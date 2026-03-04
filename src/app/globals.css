@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --sidebar-width: 256px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+        @apply bg-[#0a0a12] text-slate-100 min-h-screen;
+    }
+
+    ::-webkit-scrollbar {
+        @apply w-1.5;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-slate-700 rounded-full;
+    }
+}
+
+@layer components {
+
+    /* ── Card glass ── */
+    .glass-card {
+        @apply bg-slate-900/60 border border-glass shadow-glass rounded-2xl backdrop-blur-md transition-all hover:bg-slate-900/80;
+    }
+
+    .glass-panel {
+        @apply bg-dark-panel/80 border border-glass shadow-lg rounded-2xl backdrop-blur-md relative overflow-hidden;
+    }
+
+    .glass-panel::before {
+        content: '';
+        @apply absolute inset-0 bg-glass-gradient opacity-0 transition-opacity duration-300 pointer-events-none;
+    }
+
+    .glass-panel:hover::before {
+        @apply opacity-100;
+    }
+
+    /* ── KPI card ── */
+    .kpi-card {
+        @apply glass-card p-5 flex flex-col gap-2 hover:border-glass-hover hover:shadow-glow transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden;
+    }
+
+    .kpi-card::after {
+        content: '';
+        @apply absolute top-0 left-0 w-full h-1 bg-brand-gradient opacity-0 transition-opacity duration-300;
+    }
+
+    .kpi-card:hover::after {
+        @apply opacity-100;
+    }
+
+    /* ── Table ── */
+    .data-table {
+        @apply w-full text-sm;
+    }
+
+    .data-table thead tr {
+        @apply border-b border-glass;
+    }
+
+    .data-table th {
+        @apply px-4 py-4 text-left font-semibold text-slate-400 uppercase tracking-wider text-xs;
+    }
+
+    .data-table tbody tr {
+        @apply border-b border-glass/50 hover:bg-white/[0.02] transition-colors;
+    }
+
+    .data-table td {
+        @apply px-4 py-3.5 text-slate-300;
+    }
+
+    /* ── Badge ── */
+    .badge {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border shadow-sm backdrop-blur-sm;
+    }
+
+    .badge-yellow {
+        @apply badge bg-yellow-500/10 border-yellow-500/30 text-yellow-400 shadow-yellow-500/10;
+    }
+
+    .badge-blue {
+        @apply badge bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-blue-500/10;
+    }
+
+    .badge-green {
+        @apply badge bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-emerald-500/10;
+    }
+
+    .badge-red {
+        @apply badge bg-red-500/10 border-red-500/30 text-red-400 shadow-red-500/10;
+    }
+
+    .badge-gray {
+        @apply badge bg-slate-700/30 border-slate-600/50 text-slate-300;
+    }
+
+    .badge-purple {
+        @apply badge bg-purple-500/10 border-purple-500/30 text-purple-400 shadow-purple-500/10;
+    }
+
+    /* ── Button ── */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 cursor-pointer border relative overflow-hidden;
+    }
+
+    .btn-primary {
+        @apply btn bg-brand-gradient border-transparent text-white shadow-glow hover:shadow-glow-lg hover:brightness-110 active:scale-95;
+    }
+
+    .btn-ghost {
+        @apply btn bg-white/5 border-glass text-slate-300 hover:bg-white/10 hover:text-white active:scale-95;
+    }
+
+    .btn-danger {
+        @apply btn bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 active:scale-95;
+    }
+
+    .btn-success {
+        @apply btn bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 active:scale-95;
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs rounded-lg;
+    }
+
+    /* ── Input ── */
+    .inp {
+        @apply w-full bg-slate-900/50 border border-glass rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-brand-500/50 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-inner backdrop-blur-sm;
+    }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+        @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-dark/80 backdrop-blur-md p-4 transition-all;
+    }
+
+    .modal-box {
+        @apply glass-panel w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl ring-1 ring-white/10;
+    }
+
+    /* ── Sidebar nav link ── */
+    .nav-link {
+        @apply flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 relative;
+    }
+
+    .nav-link.active {
+        @apply text-white bg-brand-gradient border-transparent shadow-glow font-semibold;
+    }
+
+    /* ── Semáforo rows ── */
+    .row-red {
+        @apply bg-red-500/5 border-l-2 border-l-red-500;
+    }
+
+    .row-yellow {
+        @apply bg-yellow-500/5 border-l-2 border-l-yellow-500;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+        @apply w-5 h-5 border-2 border-glass border-t-brand-500 rounded-full animate-spin;
+    }
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.25s ease-out;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+}
