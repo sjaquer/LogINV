@@ -16,19 +16,19 @@ export function KPICard({ title, value, subtitle, icon: Icon, color = 'brand', l
     };
 
     return (
-        <div className="kpi-card group bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 rounded-xl">
+        <div className="kpi-card group bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all p-4 sm:p-5 rounded-xl">
             <div className="flex items-start justify-between mb-2">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
-                <span className={`p-2 rounded-lg border ${theme.chip} transition-colors`}>
-                    <Icon size={18} />
+                <p className="text-[10px] sm:text-sm font-semibold text-slate-500 uppercase tracking-wider leading-tight">{title}</p>
+                <span className={`p-1.5 sm:p-2 rounded-lg border ${theme.chip} transition-colors flex-shrink-0`}>
+                    <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </span>
             </div>
             {loading ? (
                 <div className="spinner mt-3" />
             ) : (
-                <p className={`text-3xl font-bold tracking-tight text-slate-900`}>{value}</p>
+                <p className={`text-2xl sm:text-3xl font-bold tracking-tight text-slate-900`}>{value}</p>
             )}
-            <p className="text-xs text-slate-400 mt-1 font-medium">{subtitle}</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">{subtitle}</p>
         </div>
     );
 }
@@ -79,7 +79,7 @@ export function StockBar({ actual, minimo }) {
     const pct = minimo > 0 ? Math.min(100, Math.round((actual / minimo) * 100)) : 100;
     const color = pct < 50 ? 'bg-rose-500' : pct < 100 ? 'bg-amber-400' : 'bg-emerald-500';
     return (
-        <div className="flex items-center gap-3 min-w-[120px]">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[120px]">
             <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
             </div>
@@ -118,12 +118,12 @@ export function EmptyState({ icon: Icon = CheckCircle2, title = 'Sin datos', sub
     const translatedSubtitle = subtitle ? (t(subtitle) !== subtitle ? t(subtitle) : subtitle) : null;
 
     return (
-        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-            <div className="w-16 h-16 rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex items-center justify-center mb-5 relative">
-                <Icon size={28} className="text-slate-400 relative z-10" />
+        <div className="flex flex-col items-center justify-center py-10 sm:py-16 text-center animate-fade-in px-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex items-center justify-center mb-4 sm:mb-5 relative">
+                <Icon size={24} className="sm:w-7 sm:h-7 text-slate-400 relative z-10" />
             </div>
-            <p className="text-lg font-semibold text-slate-700">{translatedTitle}</p>
-            {translatedSubtitle && <p className="text-sm text-slate-500 mt-1 max-w-sm">{translatedSubtitle}</p>}
+            <p className="text-base sm:text-lg font-semibold text-slate-700">{translatedTitle}</p>
+            {translatedSubtitle && <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm">{translatedSubtitle}</p>}
         </div>
     );
 }

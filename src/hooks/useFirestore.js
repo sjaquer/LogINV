@@ -1,132 +1,362 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS } from '@/lib/mockDataStore';
+import {
+    MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS,
+    MOCK_CATEGORIAS,
+} from '@/lib/mockDataStore';
 
 // ─── Detect if Firebase is configured ────────────────────────────────────
-function isFirebaseConfigured() {
-    // Returns false until Firebase credentials are set and USE_MOCK is turned off
-    return false;
+const USE_MOCK = typeof window !== 'undefined'
+    ? (process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)
+    : true;
+
+// ─── Helpers for mock timestamps ──────────────────────────────────────────
+function mockTimestamp() {
+    const d = new Date();
+    return { toDate: () => d, seconds: d.getTime() / 1000 };
 }
 
-const USE_MOCK = true; // Set to false after configuring Firebase in src/lib/firebase.js
-
-// ─── Mock state management (client-side only mutations for demo) ──────────
+// ─── Shared mock state (client-side) ──────────────────────────────────────
 let mockProductos = [...MOCK_PRODUCTOS];
 let mockRequerimientos = [...MOCK_REQUERIMIENTOS];
 let mockMovimientos = [...MOCK_MOVIMIENTOS];
+let mockCategorias = [...MOCK_CATEGORIAS];
 
-const productosListeners = new Set();
-const requerimientosListeners = new Set();
-const movimientosListeners = new Set();
+const listeners = {
+    productos: new Set(),
+    requerimientos: new Set(),
+    movimientos: new Set(),
+    categorias: new Set(),
+};
 
-function notifyProductosListeners() {
-    productosListeners.forEach(fn => fn([...mockProductos]));
+function notify(key) {
+    const dataMap = {
+        productos: mockProductos,
+        requerimientos: mockRequerimientos,
+        movimientos: mockMovimientos,
+        categorias: mockCategorias,
+    };
+    listeners[key].forEach(fn => fn([...dataMap[key]]));
 }
-function notifyRequerimientosListeners() {
-    requerimientosListeners.forEach(fn => fn([...mockRequerimientos]));
+
+// ─── Lazy Firestore imports ───────────────────────────────────────────────
+let _fs = null;
+let _db = null;
+
+async function getFirestore() {
+    if (_fs && _db) return { fs: _fs, db: _db };
+    _fs = await import('firebase/firestore');
+    const fbMod = await import('@/lib/firebase');
+    _db = fbMod.db;
+    return { fs: _fs, db: _db };
 }
 
-// ─── useProductos ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  useCategorias – CRUD for product categories
+// ═══════════════════════════════════════════════════════════════════════════
+export function useCategorias() {
+    const [categorias, setCategorias] = useState(USE_MOCK ? mockCategorias : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
 
+    useEffect(() => {
+        if (USE_MOCK) {
+            setCategorias([...mockCategorias]);
+            listeners.categorias.add(setCategorias);
+            return () => listeners.categorias.delete(setCategorias);
+        }
+        let unsub;
+        (async () => {
+            const { fs, db } = await getFirestore();
+            const q = fs.query(fs.collection(db, 'categorias'), fs.orderBy('orden', 'asc'));
+            unsub = fs.onSnapshot(q, (snap) => {
+                setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                setLoading(false);
+            });
+        })();
+        return () => unsub?.();
+    }, []);
+
+    const crearCategoria = useCallback(async (data) => {
+        if (USE_MOCK) {
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                ...data,
+                orden: mockCategorias.length + 1,
+                activa: true,
+                fecha_creacion: mockTimestamp(),
+            };
+            mockCategorias = [...mockCategorias, newCat];
+            notify('categorias');
+            return newCat.id;
+        }
+        const { fs, db } = await getFirestore();
+        const ref = await fs.addDoc(fs.collection(db, 'categorias'), {
+            ...data,
+            orden: categorias.length + 1,
+            activa: true,
+            fecha_creacion: fs.serverTimestamp(),
+        });
+        return ref.id;
+    }, [categorias]);
+
+    const actualizarCategoria = useCallback(async (id, data) => {
+        if (USE_MOCK) {
+            mockCategorias = mockCategorias.map(c => c.id === id ? { ...c, ...data } : c);
+            notify('categorias');
+            return;
+        }
+        const { fs, db } = await getFirestore();
+        await fs.updateDoc(fs.doc(db, 'categorias', id), data);
+    }, []);
+
+    const eliminarCategoria = useCallback(async (id) => {
+        if (USE_MOCK) {
+            mockCategorias = mockCategorias.filter(c => c.id !== id);
+            notify('categorias');
+            return;
+        }
+        const { fs, db } = await getFirestore();
+        await fs.deleteDoc(fs.doc(db, 'categorias', id));
+    }, []);
+
+    return { categorias, loading, crearCategoria, actualizarCategoria, eliminarCategoria };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  useProductos – Full CRUD for productos + stock/merma ops
+// ═══════════════════════════════════════════════════════════════════════════
 export function useProductos() {
-    const [productos, setProductos] = useState(mockProductos);
-    const [loading, setLoading] = useState(false);
+    const [productos, setProductos] = useState(USE_MOCK ? mockProductos : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
 
     useEffect(() => {
         if (USE_MOCK) {
             setProductos([...mockProductos]);
-            productosListeners.add(setProductos);
-            return () => productosListeners.delete(setProductos);
+            listeners.productos.add(setProductos);
+            return () => listeners.productos.delete(setProductos);
         }
-        // Firebase path
-        setLoading(true);
         let unsub;
-        import('firebase/firestore').then(({ collection, onSnapshot, query, orderBy }) => {
-            import('@/lib/firebase').then(({ db }) => {
-                const q = query(collection(db, 'productos'), orderBy('nombre'));
-                unsub = onSnapshot(q, (snap) => {
-                    const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-                    setProductos(docs);
-                    setLoading(false);
-                });
+        (async () => {
+            const { fs, db } = await getFirestore();
+            const q = fs.query(fs.collection(db, 'productos'), fs.orderBy('nombre'));
+            unsub = fs.onSnapshot(q, (snap) => {
+                setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                setLoading(false);
             });
-        });
+        })();
         return () => unsub?.();
     }, []);
 
-    const updateStock = useCallback(async (id, nuevoStock, usuario) => {
+    // ── Create ──
+    const crearProducto = useCallback(async (data) => {
         if (USE_MOCK) {
-            mockProductos = mockProductos.map(p =>
-                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: { toDate: () => new Date() } } : p
-            );
-            notifyProductosListeners();
-            return;
+            const newProd = {
+                id: 'p_' + Date.now(),
+                ...data,
+                stock_actual: data.stock_actual || 0,
+                fecha_vencimiento: data.fecha_vencimiento
+                    ? { toDate: () => new Date(data.fecha_vencimiento), seconds: new Date(data.fecha_vencimiento).getTime() / 1000 }
+                    : null,
+                ultima_actualizacion: mockTimestamp(),
+                fecha_creacion: mockTimestamp(),
+                activo: true,
+            };
+            mockProductos = [...mockProductos, newProd];
+            notify('productos');
+            if (data.stock_actual > 0) {
+                const mov = {
+                    id: 'mv_' + Date.now(),
+                    producto_id: newProd.id,
+                    nombre_producto: data.nombre,
+                    tipo: 'INGRESO',
+                    cantidad: data.stock_actual,
+                    usuario: data._usuario || 'Sistema',
+                    fecha: mockTimestamp(),
+                    motivo_merma: null,
+                    notas: 'Stock inicial al crear producto',
+                };
+                mockMovimientos = [mov, ...mockMovimientos];
+                notify('movimientos');
+            }
+            return newProd.id;
         }
-        const { updateDoc, doc, addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
-        await updateDoc(doc(db, 'productos', id), { stock_actual: nuevoStock, ultima_actualizacion: serverTimestamp() });
-        await addDoc(collection(db, 'movimientos'), { producto_id: id, tipo: 'SALIDA', cantidad: nuevoStock, usuario, fecha: serverTimestamp(), motivo_merma: null });
+        const { fs, db } = await getFirestore();
+        const docData = {
+            ...data,
+            stock_actual: data.stock_actual || 0,
+            fecha_vencimiento: data.fecha_vencimiento ? fs.Timestamp.fromDate(new Date(data.fecha_vencimiento)) : null,
+            ultima_actualizacion: fs.serverTimestamp(),
+            fecha_creacion: fs.serverTimestamp(),
+            activo: true,
+        };
+        const usuario = docData._usuario || 'Sistema';
+        delete docData._usuario;
+        const ref = await fs.addDoc(fs.collection(db, 'productos'), docData);
+        if (data.stock_actual > 0) {
+            await fs.addDoc(fs.collection(db, 'movimientos'), {
+                producto_id: ref.id,
+                nombre_producto: data.nombre,
+                tipo: 'INGRESO',
+                cantidad: data.stock_actual,
+                usuario,
+                fecha: fs.serverTimestamp(),
+                motivo_merma: null,
+                notas: 'Stock inicial al crear producto',
+            });
+        }
+        return ref.id;
     }, []);
 
+    // ── Update ──
+    const actualizarProducto = useCallback(async (id, data) => {
+        if (USE_MOCK) {
+            mockProductos = mockProductos.map(p => {
+                if (p.id !== id) return p;
+                const updated = { ...p, ...data, ultima_actualizacion: mockTimestamp() };
+                if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
+                    updated.fecha_vencimiento = {
+                        toDate: () => new Date(data.fecha_vencimiento),
+                        seconds: new Date(data.fecha_vencimiento).getTime() / 1000,
+                    };
+                }
+                return updated;
+            });
+            notify('productos');
+            return;
+        }
+        const { fs, db } = await getFirestore();
+        const updateData = { ...data, ultima_actualizacion: fs.serverTimestamp() };
+        if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
+            updateData.fecha_vencimiento = fs.Timestamp.fromDate(new Date(data.fecha_vencimiento));
+        }
+        await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
+    }, []);
+
+    // ── Delete ──
+    const eliminarProducto = useCallback(async (id) => {
+        if (USE_MOCK) {
+            mockProductos = mockProductos.filter(p => p.id !== id);
+            notify('productos');
+            return;
+        }
+        const { fs, db } = await getFirestore();
+        await fs.deleteDoc(fs.doc(db, 'productos', id));
+    }, []);
+
+    // ── Update Stock (inbound) ──
+    const updateStock = useCallback(async (id, nuevoStock, usuario) => {
+        if (USE_MOCK) {
+            const prod = mockProductos.find(p => p.id === id);
+            if (!prod) return;
+            const diff = nuevoStock - prod.stock_actual;
+            mockProductos = mockProductos.map(p =>
+                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: mockTimestamp() } : p
+            );
+            notify('productos');
+            const mov = {
+                id: 'mv_' + Date.now(),
+                producto_id: id,
+                nombre_producto: prod.nombre,
+                tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
+                cantidad: Math.abs(diff),
+                usuario,
+                fecha: mockTimestamp(),
+                motivo_merma: null,
+            };
+            mockMovimientos = [mov, ...mockMovimientos];
+            notify('movimientos');
+            return;
+        }
+        const { fs, db } = await getFirestore();
+        const prodSnap = productos.find(p => p.id === id);
+        const diff = nuevoStock - (prodSnap?.stock_actual || 0);
+        await fs.updateDoc(fs.doc(db, 'productos', id), {
+            stock_actual: nuevoStock,
+            ultima_actualizacion: fs.serverTimestamp(),
+        });
+        await fs.addDoc(fs.collection(db, 'movimientos'), {
+            producto_id: id,
+            nombre_producto: prodSnap?.nombre || '',
+            tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
+            cantidad: Math.abs(diff),
+            usuario,
+            fecha: fs.serverTimestamp(),
+            motivo_merma: null,
+        });
+    }, [productos]);
+
+    // ── Register loss (merma) ──
     const registrarMerma = useCallback(async (id, cantidad, usuario, motivo) => {
         if (USE_MOCK) {
             const prod = mockProductos.find(p => p.id === id);
             if (!prod) return;
             const nuevoStock = Math.max(0, prod.stock_actual - cantidad);
             mockProductos = mockProductos.map(p =>
-                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: { toDate: () => new Date() } } : p
+                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: mockTimestamp() } : p
             );
-            const newMov = {
-                id: 'mv' + Date.now(),
+            const mov = {
+                id: 'mv_' + Date.now(),
                 producto_id: id,
                 nombre_producto: prod.nombre,
                 tipo: 'MERMA',
                 cantidad,
                 usuario,
-                fecha: { toDate: () => new Date() },
+                fecha: mockTimestamp(),
                 motivo_merma: motivo,
             };
-            mockMovimientos = [newMov, ...mockMovimientos];
-            notifyProductosListeners();
-            movimientosListeners.forEach(fn => fn([...mockMovimientos]));
+            mockMovimientos = [mov, ...mockMovimientos];
+            notify('productos');
+            notify('movimientos');
             return;
         }
-        const { updateDoc, doc, addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
-        const prodRef = doc(db, 'productos', id);
-        const prod = productos.find(p => p.id === id);
-        if (!prod) return;
-        const nuevoStock = Math.max(0, prod.stock_actual - cantidad);
-        await updateDoc(prodRef, { stock_actual: nuevoStock, ultima_actualizacion: serverTimestamp() });
-        await addDoc(collection(db, 'movimientos'), { producto_id: id, nombre_producto: prod.nombre, tipo: 'MERMA', cantidad, usuario, fecha: serverTimestamp(), motivo_merma: motivo });
+        const { fs, db } = await getFirestore();
+        const prodSnap = productos.find(p => p.id === id);
+        if (!prodSnap) return;
+        const nuevoStock = Math.max(0, prodSnap.stock_actual - cantidad);
+        await fs.updateDoc(fs.doc(db, 'productos', id), {
+            stock_actual: nuevoStock,
+            ultima_actualizacion: fs.serverTimestamp(),
+        });
+        await fs.addDoc(fs.collection(db, 'movimientos'), {
+            producto_id: id,
+            nombre_producto: prodSnap.nombre,
+            tipo: 'MERMA',
+            cantidad,
+            usuario,
+            fecha: fs.serverTimestamp(),
+            motivo_merma: motivo,
+        });
     }, [productos]);
 
-    return { productos, loading, updateStock, registrarMerma };
+    return {
+        productos, loading,
+        crearProducto, actualizarProducto, eliminarProducto,
+        updateStock, registrarMerma,
+    };
 }
 
-// ─── useRequerimientos ────────────────────────────────────────────────────
-
+// ═══════════════════════════════════════════════════════════════════════════
+//  useRequerimientos
+// ═══════════════════════════════════════════════════════════════════════════
 export function useRequerimientos() {
-    const [requerimientos, setRequerimientos] = useState(mockRequerimientos);
-    const [loading, setLoading] = useState(false);
+    const [requerimientos, setRequerimientos] = useState(USE_MOCK ? mockRequerimientos : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
 
     useEffect(() => {
         if (USE_MOCK) {
             setRequerimientos([...mockRequerimientos]);
-            requerimientosListeners.add(setRequerimientos);
-            return () => requerimientosListeners.delete(setRequerimientos);
+            listeners.requerimientos.add(setRequerimientos);
+            return () => listeners.requerimientos.delete(setRequerimientos);
         }
-        setLoading(true);
         let unsub;
-        import('firebase/firestore').then(({ collection, onSnapshot, query, orderBy }) => {
-            import('@/lib/firebase').then(({ db }) => {
-                const q = query(collection(db, 'requerimientos'), orderBy('fecha_creacion', 'desc'));
-                unsub = onSnapshot(q, (snap) => {
-                    setRequerimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                    setLoading(false);
-                });
+        (async () => {
+            const { fs, db } = await getFirestore();
+            const q = fs.query(fs.collection(db, 'requerimientos'), fs.orderBy('fecha_creacion', 'desc'));
+            unsub = fs.onSnapshot(q, (snap) => {
+                setRequerimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                setLoading(false);
             });
-        });
+        })();
         return () => unsub?.();
     }, []);
 
@@ -147,68 +377,66 @@ export function useRequerimientos() {
                     }
                     : r
             );
-            notifyRequerimientosListeners();
+            notify('requerimientos');
             return;
         }
-        const { updateDoc, doc, arrayUnion } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
-        await updateDoc(doc(db, 'requerimientos', id), {
+        const { fs, db } = await getFirestore();
+        await fs.updateDoc(fs.doc(db, 'requerimientos', id), {
             estado: nuevoEstado,
-            logs: arrayUnion({ usuario, accion: accionMap[nuevoEstado] || 'Actualizó', fecha: new Date().toISOString() }),
+            logs: fs.arrayUnion({ usuario, accion: accionMap[nuevoEstado] || 'Actualizó', fecha: new Date().toISOString() }),
         });
     }, []);
 
     const crearRequerimiento = useCallback(async (items, solicitante) => {
         if (USE_MOCK) {
             const newReq = {
-                id: 'req' + Date.now(),
-                fecha_creacion: { toDate: () => new Date() },
+                id: 'req_' + Date.now(),
+                fecha_creacion: mockTimestamp(),
                 solicitante,
                 items,
                 estado: 'PENDIENTE',
                 logs: [{ usuario: solicitante, accion: 'Creó el requerimiento', fecha: new Date().toISOString() }],
             };
             mockRequerimientos = [newReq, ...mockRequerimientos];
-            notifyRequerimientosListeners();
-            return;
+            notify('requerimientos');
+            return newReq.id;
         }
-        const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
-        await addDoc(collection(db, 'requerimientos'), {
-            fecha_creacion: serverTimestamp(),
+        const { fs, db } = await getFirestore();
+        const ref = await fs.addDoc(fs.collection(db, 'requerimientos'), {
+            fecha_creacion: fs.serverTimestamp(),
             solicitante,
             items,
             estado: 'PENDIENTE',
             logs: [{ usuario: solicitante, accion: 'Creó el requerimiento', fecha: new Date().toISOString() }],
         });
+        return ref.id;
     }, []);
 
     return { requerimientos, loading, cambiarEstado, crearRequerimiento };
 }
 
-// ─── useMovimientos ───────────────────────────────────────────────────────
-
+// ═══════════════════════════════════════════════════════════════════════════
+//  useMovimientos
+// ═══════════════════════════════════════════════════════════════════════════
 export function useMovimientos() {
-    const [movimientos, setMovimientos] = useState(mockMovimientos);
-    const [loading, setLoading] = useState(false);
+    const [movimientos, setMovimientos] = useState(USE_MOCK ? mockMovimientos : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
 
     useEffect(() => {
         if (USE_MOCK) {
             setMovimientos([...mockMovimientos]);
-            movimientosListeners.add(setMovimientos);
-            return () => movimientosListeners.delete(setMovimientos);
+            listeners.movimientos.add(setMovimientos);
+            return () => listeners.movimientos.delete(setMovimientos);
         }
-        setLoading(true);
         let unsub;
-        import('firebase/firestore').then(({ collection, onSnapshot, query, orderBy }) => {
-            import('@/lib/firebase').then(({ db }) => {
-                const q = query(collection(db, 'movimientos'), orderBy('fecha', 'desc'));
-                unsub = onSnapshot(q, (snap) => {
-                    setMovimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                    setLoading(false);
-                });
+        (async () => {
+            const { fs, db } = await getFirestore();
+            const q = fs.query(fs.collection(db, 'movimientos'), fs.orderBy('fecha', 'desc'));
+            unsub = fs.onSnapshot(q, (snap) => {
+                setMovimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                setLoading(false);
             });
-        });
+        })();
         return () => unsub?.();
     }, []);
 

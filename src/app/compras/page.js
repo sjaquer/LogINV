@@ -13,11 +13,11 @@ function LogModal({ req, onClose }) {
     const { t } = useLanguage();
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 border border-slate-200 shadow-2xl bg-white" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white">
-                    <div>
-                        <h3 className="font-bold text-slate-900 text-lg">{t('historialReq')}</h3>
-                        <p className="text-sm text-brand-600 font-medium mt-1">{t('solicitadoPor')} {req.solicitante}</p>
+            <div className="modal-box animate-slide-up p-0 border border-slate-200 shadow-2xl bg-white max-w-md w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 bg-white flex-shrink-0">
+                    <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-900 text-base sm:text-lg truncate">{t('historialReq')}</h3>
+                        <p className="text-xs sm:text-sm text-brand-600 font-medium mt-1 truncate">{t('solicitadoPor')} {req.solicitante}</p>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={20} />
@@ -25,15 +25,15 @@ function LogModal({ req, onClose }) {
                 </div>
 
                 {/* Items */}
-                <div className="p-6 space-y-3 border-b border-slate-100 bg-slate-50">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-4">{t('productosSolicitados')}</p>
+                <div className="p-4 sm:p-6 space-y-3 border-b border-slate-100 bg-slate-50 flex-1 overflow-y-auto">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-3 sm:mb-4">{t('productosSolicitados')}</p>
                     {(req.items || []).map((item, i) => (
-                        <div key={i} className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-brand-200 transition-colors">
+                        <div key={i} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-brand-200 transition-colors">
                             <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0 mt-0.5 text-brand-600">
                                 <Package size={16} />
                             </div>
-                            <div>
-                                <p className="text-base font-bold text-slate-900 tracking-tight">{item.producto_nombre}</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">{item.producto_nombre}</p>
                                 <p className="text-sm text-slate-500 font-medium">{t('cant')}: <span className="text-brand-600 font-bold">{item.cantidad}</span></p>
                                 {item.justificacion && <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">&ldquo;{item.justificacion}&rdquo;</p>}
                             </div>
@@ -42,8 +42,8 @@ function LogModal({ req, onClose }) {
                 </div>
 
                 {/* Log */}
-                <div className="p-6 bg-white">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-5">{t('lineaTiempo')}</p>
+                <div className="p-4 sm:p-6 bg-white flex-shrink-0">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-4 sm:mb-5">{t('lineaTiempo')}</p>
                     <div className="relative space-y-6 ml-2">
                         <div className="absolute left-3.5 top-2 bottom-0 w-0.5 bg-slate-200" />
                         {(req.logs || []).map((log, i) => (
@@ -125,15 +125,15 @@ export default function ComprasPage() {
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title={t('compras')} />
-            <div className="flex-1 p-4 sm:p-8 space-y-8 animate-fade-in max-w-7xl mx-auto w-full">
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-8 animate-fade-in max-w-7xl mx-auto w-full">
 
                 {/* Tabs */}
-                <div className="bg-white border border-slate-200 p-1.5 flex gap-1.5 max-w-lg shadow-sm rounded-xl">
+                <div className="bg-white border border-slate-200 p-1.5 flex gap-1.5 max-w-full sm:max-w-lg shadow-sm rounded-xl overflow-x-auto no-scrollbar">
                     {TABS.map((tb) => (
                         <button
                             key={tb.id}
                             onClick={() => setTab(tb.id)}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${tab === tb.id
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap px-3 ${tab === tb.id
                                 ? 'bg-brand-50 text-brand-700 shadow-sm border border-brand-100'
                                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                 }`}
@@ -147,8 +147,8 @@ export default function ComprasPage() {
                 {tab === 'rop' && (
                     <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                         <div className="px-6 py-5 border-b border-slate-100 bg-white">
-                            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{t('motorROP')}</h2>
-                            <p className="text-sm text-slate-500 font-medium mt-1">{t('stockActualMenorMInimo')}</p>
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">{t('motorROP')}</h2>
+                            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">{t('stockActualMenorMInimo')}</p>
                         </div>
                         {loading ? (
                             <div className="p-6 space-y-4">
@@ -162,10 +162,10 @@ export default function ComprasPage() {
                                     const deficit = p.stock_minimo_rop - p.stock_actual;
                                     const pct = Math.round((p.stock_actual / p.stock_minimo_rop) * 100);
                                     return (
-                                        <div key={p.id} className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-slate-50 transition-colors group">
+                                        <div key={p.id} className="px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-slate-50 transition-colors group">
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-3 flex-wrap">
-                                                    <p className="text-lg font-bold text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors">{p.nombre}</p>
+                                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                                    <p className="text-base sm:text-lg font-bold text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors truncate">{p.nombre}</p>
                                                     <span className="badge-gray px-2 py-0.5 bg-slate-100 border-slate-200 text-slate-600">{t(p.categoria.toLowerCase())}</span>
                                                 </div>
                                                 <div className="flex items-center gap-4 mt-3">
@@ -179,12 +179,12 @@ export default function ComprasPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-5 flex-shrink-0 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                                                <div className="text-right">
-                                                    <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">{t('comprarAprox')}</p>
-                                                    <p className="text-xl font-bold text-amber-600 mt-0.5">+{deficit} <span className="text-sm font-medium text-slate-400">{p.unidad}</span></p>
+                                            <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0 bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
+                                                <div className="text-right min-w-0">
+                                                    <p className="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase tracking-wider">{t('comprarAprox')}</p>
+                                                    <p className="text-lg sm:text-xl font-bold text-amber-600 mt-0.5">+{deficit} <span className="text-xs sm:text-sm font-medium text-slate-400">{p.unidad}</span></p>
                                                 </div>
-                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-base border-2 shadow-sm ${pct < 50 ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-amber-50 border-amber-200 text-amber-600'
+                                                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-sm sm:text-base border-2 shadow-sm flex-shrink-0 ${pct < 50 ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-amber-50 border-amber-200 text-amber-600'
                                                     }`}>
                                                     {pct}%
                                                 </div>
@@ -200,9 +200,9 @@ export default function ComprasPage() {
                 {/* ── Tab: Requerimientos ── */}
                 {tab === 'requerimientos' && (
                     <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-                        <div className="px-6 py-5 border-b border-slate-100 bg-brand-50">
-                            <h2 className="text-lg font-bold text-brand-700 tracking-tight">{t('workflowAprobaciones')}</h2>
-                            <p className="text-sm text-slate-500 mt-1 font-medium">{t('rolActual')}: <span className="text-brand-700 font-bold bg-white border border-brand-200 px-2 py-0.5 rounded ml-1">{role}</span></p>
+                        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-brand-50">
+                            <h2 className="text-base sm:text-lg font-bold text-brand-700 tracking-tight">{t('workflowAprobaciones')}</h2>
+                            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">{t('rolActual')}: <span className="text-brand-700 font-bold bg-white border border-brand-200 px-2 py-0.5 rounded ml-1 text-xs">{role}</span></p>
                         </div>
                         {loading ? (
                             <div className="overflow-x-auto">

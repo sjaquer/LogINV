@@ -13,6 +13,11 @@
         --border-strong: #cbd5e1;
         --glow: rgba(59, 130, 246, 0.2);
         --blur: 16px;
+        /* iOS safe area */
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
     }
 
     * {
@@ -22,10 +27,25 @@
     html {
         font-family: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
+        -webkit-text-size-adjust: 100%;
+        /* Prevent font scaling on rotation */
+        text-size-adjust: 100%;
     }
 
     body {
         @apply bg-slate-50 text-slate-800 min-h-screen;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+
+    /* Prevent iOS zoom on inputs */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+    @media (min-width: 640px) {
+        input, select, textarea {
+            font-size: inherit !important;
+        }
     }
 
     ::-webkit-scrollbar {
@@ -54,7 +74,7 @@
 
     /* ── KPI card (Clean) ── */
     .kpi-card {
-        @apply bg-white rounded-xl p-5 flex flex-col gap-2 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden;
+        @apply bg-white rounded-xl p-4 sm:p-5 flex flex-col gap-1.5 sm:gap-2 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden min-w-0;
     }
 
     .kpi-card::after {
@@ -76,7 +96,7 @@
     }
 
     .data-table th {
-        @apply px-4 py-3 text-left font-semibold text-slate-500 uppercase tracking-wider text-xs;
+        @apply px-3 sm:px-4 py-3 text-left font-semibold text-slate-500 uppercase tracking-wider text-xs whitespace-nowrap;
     }
 
     .data-table tbody tr {
@@ -84,15 +104,14 @@
     }
 
     .data-table td {
-        @apply px-4 py-3 text-slate-700;
+        @apply px-3 sm:px-4 py-3 text-slate-700;
     }
 
     /* ── Badge (Clean) ── */
     .badge {
-        @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide border;
+        @apply inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold tracking-wide border whitespace-nowrap;
     }
 
-    /* Badges now use softer backgrounds for light mode */
     .badge-yellow {
         @apply badge bg-amber-50 border-amber-200 text-amber-700;
     }
@@ -119,7 +138,9 @@
 
     /* ── Button (Clean) ── */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-[13px] transition-all duration-200 cursor-pointer border shadow-sm;
+        @apply inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-[13px] transition-all duration-200 cursor-pointer border shadow-sm select-none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
 
     .btn-primary {
@@ -138,18 +159,46 @@
         @apply btn bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700;
     }
 
+    .btn-sm {
+        @apply px-2.5 py-1.5 text-xs gap-1 rounded-md;
+    }
+
     /* ── Input (Clean) ── */
     .inp {
-        @apply w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all shadow-sm;
+        @apply w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all shadow-sm;
+        /* 16px font on mobile prevents iOS zoom */
     }
 
     /* ── Modal overlay ── */
     .modal-overlay {
-        @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all;
+        @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all;
+        padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+    @media (min-width: 640px) {
+        .modal-overlay {
+            @apply p-4;
+        }
     }
 
     .modal-box {
-        @apply bg-white border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl rounded-xl;
+        @apply bg-white border border-slate-200 w-full max-w-md shadow-xl;
+        max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 639px) {
+        .modal-box {
+            @apply rounded-t-2xl rounded-b-none;
+            max-height: 92dvh;
+            max-height: 92vh;
+        }
+    }
+    @media (min-width: 640px) {
+        .modal-box {
+            @apply rounded-xl max-h-[90vh];
+        }
     }
 
     /* ── Sidebar nav link (Clean) ── */
@@ -205,10 +254,37 @@
     }
 }
 
+@keyframes slideUpMobile {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .animate-fade-in {
     animation: fadeIn 0.25s ease-out;
 }
 
 .animate-slide-up {
     animation: slideUp 0.3s ease-out;
+}
+
+@media (max-width: 639px) {
+    .animate-slide-up {
+        animation: slideUpMobile 0.3s ease-out;
+    }
+}
+
+/* ── Utility: hide scrollbar but keep scroll ── */
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
 }

@@ -13,6 +13,15 @@ function daysAgo(days) {
     return { toDate: () => d, seconds: d.getTime() / 1000 };
 }
 
+// ─── CATEGORÍAS ──
+export const MOCK_CATEGORIAS = [
+    { id: 'cat1', nombre: 'Aves', descripcion: 'Alimento balanceado y suplementos para aves', color: '#f59e0b', icono: '🐔', orden: 1, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat2', nombre: 'Ganado', descripcion: 'Alimento y sales minerales para ganado vacuno', color: '#10b981', icono: '🐄', orden: 2, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat3', nombre: 'Porcinos', descripcion: 'Alimento balanceado para cerdos en todas las etapas', color: '#f472b6', icono: '🐷', orden: 3, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat4', nombre: 'Materia Prima', descripcion: 'Insumos base para formulación de alimento', color: '#8b5cf6', icono: '🌾', orden: 4, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat5', nombre: 'Veterinario', descripcion: 'Medicamentos, vacunas e insumos veterinarios', color: '#ef4444', icono: '💊', orden: 5, activa: true, fecha_creacion: daysAgo(90) },
+];
+
 // ─── PRODUCTOS: Sacos de alimento balanceado, insumos de molino, materias primas ──
 export const MOCK_PRODUCTOS = [
     // Alimento Aves

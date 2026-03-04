@@ -33,9 +33,10 @@ export default function Sidebar() {
         <>
             {/* Mobile toggle button */}
             <button
-                className="fixed top-4 left-4 z-50 lg:hidden bg-white border border-slate-200 p-2 rounded-xl shadow-sm text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-colors"
+                className="fixed top-3.5 left-3 z-[60] lg:hidden bg-white border border-slate-200 p-2.5 rounded-xl shadow-md text-slate-600 hover:text-brand-600 hover:bg-slate-50 active:scale-95 transition-all"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label="Toggle menu"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
             >
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -43,7 +44,7 @@ export default function Sidebar() {
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden transition-all"
+                    className="fixed inset-0 z-[55] bg-slate-900/30 backdrop-blur-sm lg:hidden transition-all"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
@@ -51,12 +52,12 @@ export default function Sidebar() {
             {/* Sidebar panel */}
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-50 h-full flex flex-col bg-white border-r border-slate-200 shadow-xl lg:shadow-none transition-all duration-300',
+                    'fixed top-0 left-0 z-[58] h-full flex flex-col bg-white border-r border-slate-200 shadow-xl lg:shadow-none transition-all duration-300',
                     collapsed ? 'w-[72px]' : 'w-64',
-                    // Mobile: slide in/out
                     'lg:translate-x-0',
                     mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 )}
+                style={{ height: '100dvh' }}
             >
                 {/* Logo */}
                 <div className={cn('flex items-center gap-3 px-6 py-6 border-b border-slate-100', collapsed && 'justify-center px-2')}>

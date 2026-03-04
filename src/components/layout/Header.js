@@ -69,23 +69,23 @@ export default function Header({ title }) {
 
     return (
         <>
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
-                <div className="pl-12 lg:pl-0">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-0.5 flex items-center gap-2">
-                        {t('bienvenido')} <span className="w-1 h-1 rounded-full bg-slate-300"></span> {ROLE_USERS[role]}
+            <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300 min-w-0">
+                <div className="pl-11 lg:pl-0 min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-0.5 flex items-center gap-1.5 truncate">
+                        <span className="hidden sm:inline">{t('bienvenido')}</span> <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300 flex-shrink-0"></span> <span className="truncate">{ROLE_USERS[role]}</span>
                     </p>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{title}</h1>
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 tracking-tight truncate">{title}</h1>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     {/* Language Switcher */}
                     <div className="relative">
                         <button
                             onClick={() => { setOpenLangMenu(!openLangMenu); setOpenRoleMenu(false); }}
-                            className="flex items-center gap-2 btn btn-ghost text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-600"
+                            className="flex items-center gap-1.5 btn btn-ghost text-xs px-2 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-600"
                         >
-                            <Globe size={16} className="text-slate-400" />
-                            <span className="hidden sm:inline uppercase">{language}</span>
+                            <Globe size={15} className="text-slate-400" />
+                            <span className="hidden sm:inline uppercase text-[11px]">{language}</span>
                         </button>
 
                         {openLangMenu && (
@@ -94,7 +94,7 @@ export default function Header({ title }) {
                                     <button
                                         key={l.code}
                                         onClick={() => { setLanguage(l.code); setOpenLangMenu(false); }}
-                                        className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between ${l.code === language ? 'text-brand-600 font-medium bg-brand-50' : 'text-slate-600'}`}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between ${l.code === language ? 'text-brand-600 font-medium bg-brand-50' : 'text-slate-600'}`}
                                     >
                                         {l.label}
                                         {l.code === language && <div className="w-1.5 h-1.5 rounded-full bg-brand-600" />}
@@ -108,20 +108,20 @@ export default function Header({ title }) {
                     <div className="relative">
                         <button
                             onClick={() => { setOpenRoleMenu(!openRoleMenu); setOpenLangMenu(false); }}
-                            className="flex items-center gap-2.5 btn btn-ghost text-xs sm:text-sm bg-white border border-slate-200 shadow-sm hover:border-brand-400 transition-all py-1.5 pl-2 pr-3 rounded-xl"
+                            className="flex items-center gap-1.5 sm:gap-2.5 btn btn-ghost text-xs sm:text-sm bg-white border border-slate-200 shadow-sm hover:border-brand-400 transition-all py-1.5 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl"
                         >
-                            <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
+                            <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
                                 <User size={14} />
                             </div>
-                            <div className="flex flex-col items-start leading-none gap-0.5">
-                                <span className="hidden lg:block text-slate-700 max-w-[140px] truncate font-semibold text-xs">{userName}</span>
-                                <span className={`hidden sm:block text-[10px] uppercase tracking-wider font-bold ${ROLE_COLORS[role]}`}>{role}</span>
+                            <div className="hidden sm:flex flex-col items-start leading-none gap-0.5 min-w-0">
+                                <span className="hidden lg:block text-slate-700 max-w-[120px] truncate font-semibold text-xs">{userName}</span>
+                                <span className={`text-[10px] uppercase tracking-wider font-bold ${ROLE_COLORS[role]}`}>{role}</span>
                             </div>
-                            <ChevronDown size={14} className="text-slate-400" />
+                            <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
                         </button>
 
                         {openRoleMenu && (
-                            <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-64 animate-fade-in z-40 origin-top-right">
+                            <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-64 animate-fade-in z-40 origin-top-right max-w-[calc(100vw-2rem)]">
                                 <p className="px-4 py-2 text-[10px] text-slate-400 uppercase tracking-wider font-bold border-b border-slate-100 mb-1">
                                     {t('cambiarRol')}
                                 </p>
@@ -132,8 +132,8 @@ export default function Header({ title }) {
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all text-left hover:bg-slate-50 ${r === role ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-600'}`}
                                     >
                                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r === role ? 'bg-brand-500' : 'bg-slate-300'}`} />
-                                        <span className="font-medium">{ROLE_USERS[r]}</span>
-                                        <span className={`ml-auto text-[10px] uppercase tracking-wider ${r === role ? 'text-brand-600' : 'text-slate-400'}`}>{r}</span>
+                                        <span className="font-medium truncate flex-1 min-w-0">{ROLE_USERS[r]}</span>
+                                        <span className={`ml-auto text-[10px] uppercase tracking-wider flex-shrink-0 ${r === role ? 'text-brand-600' : 'text-slate-400'}`}>{r}</span>
                                     </button>
                                 ))}
                             </div>
