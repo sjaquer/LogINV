@@ -69,32 +69,35 @@ export default function Header({ title }) {
 
     return (
         <>
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-[rgba(5,6,12,0.8)] backdrop-blur-2xl shadow-soft">
-                <div className="pl-10 lg:pl-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-500 mb-1">{t('bienvenido')} · {ROLE_USERS[role]}</p>
-                    <h1 className="text-2xl font-semibold text-white tracking-tight">{title}</h1>
+            <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
+                <div className="pl-12 lg:pl-0">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-0.5 flex items-center gap-2">
+                        {t('bienvenido')} <span className="w-1 h-1 rounded-full bg-slate-300"></span> {ROLE_USERS[role]}
+                    </p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{title}</h1>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                     {/* Language Switcher */}
                     <div className="relative">
                         <button
                             onClick={() => { setOpenLangMenu(!openLangMenu); setOpenRoleMenu(false); }}
-                            className="flex items-center gap-2 btn btn-ghost text-[11px] sm:text-xs px-2 sm:px-3 border-transparent"
+                            className="flex items-center gap-2 btn btn-ghost text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-600"
                         >
                             <Globe size={16} className="text-slate-400" />
-                            <span className="hidden sm:inline font-medium text-slate-300 uppercase">{language}</span>
+                            <span className="hidden sm:inline uppercase">{language}</span>
                         </button>
 
                         {openLangMenu && (
-                            <div className="absolute right-0 top-full mt-2 glass-panel py-1.5 w-32 animate-fade-in z-40">
+                            <div className="absolute right-0 top-full mt-2 w-36 bg-white border border-slate-200 rounded-xl shadow-lg ring-1 ring-slate-900/5 py-1 z-40 animate-fade-in-up origin-top-right overflow-hidden">
                                 {LANGUAGES.map((l) => (
                                     <button
                                         key={l.code}
                                         onClick={() => { setLanguage(l.code); setOpenLangMenu(false); }}
-                                        className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-white/10 ${l.code === language ? 'text-brand-400 font-medium bg-brand-500/10' : 'text-slate-300'}`}
+                                        className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between ${l.code === language ? 'text-brand-600 font-medium bg-brand-50' : 'text-slate-600'}`}
                                     >
                                         {l.label}
+                                        {l.code === language && <div className="w-1.5 h-1.5 rounded-full bg-brand-600" />}
                                     </button>
                                 ))}
                             </div>
@@ -105,30 +108,32 @@ export default function Header({ title }) {
                     <div className="relative">
                         <button
                             onClick={() => { setOpenRoleMenu(!openRoleMenu); setOpenLangMenu(false); }}
-                            className="flex items-center gap-2.5 btn btn-ghost text-xs sm:text-sm shadow-glass bg-dark-panel border-white/10 hover:border-brand-500/60 transition-all"
+                            className="flex items-center gap-2.5 btn btn-ghost text-xs sm:text-sm bg-white border border-slate-200 shadow-sm hover:border-brand-400 transition-all py-1.5 pl-2 pr-3 rounded-xl"
                         >
-                            <div className="w-7 h-7 rounded-full bg-brand-500/20 shadow-glow flex items-center justify-center">
-                                <User size={13} className={ROLE_COLORS[role]} />
+                            <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
+                                <User size={14} />
                             </div>
-                            <span className="hidden lg:block text-slate-200 max-w-[140px] truncate font-medium">{userName}</span>
-                            <span className={`hidden sm:block font-bold ${ROLE_COLORS[role]}`}>[{role}]</span>
+                            <div className="flex flex-col items-start leading-none gap-0.5">
+                                <span className="hidden lg:block text-slate-700 max-w-[140px] truncate font-semibold text-xs">{userName}</span>
+                                <span className={`hidden sm:block text-[10px] uppercase tracking-wider font-bold ${ROLE_COLORS[role]}`}>{role}</span>
+                            </div>
                             <ChevronDown size={14} className="text-slate-400" />
                         </button>
 
                         {openRoleMenu && (
-                            <div className="absolute right-0 top-full mt-2 glass-panel py-2 w-64 animate-fade-in shadow-2xl z-40">
-                                <p className="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider font-semibold border-b border-glass mb-1">
+                            <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-64 animate-fade-in z-40 origin-top-right">
+                                <p className="px-4 py-2 text-[10px] text-slate-400 uppercase tracking-wider font-bold border-b border-slate-100 mb-1">
                                     {t('cambiarRol')}
                                 </p>
-                                {ROLES.map((r) => (
+                                {Object.keys(ROLE_USERS).map((r) => (
                                     <button
                                         key={r}
                                         onClick={() => handleRoleSelect(r)}
-                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all text-left hover:bg-white/10 ${r === role ? 'bg-brand-gradient text-white shadow-glow' : 'text-slate-300'}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all text-left hover:bg-slate-50 ${r === role ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-600'}`}
                                     >
-                                        {!r.includes(role) && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r === role ? 'bg-white' : 'bg-slate-600'}`} />}
+                                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r === role ? 'bg-brand-500' : 'bg-slate-300'}`} />
                                         <span className="font-medium">{ROLE_USERS[r]}</span>
-                                        <span className={`ml-auto text-xs ${r === role ? 'text-white/80' : ROLE_COLORS[r]}`}>{r}</span>
+                                        <span className={`ml-auto text-[10px] uppercase tracking-wider ${r === role ? 'text-brand-600' : 'text-slate-400'}`}>{r}</span>
                                     </button>
                                 ))}
                             </div>
@@ -140,44 +145,48 @@ export default function Header({ title }) {
             {/* Password Prompt Modal */}
             {pendingRole && (
                 <div className="modal-overlay">
-                    <div className="modal-box p-6 relative animate-slide-up max-w-sm border border-glass">
+                    <div className="modal-box p-6 relative animate-slide-up max-w-sm border-0 shadow-2xl bg-white">
                         <div className="flex flex-col items-center text-center space-y-4">
-                            <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center shadow-glow">
-                                <Lock size={24} className="text-brand-400" />
+                            <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center">
+                                <Lock size={24} className="text-brand-600" />
                             </div>
-                            <h2 className="text-xl font-bold text-white">{t('seguridadAcceso')}</h2>
-                            <p className="text-slate-400 text-sm">
-                                {t('ingresaContrasena')}
-                                <span className={`block font-bold mt-1 text-base ${ROLE_COLORS[pendingRole]}`}>{ROLE_USERS[pendingRole]}</span>
-                            </p>
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold text-slate-900">{t('seguridadAcceso')}</h2>
+                                <p className="text-slate-500 text-sm">
+                                    {t('ingresaContrasena')}
+                                    <span className={`block font-bold mt-1 text-sm ${ROLE_COLORS[pendingRole]}`}>{ROLE_USERS[pendingRole]}</span>
+                                </p>
+                            </div>
 
                             <form onSubmit={handlePasswordSubmit} className="w-full mt-2">
-                                <input
-                                    ref={passInputRef}
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder={t('contrasenaPlaceholder')}
-                                    className="inp text-center text-lg tracking-widest placeholder:tracking-normal w-full mb-3"
-                                    autoComplete="off"
-                                />
+                                <div className="relative mb-4">
+                                    <input
+                                        ref={passInputRef}
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        className="inp text-center text-lg tracking-[0.5em] placeholder:tracking-normal w-full font-bold text-slate-800"
+                                        autoComplete="off"
+                                    />
+                                </div>
                                 {errorMsg && (
-                                    <div className="flex items-center gap-1.5 text-red-400 text-xs mb-3 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                                    <div className="flex items-center gap-2 justify-center text-rose-600 text-xs mb-4 bg-rose-50 p-2.5 rounded-lg border border-rose-100">
                                         <AlertCircle size={14} />
                                         <span>{t('contrasenaIncorrecta')}</span>
                                     </div>
                                 )}
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setPendingRole(null)}
-                                        className="btn btn-ghost flex-1 py-2.5"
+                                        className="btn btn-ghost flex-1 py-2.5 border border-slate-200"
                                     >
                                         {t('cerrar')}
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn btn-primary flex-1 py-2.5 justify-center"
+                                        className="btn btn-primary flex-1 py-2.5 justify-center shadow-lg shadow-brand-500/30"
                                         disabled={!password}
                                     >
                                         {t('acceder')}

@@ -5,30 +5,30 @@ import { useLanguage } from '@/context/LanguageContext';
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 export function KPICard({ title, value, subtitle, icon: Icon, color = 'brand', loading }) {
     const theme = {
-        brand: { chip: 'bg-brand-500/15 border-brand-500/25 text-brand-100', value: 'text-white' },
-        red: { chip: 'bg-rose-500/15 border-rose-500/25 text-rose-100', value: 'text-rose-100' },
-        yellow: { chip: 'bg-accent-amber/20 border-accent-amber/30 text-amber-100', value: 'text-accent-amber' },
-        green: { chip: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-100', value: 'text-emerald-200' },
-        blue: { chip: 'bg-blue-500/15 border-blue-500/25 text-blue-100', value: 'text-blue-100' },
+        brand: { chip: 'bg-brand-50 border-brand-100 text-brand-600', value: 'text-brand-600' },
+        red: { chip: 'bg-rose-50 border-rose-100 text-rose-600', value: 'text-rose-600' },
+        yellow: { chip: 'bg-amber-50 border-amber-100 text-amber-600', value: 'text-amber-600' },
+        green: { chip: 'bg-emerald-50 border-emerald-100 text-emerald-600', value: 'text-emerald-600' },
+        blue: { chip: 'bg-blue-50 border-blue-100 text-blue-600', value: 'text-blue-600' },
     }[color] || {
-        chip: 'bg-brand-500/15 border-brand-500/25 text-brand-100',
-        value: 'text-white'
+        chip: 'bg-brand-50 border-brand-100 text-brand-600',
+        value: 'text-brand-600'
     };
 
     return (
-        <div className="kpi-card animate-fade-in group">
-            <div className="flex items-start justify-between">
-                <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{title}</p>
-                <span className={`p-2 rounded-xl border shadow-glow ${theme.chip}`}>
+        <div className="kpi-card group bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 rounded-xl">
+            <div className="flex items-start justify-between mb-2">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
+                <span className={`p-2 rounded-lg border ${theme.chip} transition-colors`}>
                     <Icon size={18} />
                 </span>
             </div>
             {loading ? (
                 <div className="spinner mt-3" />
             ) : (
-                <p className={`text-3xl font-semibold mt-2 ${theme.value}`}>{value}</p>
+                <p className={`text-3xl font-bold tracking-tight text-slate-900`}>{value}</p>
             )}
-            <p className="text-xs text-slate-500/90 mt-1 tracking-wide">{subtitle}</p>
+            <p className="text-xs text-slate-400 mt-1 font-medium">{subtitle}</p>
         </div>
     );
 }
@@ -69,21 +69,21 @@ export function StatusBadge({ estado }) {
 
 // ─── Semáforo Row Badge ────────────────────────────────────────────────────
 export function SemaforoBadge({ days }) {
-    if (days <= 3) return <span className="badge-red shadow-sm shadow-red-500/20">🔴 {days}d</span>;
-    if (days <= 7) return <span className="badge-yellow shadow-sm shadow-yellow-500/20">🟡 {days}d</span>;
-    return <span className="badge-green shadow-sm shadow-emerald-500/20">🟢 {days}d</span>;
+    if (days <= 3) return <span className="badge-red">🔴 {days}d</span>;
+    if (days <= 7) return <span className="badge-yellow">🟡 {days}d</span>;
+    return <span className="badge-green">🟢 {days}d</span>;
 }
 
 // ─── Stock Bar ─────────────────────────────────────────────────────────────
 export function StockBar({ actual, minimo }) {
     const pct = minimo > 0 ? Math.min(100, Math.round((actual / minimo) * 100)) : 100;
-    const color = pct < 50 ? 'bg-red-500 shadow-glow' : pct < 100 ? 'bg-yellow-500' : 'bg-emerald-500';
+    const color = pct < 50 ? 'bg-rose-500' : pct < 100 ? 'bg-amber-400' : 'bg-emerald-500';
     return (
         <div className="flex items-center gap-3 min-w-[120px]">
-            <div className="flex-1 h-2 rounded-full bg-slate-800 border border-glass overflow-hidden">
+            <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
             </div>
-            <span className={`text-xs font-semibold w-8 text-right ${pct < 50 ? 'text-red-400' : 'text-slate-400'}`}>{pct}%</span>
+            <span className={`text-xs font-semibold w-8 text-right ${pct < 50 ? 'text-rose-600' : 'text-slate-500'}`}>{pct}%</span>
         </div>
     );
 }
@@ -91,10 +91,10 @@ export function StockBar({ actual, minimo }) {
 // ─── Loading Skeleton ──────────────────────────────────────────────────────
 export function SkeletonRow({ cols = 5 }) {
     return (
-        <tr className="border-b border-glass/50">
+        <tr className="border-b border-slate-100">
             {Array.from({ length: cols }).map((_, i) => (
                 <td key={i} className="px-4 py-4">
-                    <div className="h-4 bg-white/5 rounded-md animate-pulse w-full max-w-[120px]" />
+                    <div className="h-4 bg-slate-100 rounded animate-pulse w-full max-w-[120px]" />
                 </td>
             ))}
         </tr>

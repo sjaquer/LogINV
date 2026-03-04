@@ -14,9 +14,9 @@ export default function RootLayout({ children }) {
             <body className="font-sans antialiased">
                 <LanguageProvider>
                     <RoleProvider>
-                        <div className="flex min-h-screen bg-app-bg text-slate-100">
+                        <div className="flex min-h-screen bg-app-bg text-slate-900">
                             <Sidebar />
-                            <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300 min-w-0">
+                            <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300 min-w-0 bg-slate-50/50">
                                 {children}
                             </main>
                         </div>

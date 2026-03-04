@@ -55,12 +55,12 @@ export default function DashboardPage() {
     const loading = pLoading || rLoading || mLoading;
 
     return (
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title={t('dashboard')} />
-            <div className="flex-1 p-4 sm:p-6 space-y-6 animate-fade-in">
+            <div className="flex-1 p-4 sm:p-8 space-y-8 animate-fade-in max-w-7xl mx-auto w-full">
 
                 {/* ── KPI Cards ── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <KPICard
                         title={t('alertasROP')}
                         value={loading ? '—' : alertasROP}
@@ -98,21 +98,21 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
                     {/* ── Semáforo Table ── */}
-                    <div className="xl:col-span-2 glass-panel overflow-hidden">
-                        <div className="px-6 py-5 border-b border-glass flex items-center justify-between">
+                    <div className="xl:col-span-2 bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
                             <div>
-                                <h2 className="text-lg font-bold text-white tracking-wide">{t('semaforoVencimientos')}</h2>
-                                <p className="text-xs text-slate-400 mt-1">{t('productosProximosVencer')}</p>
+                                <h2 className="text-lg font-bold text-slate-900 tracking-tight">{t('semaforoVencimientos')}</h2>
+                                <p className="text-xs text-slate-500 mt-1 font-medium">{t('productosProximosVencer')}</p>
                             </div>
-                            <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
-                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 shadow-glow" /> &lt;3d</span>
-                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500 shadow-glow" /> &lt;7d</span>
-                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 shadow-glow" /> OK</span>
+                            <div className="flex items-center gap-4 text-xs font-semibold text-slate-500">
+                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> &lt;3d</span>
+                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> &lt;7d</span>
+                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> OK</span>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="data-table">
-                                <thead>
+                            <table className="data-table w-full">
+                                <thead className="bg-slate-50 border-b border-slate-100">
                                     <tr>
                                         <th>{t('producto')}</th>
                                         <th>{t('categoria')}</th>
@@ -134,18 +134,18 @@ export default function DashboardPage() {
                                 ) : (
                                     <tbody>
                                         {productosSemaforo.map((p) => (
-                                            <tr key={p.id} className={`${semaforoRowBg(p.dias)} group`}>
-                                                <td className="font-semibold text-slate-200 group-hover:text-white transition-colors">{p.nombre}</td>
+                                            <tr key={p.id} className={`${semaforoRowBg(p.dias)} group border-b border-slate-50 hover:bg-slate-50/50`}>
+                                                <td className="font-semibold text-slate-800 group-hover:text-brand-600 transition-colors">{p.nombre}</td>
                                                 <td>
-                                                    <span className="badge-gray">{t(p.categoria.toLowerCase())}</span>
+                                                    <span className="badge-gray bg-white border-slate-200">{t(p.categoria.toLowerCase())}</span>
                                                 </td>
                                                 <td>
                                                     <div className="flex flex-col gap-1.5">
-                                                        <span className="text-slate-200 font-medium">{p.stock_actual} <span className="text-slate-500 text-xs">{p.unidad || 'u'}</span></span>
+                                                        <span className="text-slate-700 font-bold text-sm">{p.stock_actual} <span className="text-slate-400 text-xs font-normal">{p.unidad || 'u'}</span></span>
                                                         <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />
                                                     </div>
                                                 </td>
-                                                <td className="text-slate-400 text-xs font-medium">{formatDate(p.fecha_vencimiento)}</td>
+                                                <td className="text-slate-500 text-xs font-medium">{formatDate(p.fecha_vencimiento)}</td>
                                                 <td><SemaforoBadge days={p.dias} /></td>
                                             </tr>
                                         ))}
@@ -156,35 +156,35 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── ROP Alerts Panel ── */}
-                    <div className="glass-panel overflow-hidden">
-                        <div className="px-6 py-5 border-b border-glass bg-yellow-500/5">
-                            <h2 className="text-lg font-bold text-yellow-400 tracking-wide flex items-center gap-2">
+                    <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+                        <div className="px-6 py-5 border-b border-slate-100 bg-amber-50">
+                            <h2 className="text-lg font-bold text-amber-600 tracking-tight flex items-center gap-2">
                                 <AlertTriangle size={18} />
                                 {t('alertasCompra')}
                             </h2>
-                            <p className="text-xs text-slate-400 mt-1">{t('stockActualMenorMInimo')}</p>
+                            <p className="text-xs text-amber-600/70 mt-1 font-medium">{t('stockActualMenorMInimo')}</p>
                         </div>
                         {loading ? (
                             <div className="p-5 space-y-4">
                                 {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />
+                                    <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />
                                 ))}
                             </div>
                         ) : ropAlerts.length === 0 ? (
                             <EmptyState title="stockOk" subtitle="noAlertasReorden" />
                         ) : (
-                            <div className="divide-y divide-glass/50">
+                            <div className="divide-y divide-slate-100">
                                 {ropAlerts.map((p) => {
                                     const deficit = p.stock_minimo_rop - p.stock_actual;
                                     return (
-                                        <div key={p.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors group">
+                                        <div key={p.id} className="px-6 py-4 flex items-center justify-between hover:bg-amber-50/50 transition-colors group">
                                             <div>
-                                                <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{p.nombre}</p>
-                                                <p className="text-xs text-slate-500 mt-0.5">{t(p.categoria.toLowerCase())} · {t('stock')}: <span className="text-red-400 font-bold">{p.stock_actual}</span> / {t('min')} {p.stock_minimo_rop}</p>
+                                                <p className="text-sm font-semibold text-slate-800 group-hover:text-amber-700 transition-colors">{p.nombre}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5 font-medium">{t(p.categoria.toLowerCase())} · {t('stock')}: <span className="text-rose-600 font-bold">{p.stock_actual}</span> / {t('min')} {p.stock_minimo_rop}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-sm text-yellow-500 font-bold shadow-glow">+{deficit} {p.unidad || 'u'}</p>
-                                                <p className="text-xs text-slate-400 font-medium">{t('aReponer')}</p>
+                                                <p className="text-sm text-amber-600 font-bold">+{deficit} {p.unidad || 'u'}</p>
+                                                <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('aReponer')}</p>
                                             </div>
                                         </div>
                                     );
