@@ -3,15 +3,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS } from '@/lib/mockDataStore';
 
 // ─── Detect if Firebase is configured ────────────────────────────────────
-// Returns true if the user has replaced the placeholder values
 function isFirebaseConfigured() {
-    try {
-        // Dynamically check the config without crashing
-        const config = require('@/lib/firebaseConfig').default;
-        return config && config.apiKey && !config.apiKey.includes('YOUR_API_KEY');
-    } catch {
-        return false;
-    }
+    // Returns false until Firebase credentials are set and USE_MOCK is turned off
+    return false;
 }
 
 const USE_MOCK = true; // Set to false after configuring Firebase in src/lib/firebase.js

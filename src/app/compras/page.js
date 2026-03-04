@@ -35,7 +35,7 @@ function LogModal({ req, onClose }) {
                             <div>
                                 <p className="text-base font-bold text-white tracking-wide">{item.producto_nombre}</p>
                                 <p className="text-sm text-slate-400 font-medium">{t('cant')}: <span className="text-brand-400 font-bold">{item.cantidad}</span></p>
-                                {item.justificacion && <p className="text-sm text-slate-300 mt-2 bg-white/5 p-2.5 rounded-lg border border-white/5 italic">"{item.justificacion}"</p>}
+                                {item.justificacion && <p className="text-sm text-slate-300 mt-2 bg-white/5 p-2.5 rounded-lg border border-white/5 italic">&ldquo;{item.justificacion}&rdquo;</p>}
                             </div>
                         </div>
                     ))}
