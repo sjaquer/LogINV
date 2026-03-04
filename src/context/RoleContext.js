@@ -1,18 +1,18 @@
 'use client';
 import { createContext, useContext, useState } from 'react';
 
-const ROLES = ['LOGISTICA', 'CHEF', 'ADMIN', 'GERENCIA'];
+const ROLES = ['LOGISTICA', 'PLANTA', 'ADMIN', 'GERENCIA'];
 
 const ROLE_USERS = {
-    LOGISTICA: 'Sebastián (Logística)',
-    CHEF: 'Chef Masana',
-    ADMIN: 'Admin López',
-    GERENCIA: 'Gerente Ramírez',
+    LOGISTICA: 'Jefe Logística Paredes',
+    PLANTA: 'Jefe de Planta Rodríguez',
+    ADMIN: 'Administrador Quispe',
+    GERENCIA: 'Gerente General Mendoza',
 };
 
 const RoleContext = createContext({
     role: 'LOGISTICA',
-    userName: 'Sebastián (Logística)',
+    userName: 'Jefe Logística Paredes',
     setRole: () => { },
     ROLES,
     ROLE_USERS,

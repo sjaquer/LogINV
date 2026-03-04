@@ -6,9 +6,9 @@ import { useRole } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { SemaforoBadge, StockBar, LoadingSkeleton, EmptyState } from '@/components/ui/SharedComponents';
 import { daysUntil, formatDate } from '@/lib/utils';
-import { Search, X, Plus, Minus, Package } from 'lucide-react';
+import { Search, X, Plus, Minus, Package, Weight } from 'lucide-react';
 
-const CATEGORIAS = ['Todas', 'Desayuno', 'Limpieza', 'Frigobar', 'Cocina'];
+const CATEGORIAS = ['Todas', 'Aves', 'Ganado', 'Porcinos', 'Materia Prima', 'Veterinario'];
 
 // ─── Modal de captura rápida ───────────────────────────────────────────────
 function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
@@ -64,6 +64,12 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
                             <p className="text-4xl font-bold text-slate-900 mt-1">
                                 {producto.stock_actual} <span className="text-lg text-slate-400 font-normal ml-1">{producto.unidad || 'u'}</span>
                             </p>
+                            {producto.peso_unitario && (
+                                <p className="text-sm text-slate-500 mt-1 font-medium">
+                                    {t('pesoTotal')}: <strong className="text-slate-700">{(producto.stock_actual * producto.peso_unitario).toLocaleString()} {t('kg')}</strong>
+                                    <span className="text-slate-400 ml-1">({producto.peso_unitario} {t('kg')}/u)</span>
+                                </p>
+                            )}
                         </div>
                         <div className="text-right">
                             <p className="text-xs text-slate-500 font-semibold">{t('minDef')}</p>
@@ -73,10 +79,18 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
                             </div>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-3 font-medium flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                        {t('vencimiento')}: <strong className="text-slate-700">{formatDate(producto.fecha_vencimiento)}</strong>
-                    </p>
+                    <div className="flex items-center gap-4 mt-3">
+                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                            {t('vencimiento')}: <strong className="text-slate-700">{formatDate(producto.fecha_vencimiento)}</strong>
+                        </p>
+                        {producto.lote && (
+                            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
+                                {t('lote')}: <strong className="text-slate-700 font-mono">{producto.lote}</strong>
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Pestañas */}
@@ -178,7 +192,10 @@ export default function InventarioPage() {
     const productosFiltrados = useMemo(() => {
         return productos
             .filter((p) => categoria === 'Todas' || p.categoria === categoria)
-            .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+            .filter((p) => {
+                const q = busqueda.toLowerCase();
+                return p.nombre.toLowerCase().includes(q) || (p.lote && p.lote.toLowerCase().includes(q));
+            });
     }, [productos, categoria, busqueda]);
 
     return (
@@ -233,8 +250,10 @@ export default function InventarioPage() {
                             <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('producto')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('lote')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('categoria')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('stockActual')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('peso')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('min')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('nivel')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('vencimiento')}</th>
@@ -247,10 +266,11 @@ export default function InventarioPage() {
                             ) : (
                                 <tbody>
                                     {productosFiltrados.length === 0 ? (
-                                        <tr><td colSpan={8}><div className="p-8"><EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" /></div></td></tr>
+                                        <tr><td colSpan={10}><div className="p-8"><EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" /></div></td></tr>
                                     ) : (
                                         productosFiltrados.map((p) => {
                                             const dias = daysUntil(p.fecha_vencimiento);
+                                            const pesoTotal = p.peso_unitario ? (p.stock_actual * p.peso_unitario) : null;
                                             return (
                                                 <tr
                                                     key={p.id}
@@ -258,8 +278,10 @@ export default function InventarioPage() {
                                                     onClick={() => setProductoSeleccionado(p)}
                                                 >
                                                     <td className="px-6 py-4 font-bold text-slate-800 group-hover:text-brand-600 transition-colors">{p.nombre}</td>
+                                                    <td className="px-6 py-4 text-xs font-mono text-slate-500">{p.lote || '—'}</td>
                                                     <td className="px-6 py-4"><span className="badge-gray bg-white border-slate-200">{t(p.categoria.toLowerCase())}</span></td>
                                                     <td className="px-6 py-4 font-bold text-slate-900 text-base">{p.stock_actual} <span className="text-slate-400 text-xs font-normal">{p.unidad}</span></td>
+                                                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{pesoTotal != null ? `${pesoTotal.toLocaleString()} ${t('kg')}` : '—'}</td>
                                                     <td className="px-6 py-4 text-slate-500 font-medium">{p.stock_minimo_rop}</td>
                                                     <td className="px-6 py-4 w-32"><StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} /></td>
                                                     <td className="px-6 py-4 text-sm text-slate-500 font-medium">{formatDate(p.fecha_vencimiento)}</td>
@@ -290,6 +312,7 @@ export default function InventarioPage() {
                     ) : (
                         productosFiltrados.map((p) => {
                             const dias = daysUntil(p.fecha_vencimiento);
+                            const pesoTotal = p.peso_unitario ? (p.stock_actual * p.peso_unitario) : null;
                             return (
                                 <button
                                     key={p.id}
@@ -299,7 +322,10 @@ export default function InventarioPage() {
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-slate-900 text-lg leading-tight truncate">{p.nombre}</p>
-                                            <p className="text-xs text-brand-600 font-medium mt-1 uppercase tracking-wide">{t(p.categoria.toLowerCase())}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <p className="text-xs text-brand-600 font-medium uppercase tracking-wide">{t(p.categoria.toLowerCase())}</p>
+                                                {p.lote && <span className="text-xs text-slate-400 font-mono">· {p.lote}</span>}
+                                            </div>
                                         </div>
                                         <SemaforoBadge days={dias} />
                                     </div>
@@ -307,6 +333,7 @@ export default function InventarioPage() {
                                         <div>
                                             <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('stock')}</p>
                                             <p className="font-bold text-slate-900 text-xl mt-0.5">{p.stock_actual} <span className="text-slate-400 text-sm font-normal">{p.unidad}</span></p>
+                                            {pesoTotal != null && <p className="text-[10px] text-slate-400 font-medium mt-0.5">{pesoTotal.toLocaleString()} {t('kg')}</p>}
                                         </div>
                                         <div className="flex-1 mb-1.5">
                                             <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />

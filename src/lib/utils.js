@@ -50,7 +50,7 @@ export function semaforoBg(days) {
 }
 
 export function semaforoRowBg(days) {
-    if (days <= 3) return 'bg-red-950/30 border-l-2 border-l-red-500';
-    if (days <= 7) return 'bg-yellow-950/30 border-l-2 border-l-yellow-500';
+    if (days <= 3) return 'bg-red-50 border-l-2 border-l-red-500';
+    if (days <= 7) return 'bg-amber-50 border-l-2 border-l-amber-500';
     return '';
 }

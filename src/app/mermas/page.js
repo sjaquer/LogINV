@@ -10,9 +10,9 @@ import { Trash2, Search, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 const TIPOS = ['Todas', 'MERMA', 'INGRESO', 'SALIDA'];
 
 const TIPO_BADGE = {
-    MERMA: { cls: 'badge-red bg-red-50 border-red-200 text-red-700', icon: Trash2, label: 'Merma' },
-    INGRESO: { cls: 'badge-green bg-emerald-50 border-emerald-200 text-emerald-700', icon: ArrowDownRight, label: 'Ingreso' },
-    SALIDA: { cls: 'badge-gray bg-slate-50 border-slate-200 text-slate-600', icon: ArrowUpRight, label: 'Salida' },
+    MERMA: { cls: 'badge-red bg-red-50 border-red-200 text-red-700', icon: Trash2, tKey: 'merma' },
+    INGRESO: { cls: 'badge-green bg-emerald-50 border-emerald-200 text-emerald-700', icon: ArrowDownRight, tKey: 'ingreso' },
+    SALIDA: { cls: 'badge-gray bg-slate-50 border-slate-200 text-slate-600', icon: ArrowUpRight, tKey: 'salida' },
 };
 
 export default function MermasPage() {
@@ -75,7 +75,7 @@ export default function MermasPage() {
                     </div>
                     <div className="flex gap-2 flex-wrap items-center">
                         {TIPOS.map((tipo) => {
-                            const label = tipo === 'Todas' ? t('todas') : tipo;
+                            const label = tipo === 'Todas' ? t('todas') : t(tipo.toLowerCase());
                             return (
                                 <button
                                     key={tipo}

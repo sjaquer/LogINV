@@ -119,11 +119,10 @@ export function EmptyState({ icon: Icon = CheckCircle2, title = 'Sin datos', sub
 
     return (
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-            <div className="w-16 h-16 rounded-3xl bg-dark-panel border border-white/5 shadow-soft flex items-center justify-center mb-5 relative">
-                <div className="absolute inset-0 rounded-3xl bg-brand-gradient opacity-20 blur-xl" />
-                <Icon size={28} className="text-slate-300 relative z-10" />
+            <div className="w-16 h-16 rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex items-center justify-center mb-5 relative">
+                <Icon size={28} className="text-slate-400 relative z-10" />
             </div>
-            <p className="text-lg font-semibold text-white">{translatedTitle}</p>
+            <p className="text-lg font-semibold text-slate-700">{translatedTitle}</p>
             {translatedSubtitle && <p className="text-sm text-slate-500 mt-1 max-w-sm">{translatedSubtitle}</p>}
         </div>
     );

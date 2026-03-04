@@ -6,14 +6,14 @@ import { useState, useRef, useEffect } from 'react';
 
 const ROLE_COLORS = {
     LOGISTICA: 'text-brand-400',
-    CHEF: 'text-orange-400',
+    PLANTA: 'text-orange-400',
     ADMIN: 'text-blue-400',
     GERENCIA: 'text-purple-400',
 };
 
 const PASSWORDS = {
     LOGISTICA: '1234',
-    CHEF: '5678',
+    PLANTA: '5678',
     ADMIN: 'admin',
     GERENCIA: 'master',
 };

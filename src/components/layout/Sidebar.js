@@ -8,7 +8,7 @@ import {
     Package,
     ShoppingCart,
     ArrowLeftRight,
-    Hotel,
+    Wheat,
     ChevronLeft,
     ChevronRight,
     Menu,
@@ -61,12 +61,12 @@ export default function Sidebar() {
                 {/* Logo */}
                 <div className={cn('flex items-center gap-3 px-6 py-6 border-b border-slate-100', collapsed && 'justify-center px-2')}>
                     <div className="flex-shrink-0 w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-md shadow-brand-500/20">
-                        <Hotel size={20} className="text-white" />
+                        <Wheat size={20} className="text-white" />
                     </div>
                     {!collapsed && (
                         <div>
-                            <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">LogINV</p>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Hospitality Ops</p>
+                            <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">MolinoINV</p>
+                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Agroindustrial</p>
                         </div>
                     )}
                 </div>
