@@ -9,41 +9,48 @@ module.exports = {
         extend: {
             colors: {
                 brand: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    200: '#c7d2fe',
-                    300: '#a5b4fc',
-                    400: '#818cf8',
-                    500: '#6366f1',
-                    600: '#4f46e5',
-                    700: '#4338ca',
-                    800: '#3730a3',
-                    900: '#312e81',
-                    950: '#1e1b4b',
+                    50: '#edf7ff',
+                    100: '#d7edff',
+                    200: '#b7dbff',
+                    300: '#89c2ff',
+                    400: '#5ca6ff',
+                    500: '#3a8bff',
+                    600: '#2974e6',
+                    700: '#1f5cca',
+                    800: '#1b49a3',
+                    900: '#173a82',
+                    950: '#0b1f45',
+                },
+                accent: {
+                    cyan: '#39bfe0',
+                    teal: '#00c6ad',
+                    amber: '#f6b756',
+                    rose: '#f47189',
                 },
                 glass: {
-                    DEFAULT: 'rgba(255, 255, 255, 0.05)',
-                    hover: 'rgba(255, 255, 255, 0.1)',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    DEFAULT: 'rgba(255, 255, 255, 0.06)',
+                    hover: 'rgba(255, 255, 255, 0.15)',
+                    border: 'rgba(255, 255, 255, 0.12)',
                 },
                 dark: {
-                    DEFAULT: '#0f172a', /* slate-900 */
-                    panel: '#1e293b', /* slate-800 */
-                    accent: '#334155', /* slate-700 */
+                    DEFAULT: '#05060c',
+                    panel: '#0f1424',
+                    accent: '#1c2437',
                 }
             },
             backgroundImage: {
-                'app-bg': 'radial-gradient(circle at 50% -20%, #1e293b, #0f172a 80%)',
-                'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
-                'brand-gradient': 'linear-gradient(to right, #4f46e5, #3b82f6)',
+                'app-bg': 'radial-gradient(circle at 20% 20%, rgba(57, 191, 224, 0.22), transparent 45%), radial-gradient(circle at 80% 0%, rgba(244, 113, 137, 0.18), transparent 40%), linear-gradient(145deg, #05060c, #090f1d 65%, #111a2f)',
+                'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02))',
+                'brand-gradient': 'linear-gradient(110deg, #39bfe0, #3a8bff 45%, #7c5dff)',
             },
             boxShadow: {
-                'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-                'glow': '0 0 15px rgba(99, 102, 241, 0.5)',
-                'glow-lg': '0 0 25px rgba(99, 102, 241, 0.6)',
+                'glass': '0 18px 45px rgba(5, 6, 12, 0.35)',
+                'glow': '0 0 25px rgba(58, 139, 255, 0.45)',
+                'glow-lg': '0 0 45px rgba(124, 93, 255, 0.55)',
+                'soft': '0 20px 60px rgba(0, 0, 0, 0.35)',
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['"Space Grotesk"', '"Manrope"', 'system-ui', 'sans-serif'],
             },
         },
     },

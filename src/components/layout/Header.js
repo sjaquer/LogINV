@@ -69,9 +69,10 @@ export default function Header({ title }) {
 
     return (
         <>
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-glass bg-dark/80 backdrop-blur-md shadow-sm">
+            <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-[rgba(5,6,12,0.8)] backdrop-blur-2xl shadow-soft">
                 <div className="pl-10 lg:pl-0">
-                    <h1 className="text-lg font-bold text-white tracking-wide">{title}</h1>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-500 mb-1">{t('bienvenido')} · {ROLE_USERS[role]}</p>
+                    <h1 className="text-2xl font-semibold text-white tracking-tight">{title}</h1>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-4">
@@ -79,7 +80,7 @@ export default function Header({ title }) {
                     <div className="relative">
                         <button
                             onClick={() => { setOpenLangMenu(!openLangMenu); setOpenRoleMenu(false); }}
-                            className="flex items-center gap-2 btn btn-ghost text-xs sm:text-sm px-2 sm:px-3 border-transparent"
+                            className="flex items-center gap-2 btn btn-ghost text-[11px] sm:text-xs px-2 sm:px-3 border-transparent"
                         >
                             <Globe size={16} className="text-slate-400" />
                             <span className="hidden sm:inline font-medium text-slate-300 uppercase">{language}</span>
@@ -104,7 +105,7 @@ export default function Header({ title }) {
                     <div className="relative">
                         <button
                             onClick={() => { setOpenRoleMenu(!openRoleMenu); setOpenLangMenu(false); }}
-                            className="flex items-center gap-2.5 btn btn-ghost text-xs sm:text-sm shadow-glass bg-dark-panel border-glass hover:border-brand-500/50 transition-all"
+                            className="flex items-center gap-2.5 btn btn-ghost text-xs sm:text-sm shadow-glass bg-dark-panel border-white/10 hover:border-brand-500/60 transition-all"
                         >
                             <div className="w-7 h-7 rounded-full bg-brand-500/20 shadow-glow flex items-center justify-center">
                                 <User size={13} className={ROLE_COLORS[role]} />

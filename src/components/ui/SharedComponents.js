@@ -4,46 +4,67 @@ import { useLanguage } from '@/context/LanguageContext';
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 export function KPICard({ title, value, subtitle, icon: Icon, color = 'brand', loading }) {
-    const colorMap = {
-        brand: 'text-brand-400 bg-brand-500/10 border-brand-500/20',
-        red: 'text-red-400 bg-red-500/10 border-red-500/20',
-        yellow: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-        green: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-        blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    const theme = {
+        brand: { chip: 'bg-brand-500/15 border-brand-500/25 text-brand-100', value: 'text-white' },
+        red: { chip: 'bg-rose-500/15 border-rose-500/25 text-rose-100', value: 'text-rose-100' },
+        yellow: { chip: 'bg-accent-amber/20 border-accent-amber/30 text-amber-100', value: 'text-accent-amber' },
+        green: { chip: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-100', value: 'text-emerald-200' },
+        blue: { chip: 'bg-blue-500/15 border-blue-500/25 text-blue-100', value: 'text-blue-100' },
+    }[color] || {
+        chip: 'bg-brand-500/15 border-brand-500/25 text-brand-100',
+        value: 'text-white'
     };
+
     return (
         <div className="kpi-card animate-fade-in group">
             <div className="flex items-start justify-between">
-                <p className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{title}</p>
-                <span className={`p-2 rounded-xl border ${colorMap[color]} shadow-glow`}>
+                <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{title}</p>
+                <span className={`p-2 rounded-xl border shadow-glow ${theme.chip}`}>
                     <Icon size={18} />
                 </span>
             </div>
             {loading ? (
                 <div className="spinner mt-3" />
             ) : (
-                <p className={`text-3xl font-bold mt-2 ${colorMap[color].split(' ')[0]}`}>{value}</p>
+                <p className={`text-3xl font-semibold mt-2 ${theme.value}`}>{value}</p>
             )}
-            <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+            <p className="text-xs text-slate-500/90 mt-1 tracking-wide">{subtitle}</p>
         </div>
     );
 }
 
 // ─── Status Badge ──────────────────────────────────────────────────────────
 export function StatusBadge({ estado }) {
-    const { t, language } = useLanguage();
+    const { language } = useLanguage();
 
-    // Fallbacks since states are stored in DB
-    const ESTADO_MAP = {
-        PENDIENTE: { cls: 'badge-yellow', label: t('estado') + ': ' + (language === 'es' ? 'Pendiente' : language === 'en' ? 'Pending' : language === 'zh' ? '待定' : '保留') },
-        APROBADO_ADMIN: { cls: 'badge-blue', label: t('aprobarComoAdmin') },
-        VALIDADO_GERENCIA: { cls: 'badge-green', label: t('validarComoGerencia') },
-        RECHAZADO: { cls: 'badge-red', label: t('rechazar') },
-        COMPRADO: { cls: 'badge-purple', label: t('marcarComprado') },
+    const LABELS = {
+        es: {
+            PENDIENTE: 'Pendiente',
+            APROBADO_ADMIN: 'Aprobado · Admin',
+            VALIDADO_GERENCIA: 'Validado · Gerencia',
+            RECHAZADO: 'Rechazado',
+            COMPRADO: 'Comprado',
+        },
+        en: {
+            PENDIENTE: 'Pending',
+            APROBADO_ADMIN: 'Approved · Admin',
+            VALIDADO_GERENCIA: 'Validated · Mgmt',
+            RECHAZADO: 'Rejected',
+            COMPRADO: 'Purchased',
+        },
     };
 
-    const e = ESTADO_MAP[estado] || { cls: 'badge-gray', label: estado };
-    return <span className={e.cls}>●&nbsp;{e.label.replace('Aprobar', 'Aprobado').replace('Validar', 'Validado').replace('Marcar como ', '')}</span>;
+    const CLS = {
+        PENDIENTE: 'badge-yellow',
+        APROBADO_ADMIN: 'badge-blue',
+        VALIDADO_GERENCIA: 'badge-green',
+        RECHAZADO: 'badge-red',
+        COMPRADO: 'badge-purple',
+    };
+
+    const label = LABELS[language]?.[estado] || LABELS.en[estado] || estado;
+    const cls = CLS[estado] || 'badge-gray';
+    return <span className={cls}>● {label}</span>;
 }
 
 // ─── Semáforo Row Badge ────────────────────────────────────────────────────
@@ -98,11 +119,11 @@ export function EmptyState({ icon: Icon = CheckCircle2, title = 'Sin datos', sub
 
     return (
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-            <div className="w-16 h-16 rounded-3xl bg-dark-panel border border-glass shadow-lg flex items-center justify-center mb-5 relative group">
-                <div className="absolute inset-0 bg-brand-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Icon size={28} className="text-slate-400 group-hover:text-brand-400 transition-colors relative z-10" />
+            <div className="w-16 h-16 rounded-3xl bg-dark-panel border border-white/5 shadow-soft flex items-center justify-center mb-5 relative">
+                <div className="absolute inset-0 rounded-3xl bg-brand-gradient opacity-20 blur-xl" />
+                <Icon size={28} className="text-slate-300 relative z-10" />
             </div>
-            <p className="text-lg font-medium text-slate-200">{translatedTitle}</p>
+            <p className="text-lg font-semibold text-white">{translatedTitle}</p>
             {translatedSubtitle && <p className="text-sm text-slate-500 mt-1 max-w-sm">{translatedSubtitle}</p>}
         </div>
     );

@@ -7,7 +7,7 @@ import {
     LayoutDashboard,
     Package,
     ShoppingCart,
-    Trash2,
+    ArrowLeftRight,
     Hotel,
     ChevronLeft,
     ChevronRight,
@@ -26,7 +26,7 @@ export default function Sidebar() {
         { href: '/', label: t('dashboard'), icon: LayoutDashboard },
         { href: '/inventario', label: t('inventario'), icon: Package },
         { href: '/compras', label: t('compras'), icon: ShoppingCart },
-        { href: '/mermas', label: t('mermas'), icon: Trash2 },
+        { href: '/mermas', label: t('mermas'), icon: ArrowLeftRight },
     ];
 
     return (
@@ -59,20 +59,25 @@ export default function Sidebar() {
                 )}
             >
                 {/* Logo */}
-                <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-glass', collapsed && 'justify-center px-2')}>
-                    <div className="flex-shrink-0 w-9 h-9 bg-brand-gradient shadow-glow rounded-xl flex items-center justify-center">
+                <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-white/5', collapsed && 'justify-center px-2')}>
+                    <div className="flex-shrink-0 w-10 h-10 bg-brand-gradient shadow-glow rounded-2xl flex items-center justify-center">
                         <Hotel size={18} className="text-white" />
                     </div>
                     {!collapsed && (
                         <div>
                             <p className="font-bold text-white tracking-wide leading-tight">LogINV</p>
-                            <p className="text-xs text-brand-400 font-medium leading-tight">Hotel ERP</p>
+                            <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em]">Hospitality Ops</p>
                         </div>
                     )}
                 </div>
 
                 {/* Nav links */}
                 <nav className="flex-1 flex flex-col gap-1.5 p-3 overflow-y-auto">
+                    {!collapsed && (
+                        <div className="px-2 pb-1">
+                            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500 font-semibold">{t('menu')}</p>
+                        </div>
+                    )}
                     {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                         const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
                         return (
@@ -82,9 +87,12 @@ export default function Sidebar() {
                                 onClick={() => setMobileOpen(false)}
                                 className={cn('nav-link', isActive && 'active', collapsed && 'justify-center px-2')}
                                 title={collapsed ? label : undefined}
+                                aria-current={isActive ? 'page' : undefined}
                             >
-                                <Icon size={18} className="flex-shrink-0" />
-                                {!collapsed && <span>{label}</span>}
+                                <span className={cn('flex-shrink-0 w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center', isActive && 'bg-white/10 border-transparent shadow-glow')}>
+                                    <Icon size={18} />
+                                </span>
+                                {!collapsed && <span className="flex-1 text-left">{label}</span>}
                             </Link>
                         );
                     })}
