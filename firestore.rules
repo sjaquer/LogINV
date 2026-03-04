@@ -1,0 +1,74 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  Firestore Security Rules - MolinoINV
+// ═══════════════════════════════════════════════════════════════════════════
+//
+//  INSTRUCCIONES:
+//  1. Ve a Firebase Console → https://console.firebase.google.com
+//  2. Selecciona tu proyecto: studio-6382721178-dadde
+//  3. Ve a Firestore Database → Rules
+//  4. Copia y pega estas reglas
+//  5. Haz click en "Publish"
+//
+// ═══════════════════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── REGLAS DE DESARROLLO (Acceso completo) ──────────────────────────
+    // Permite lectura y escritura en TODAS las colecciones.
+    // NOTA: Para producción con usuarios reales, agrega autenticación.
+    
+    // Productos - inventario completo
+    match /productos/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Categorías de productos
+    match /categorias/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Movimientos de stock (ingresos, salidas, mermas)
+    match /movimientos/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Requerimientos de compra
+    match /requerimientos/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  REGLAS DE PRODUCCIÓN (con autenticación Firebase Auth)
+//  Descomenta estas reglas cuando implementes Firebase Authentication:
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     
+//     // Solo usuarios autenticados pueden leer y escribir
+//     match /productos/{document=**} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null;
+//     }
+//     
+//     match /categorias/{document=**} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null;
+//     }
+//     
+//     match /movimientos/{document=**} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null;
+//     }
+//     
+//     match /requerimientos/{document=**} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null;
+//     }
+//   }
+// }

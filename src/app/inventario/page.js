@@ -248,12 +248,19 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 function DeleteConfirmModal({ producto, onClose, onConfirm }) {
     const { t } = useLanguage();
     const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState('');
 
     async function handleDelete() {
         setDeleting(true);
-        await onConfirm(producto.id);
-        setDeleting(false);
-        onClose();
+        setError('');
+        try {
+            await onConfirm(producto.id);
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Error al eliminar producto');
+        } finally {
+            setDeleting(false);
+        }
     }
 
     return (
@@ -266,6 +273,11 @@ function DeleteConfirmModal({ producto, onClose, onConfirm }) {
                     <h3 className="font-bold text-slate-900 text-lg">{t('eliminarProducto')}</h3>
                     <p className="text-sm text-slate-500 mt-2">{t('confirmarEliminar')}</p>
                     <p className="text-sm font-bold text-slate-800 mt-1 bg-slate-100 px-3 py-1 rounded-lg">{producto.nombre}</p>
+                    {error && (
+                        <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 w-full text-left">
+                            {error}
+                        </div>
+                    )}
                 </div>
                 <div className="flex gap-3 mt-6">
                     <button onClick={onClose} className="btn btn-ghost flex-1 py-2.5 text-sm font-semibold text-slate-600">
@@ -296,18 +308,42 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
     const [newColor, setNewColor] = useState('#6366f1');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
+    const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
 
     async function handleAdd(e) {
         e.preventDefault();
         if (!newName.trim()) return;
-        await onCrear({ nombre: newName.trim(), descripcion: newDesc.trim(), icono: newIcon, color: newColor });
-        setNewName(''); setNewDesc(''); setNewIcon('📦'); setNewColor('#6366f1');
+        setSaving(true);
+        setError('');
+        try {
+            await onCrear({ nombre: newName.trim(), descripcion: newDesc.trim(), icono: newIcon, color: newColor });
+            setNewName(''); setNewDesc(''); setNewIcon('📦'); setNewColor('#6366f1');
+        } catch (err) {
+            setError(err.message || 'Error al crear categoría');
+        } finally {
+            setSaving(false);
+        }
     }
 
     async function handleSaveEdit(id) {
         if (!editName.trim()) return;
-        await onActualizar(id, { nombre: editName.trim() });
-        setEditingId(null);
+        setError('');
+        try {
+            await onActualizar(id, { nombre: editName.trim() });
+            setEditingId(null);
+        } catch (err) {
+            setError(err.message || 'Error al actualizar categoría');
+        }
+    }
+
+    async function handleEliminar(id) {
+        setError('');
+        try {
+            await onEliminar(id);
+        } catch (err) {
+            setError(err.message || 'Error al eliminar categoría');
+        }
     }
 
     const ICONS = ['📦', '🐔', '🐄', '🐷', '🌾', '💊', '🧪', '🏭', '🛢️', '⚗️'];
@@ -377,6 +413,14 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
                     )}
                 </div>
 
+                {/* Error display */}
+                {error && (
+                    <div className="mx-4 sm:mx-6 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
+                        <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
                 {/* Add new */}
                 <form onSubmit={handleAdd} className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-3 flex-shrink-0">
                     <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">{t('nuevaCategoria')}</p>
@@ -416,8 +460,9 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
                             />
                         ))}
                     </div>
-                    <button type="submit" className="btn btn-primary w-full py-2.5 text-sm font-bold flex items-center justify-center gap-2">
-                        <FolderPlus size={16} /> {t('agregarCategoria')}
+                    <button type="submit" disabled={saving} className="btn btn-primary w-full py-2.5 text-sm font-bold flex items-center justify-center gap-2">
+                        {saving ? <span className="spinner border-white border-t-transparent w-4 h-4" /> : <FolderPlus size={16} />}
+                        {saving ? t('guardando') || 'Guardando...' : t('agregarCategoria')}
                     </button>
                 </form>
             </div>
@@ -435,6 +480,7 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
     const [motivo, setMotivo] = useState('');
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
 
     const dias = daysUntil(producto.fecha_vencimiento);
 
@@ -442,6 +488,7 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
         e.preventDefault();
         if (cantidad <= 0) return;
         setSaving(true);
+        setError('');
         try {
             if (modo === 'merma') {
                 await onMerma(producto.id, cantidad, userName, motivo);
@@ -451,6 +498,8 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
             }
             setSuccess(true);
             setTimeout(() => { setSuccess(false); setCantidad(0); setMotivo(''); }, 1500);
+        } catch (err) {
+            setError(err.message || 'Error al actualizar stock');
         } finally {
             setSaving(false);
         }
@@ -551,6 +600,13 @@ function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
                         </div>
                     )}
 
+                    {error && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
+                            <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
                     <button type="submit" disabled={saving || cantidad === 0}
                         className={`w-full py-4 rounded-xl font-bold text-base transition-all active:scale-95 shadow-lg ${success ? 'bg-emerald-500 text-white' : modo === 'merma' ? 'btn-danger justify-center' : 'btn-primary justify-center'} ${saving || cantidad === 0 ? 'opacity-50 cursor-not-allowed transform-none shadow-none' : ''}`}
                     >
@@ -571,7 +627,7 @@ export default function InventarioPage() {
         crearProducto, actualizarProducto, eliminarProducto,
         updateStock, registrarMerma,
     } = useProductos();
-    const { categorias, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
+    const { categorias, error: catError, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
     const { role, userName } = useRole();
     const { t } = useLanguage();
 

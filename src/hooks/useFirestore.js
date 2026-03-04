@@ -10,6 +10,10 @@ const USE_MOCK = typeof window !== 'undefined'
     ? (process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)
     : true;
 
+if (typeof window !== 'undefined') {
+    console.log('[MolinoINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
+}
+
 // ─── Helpers for mock timestamps ──────────────────────────────────────────
 function mockTimestamp() {
     const d = new Date();
@@ -51,12 +55,36 @@ async function getFirestore() {
     return { fs: _fs, db: _db };
 }
 
+// ─── Error helper ─────────────────────────────────────────────────────────
+function firebaseError(operation, err) {
+    const code = err?.code || '';
+    const msg = err?.message || String(err);
+    console.error(`[MolinoINV] Error en ${operation}:`, code, msg);
+
+    if (code === 'permission-denied' || code === 'PERMISSION_DENIED' || msg.includes('Missing or insufficient permissions')) {
+        throw new Error(
+            'Permisos denegados en Firestore. Revisa las Security Rules en Firebase Console → Firestore → Rules. ' +
+            'Asegúrate de que permiten lectura/escritura.'
+        );
+    }
+    if (code === 'failed-precondition' || msg.includes('index')) {
+        throw new Error(
+            'Firestore requiere un índice para esta consulta. Revisa la consola del navegador para obtener el enlace de creación del índice.'
+        );
+    }
+    if (code === 'unavailable' || code === 'resource-exhausted') {
+        throw new Error('Firebase no disponible. Verifica tu conexión a internet.');
+    }
+    throw new Error(msg || `Error en operación: ${operation}`);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  useCategorias – CRUD for product categories
 // ═══════════════════════════════════════════════════════════════════════════
 export function useCategorias() {
     const [categorias, setCategorias] = useState(USE_MOCK ? mockCategorias : []);
     const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (USE_MOCK) {
@@ -66,12 +94,42 @@ export function useCategorias() {
         }
         let unsub;
         (async () => {
-            const { fs, db } = await getFirestore();
-            const q = fs.query(fs.collection(db, 'categorias'), fs.orderBy('orden', 'asc'));
-            unsub = fs.onSnapshot(q, (snap) => {
-                setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'categorias'), fs.orderBy('orden', 'asc'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[MolinoINV] Error listener categorias:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        // Fallback: try without orderBy if index is missing
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            console.warn('[MolinoINV] Intentando sin orderBy...');
+                            const qSimple = fs.collection(db, 'categorias');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[MolinoINV] Error fallback categorias:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[MolinoINV] Error setup categorias:', err);
                 setLoading(false);
-            });
+                setError(err.message);
+            }
         })();
         return () => unsub?.();
     }, []);
@@ -89,14 +147,18 @@ export function useCategorias() {
             notify('categorias');
             return newCat.id;
         }
-        const { fs, db } = await getFirestore();
-        const ref = await fs.addDoc(fs.collection(db, 'categorias'), {
-            ...data,
-            orden: categorias.length + 1,
-            activa: true,
-            fecha_creacion: fs.serverTimestamp(),
-        });
-        return ref.id;
+        try {
+            const { fs, db } = await getFirestore();
+            const ref = await fs.addDoc(fs.collection(db, 'categorias'), {
+                ...data,
+                orden: categorias.length + 1,
+                activa: true,
+                fecha_creacion: fs.serverTimestamp(),
+            });
+            return ref.id;
+        } catch (err) {
+            firebaseError('crearCategoria', err);
+        }
     }, [categorias]);
 
     const actualizarCategoria = useCallback(async (id, data) => {
@@ -105,8 +167,12 @@ export function useCategorias() {
             notify('categorias');
             return;
         }
-        const { fs, db } = await getFirestore();
-        await fs.updateDoc(fs.doc(db, 'categorias', id), data);
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'categorias', id), data);
+        } catch (err) {
+            firebaseError('actualizarCategoria', err);
+        }
     }, []);
 
     const eliminarCategoria = useCallback(async (id) => {
@@ -115,11 +181,15 @@ export function useCategorias() {
             notify('categorias');
             return;
         }
-        const { fs, db } = await getFirestore();
-        await fs.deleteDoc(fs.doc(db, 'categorias', id));
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.deleteDoc(fs.doc(db, 'categorias', id));
+        } catch (err) {
+            firebaseError('eliminarCategoria', err);
+        }
     }, []);
 
-    return { categorias, loading, crearCategoria, actualizarCategoria, eliminarCategoria };
+    return { categorias, loading, error, crearCategoria, actualizarCategoria, eliminarCategoria };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -128,6 +198,7 @@ export function useCategorias() {
 export function useProductos() {
     const [productos, setProductos] = useState(USE_MOCK ? mockProductos : []);
     const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (USE_MOCK) {
@@ -137,12 +208,40 @@ export function useProductos() {
         }
         let unsub;
         (async () => {
-            const { fs, db } = await getFirestore();
-            const q = fs.query(fs.collection(db, 'productos'), fs.orderBy('nombre'));
-            unsub = fs.onSnapshot(q, (snap) => {
-                setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'productos'), fs.orderBy('nombre'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[MolinoINV] Error listener productos:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            const qSimple = fs.collection(db, 'productos');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[MolinoINV] Error fallback productos:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[MolinoINV] Error setup productos:', err);
                 setLoading(false);
-            });
+                setError(err.message);
+            }
         })();
         return () => unsub?.();
     }, []);
@@ -180,31 +279,35 @@ export function useProductos() {
             }
             return newProd.id;
         }
-        const { fs, db } = await getFirestore();
-        const docData = {
-            ...data,
-            stock_actual: data.stock_actual || 0,
-            fecha_vencimiento: data.fecha_vencimiento ? fs.Timestamp.fromDate(new Date(data.fecha_vencimiento)) : null,
-            ultima_actualizacion: fs.serverTimestamp(),
-            fecha_creacion: fs.serverTimestamp(),
-            activo: true,
-        };
-        const usuario = docData._usuario || 'Sistema';
-        delete docData._usuario;
-        const ref = await fs.addDoc(fs.collection(db, 'productos'), docData);
-        if (data.stock_actual > 0) {
-            await fs.addDoc(fs.collection(db, 'movimientos'), {
-                producto_id: ref.id,
-                nombre_producto: data.nombre,
-                tipo: 'INGRESO',
-                cantidad: data.stock_actual,
-                usuario,
-                fecha: fs.serverTimestamp(),
-                motivo_merma: null,
-                notas: 'Stock inicial al crear producto',
-            });
+        try {
+            const { fs, db } = await getFirestore();
+            const docData = {
+                ...data,
+                stock_actual: data.stock_actual || 0,
+                fecha_vencimiento: data.fecha_vencimiento ? fs.Timestamp.fromDate(new Date(data.fecha_vencimiento)) : null,
+                ultima_actualizacion: fs.serverTimestamp(),
+                fecha_creacion: fs.serverTimestamp(),
+                activo: true,
+            };
+            const usuario = docData._usuario || 'Sistema';
+            delete docData._usuario;
+            const ref = await fs.addDoc(fs.collection(db, 'productos'), docData);
+            if (data.stock_actual > 0) {
+                await fs.addDoc(fs.collection(db, 'movimientos'), {
+                    producto_id: ref.id,
+                    nombre_producto: data.nombre,
+                    tipo: 'INGRESO',
+                    cantidad: data.stock_actual,
+                    usuario,
+                    fecha: fs.serverTimestamp(),
+                    motivo_merma: null,
+                    notas: 'Stock inicial al crear producto',
+                });
+            }
+            return ref.id;
+        } catch (err) {
+            firebaseError('crearProducto', err);
         }
-        return ref.id;
     }, []);
 
     // ── Update ──
@@ -224,12 +327,16 @@ export function useProductos() {
             notify('productos');
             return;
         }
-        const { fs, db } = await getFirestore();
-        const updateData = { ...data, ultima_actualizacion: fs.serverTimestamp() };
-        if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
-            updateData.fecha_vencimiento = fs.Timestamp.fromDate(new Date(data.fecha_vencimiento));
+        try {
+            const { fs, db } = await getFirestore();
+            const updateData = { ...data, ultima_actualizacion: fs.serverTimestamp() };
+            if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
+                updateData.fecha_vencimiento = fs.Timestamp.fromDate(new Date(data.fecha_vencimiento));
+            }
+            await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
+        } catch (err) {
+            firebaseError('actualizarProducto', err);
         }
-        await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
     }, []);
 
     // ── Delete ──
@@ -239,8 +346,12 @@ export function useProductos() {
             notify('productos');
             return;
         }
-        const { fs, db } = await getFirestore();
-        await fs.deleteDoc(fs.doc(db, 'productos', id));
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.deleteDoc(fs.doc(db, 'productos', id));
+        } catch (err) {
+            firebaseError('eliminarProducto', err);
+        }
     }, []);
 
     // ── Update Stock (inbound) ──
@@ -267,22 +378,26 @@ export function useProductos() {
             notify('movimientos');
             return;
         }
-        const { fs, db } = await getFirestore();
-        const prodSnap = productos.find(p => p.id === id);
-        const diff = nuevoStock - (prodSnap?.stock_actual || 0);
-        await fs.updateDoc(fs.doc(db, 'productos', id), {
-            stock_actual: nuevoStock,
-            ultima_actualizacion: fs.serverTimestamp(),
-        });
-        await fs.addDoc(fs.collection(db, 'movimientos'), {
-            producto_id: id,
-            nombre_producto: prodSnap?.nombre || '',
-            tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
-            cantidad: Math.abs(diff),
-            usuario,
-            fecha: fs.serverTimestamp(),
-            motivo_merma: null,
-        });
+        try {
+            const { fs, db } = await getFirestore();
+            const prodSnap = productos.find(p => p.id === id);
+            const diff = nuevoStock - (prodSnap?.stock_actual || 0);
+            await fs.updateDoc(fs.doc(db, 'productos', id), {
+                stock_actual: nuevoStock,
+                ultima_actualizacion: fs.serverTimestamp(),
+            });
+            await fs.addDoc(fs.collection(db, 'movimientos'), {
+                producto_id: id,
+                nombre_producto: prodSnap?.nombre || '',
+                tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
+                cantidad: Math.abs(diff),
+                usuario,
+                fecha: fs.serverTimestamp(),
+                motivo_merma: null,
+            });
+        } catch (err) {
+            firebaseError('updateStock', err);
+        }
     }, [productos]);
 
     // ── Register loss (merma) ──
@@ -309,27 +424,31 @@ export function useProductos() {
             notify('movimientos');
             return;
         }
-        const { fs, db } = await getFirestore();
-        const prodSnap = productos.find(p => p.id === id);
-        if (!prodSnap) return;
-        const nuevoStock = Math.max(0, prodSnap.stock_actual - cantidad);
-        await fs.updateDoc(fs.doc(db, 'productos', id), {
-            stock_actual: nuevoStock,
-            ultima_actualizacion: fs.serverTimestamp(),
-        });
-        await fs.addDoc(fs.collection(db, 'movimientos'), {
-            producto_id: id,
-            nombre_producto: prodSnap.nombre,
-            tipo: 'MERMA',
-            cantidad,
-            usuario,
-            fecha: fs.serverTimestamp(),
-            motivo_merma: motivo,
-        });
+        try {
+            const { fs, db } = await getFirestore();
+            const prodSnap = productos.find(p => p.id === id);
+            if (!prodSnap) return;
+            const nuevoStock = Math.max(0, prodSnap.stock_actual - cantidad);
+            await fs.updateDoc(fs.doc(db, 'productos', id), {
+                stock_actual: nuevoStock,
+                ultima_actualizacion: fs.serverTimestamp(),
+            });
+            await fs.addDoc(fs.collection(db, 'movimientos'), {
+                producto_id: id,
+                nombre_producto: prodSnap.nombre,
+                tipo: 'MERMA',
+                cantidad,
+                usuario,
+                fecha: fs.serverTimestamp(),
+                motivo_merma: motivo,
+            });
+        } catch (err) {
+            firebaseError('registrarMerma', err);
+        }
     }, [productos]);
 
     return {
-        productos, loading,
+        productos, loading, error,
         crearProducto, actualizarProducto, eliminarProducto,
         updateStock, registrarMerma,
     };
@@ -341,6 +460,7 @@ export function useProductos() {
 export function useRequerimientos() {
     const [requerimientos, setRequerimientos] = useState(USE_MOCK ? mockRequerimientos : []);
     const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (USE_MOCK) {
@@ -350,12 +470,40 @@ export function useRequerimientos() {
         }
         let unsub;
         (async () => {
-            const { fs, db } = await getFirestore();
-            const q = fs.query(fs.collection(db, 'requerimientos'), fs.orderBy('fecha_creacion', 'desc'));
-            unsub = fs.onSnapshot(q, (snap) => {
-                setRequerimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'requerimientos'), fs.orderBy('fecha_creacion', 'desc'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setRequerimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[MolinoINV] Error listener requerimientos:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            const qSimple = fs.collection(db, 'requerimientos');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setRequerimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[MolinoINV] Error fallback requerimientos:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[MolinoINV] Error setup requerimientos:', err);
                 setLoading(false);
-            });
+                setError(err.message);
+            }
         })();
         return () => unsub?.();
     }, []);
@@ -380,11 +528,15 @@ export function useRequerimientos() {
             notify('requerimientos');
             return;
         }
-        const { fs, db } = await getFirestore();
-        await fs.updateDoc(fs.doc(db, 'requerimientos', id), {
-            estado: nuevoEstado,
-            logs: fs.arrayUnion({ usuario, accion: accionMap[nuevoEstado] || 'Actualizó', fecha: new Date().toISOString() }),
-        });
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'requerimientos', id), {
+                estado: nuevoEstado,
+                logs: fs.arrayUnion({ usuario, accion: accionMap[nuevoEstado] || 'Actualizó', fecha: new Date().toISOString() }),
+            });
+        } catch (err) {
+            firebaseError('cambiarEstado', err);
+        }
     }, []);
 
     const crearRequerimiento = useCallback(async (items, solicitante) => {
@@ -401,18 +553,22 @@ export function useRequerimientos() {
             notify('requerimientos');
             return newReq.id;
         }
-        const { fs, db } = await getFirestore();
-        const ref = await fs.addDoc(fs.collection(db, 'requerimientos'), {
-            fecha_creacion: fs.serverTimestamp(),
-            solicitante,
-            items,
-            estado: 'PENDIENTE',
-            logs: [{ usuario: solicitante, accion: 'Creó el requerimiento', fecha: new Date().toISOString() }],
-        });
-        return ref.id;
+        try {
+            const { fs, db } = await getFirestore();
+            const ref = await fs.addDoc(fs.collection(db, 'requerimientos'), {
+                fecha_creacion: fs.serverTimestamp(),
+                solicitante,
+                items,
+                estado: 'PENDIENTE',
+                logs: [{ usuario: solicitante, accion: 'Creó el requerimiento', fecha: new Date().toISOString() }],
+            });
+            return ref.id;
+        } catch (err) {
+            firebaseError('crearRequerimiento', err);
+        }
     }, []);
 
-    return { requerimientos, loading, cambiarEstado, crearRequerimiento };
+    return { requerimientos, loading, error, cambiarEstado, crearRequerimiento };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -421,6 +577,7 @@ export function useRequerimientos() {
 export function useMovimientos() {
     const [movimientos, setMovimientos] = useState(USE_MOCK ? mockMovimientos : []);
     const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (USE_MOCK) {
@@ -430,15 +587,43 @@ export function useMovimientos() {
         }
         let unsub;
         (async () => {
-            const { fs, db } = await getFirestore();
-            const q = fs.query(fs.collection(db, 'movimientos'), fs.orderBy('fecha', 'desc'));
-            unsub = fs.onSnapshot(q, (snap) => {
-                setMovimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'movimientos'), fs.orderBy('fecha', 'desc'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setMovimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[MolinoINV] Error listener movimientos:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            const qSimple = fs.collection(db, 'movimientos');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setMovimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[MolinoINV] Error fallback movimientos:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[MolinoINV] Error setup movimientos:', err);
                 setLoading(false);
-            });
+                setError(err.message);
+            }
         })();
         return () => unsub?.();
     }, []);
 
-    return { movimientos, loading };
+    return { movimientos, loading, error };
 }
