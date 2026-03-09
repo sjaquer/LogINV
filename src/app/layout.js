@@ -1,11 +1,13 @@
 import './globals.css';
 import { RoleProvider } from '@/context/RoleContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { SidebarProvider } from '@/context/SidebarContext';
 import Sidebar from '@/components/layout/Sidebar';
+import MainContent from '@/components/layout/MainContent';
 
 export const metadata = {
-    title: 'MolinoINV – Sistema de Inventario Agroindustrial',
-    description: 'ERP agroindustrial de inventario, abastecimiento, mermas y alertas en tiempo real.',
+    title: 'LOG-INV – Sistema de Gestión de Inventario',
+    description: 'Sistema de gestión de inventario, abastecimiento, mermas y alertas en tiempo real.',
 };
 
 export const viewport = {
@@ -22,12 +24,12 @@ export default function RootLayout({ children }) {
             <body className="font-sans antialiased overscroll-none">
                 <LanguageProvider>
                     <RoleProvider>
-                        <div className="flex min-h-[100dvh] min-h-screen bg-app-bg text-slate-900">
-                            <Sidebar />
-                            <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300 min-w-0 bg-slate-50/50 w-full overflow-x-hidden">
-                                {children}
-                            </main>
-                        </div>
+                        <SidebarProvider>
+                            <div className="flex min-h-[100dvh] min-h-screen bg-app-bg text-slate-900">
+                                <Sidebar />
+                                <MainContent>{children}</MainContent>
+                            </div>
+                        </SidebarProvider>
                     </RoleProvider>
                 </LanguageProvider>
             </body>

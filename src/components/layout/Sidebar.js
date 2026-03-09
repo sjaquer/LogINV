@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSidebar } from '@/context/SidebarContext';
 import {
     LayoutDashboard,
     Package,
@@ -19,7 +20,7 @@ import { cn } from '@/lib/utils';
 export default function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
-    const [collapsed, setCollapsed] = useState(false);
+    const { collapsed, setCollapsed } = useSidebar();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const NAV_ITEMS = [
@@ -66,8 +67,8 @@ export default function Sidebar() {
                     </div>
                     {!collapsed && (
                         <div>
-                            <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">MolinoINV</p>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Agroindustrial</p>
+                            <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">LOG-INV</p>
+                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Gestión de Stock</p>
                         </div>
                     )}
                 </div>
@@ -124,9 +125,4 @@ export default function Sidebar() {
             </aside>
         </>
     );
-}
-
-
-export function useSidebarWidth() {
-    return 'lg:pl-64';
 }

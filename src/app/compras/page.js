@@ -146,7 +146,7 @@ export default function ComprasPage() {
                 {/* ── Tab: ROP Sugerencias ── */}
                 {tab === 'rop' && (
                     <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-                        <div className="px-6 py-5 border-b border-slate-100 bg-white">
+                        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-white">
                             <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">{t('motorROP')}</h2>
                             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">{t('stockActualMenorMInimo')}</p>
                         </div>
