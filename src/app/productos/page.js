@@ -2,15 +2,15 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
-import { useRole } from '@/context/RoleContext';
-import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { EmptyState, StockBar } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDate } from '@/lib/utils';
 import {
     Search, X, Plus, Package, Trash2, Pencil,
     PlusCircle, Save, AlertTriangle, FolderPlus,
-    Settings2, ScanBarcode, ChevronRight, ArrowUpDown,
+    Settings2, ScanBarcode, ChevronRight, ArrowUpDown, Download,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -19,7 +19,6 @@ import {
 const UNIDADES = ['unidades', 'botellas', 'latas', 'bolsas', 'cajas', 'litros', 'kg', 'gramos', 'packs'];
 
 function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
-    const { t } = useLanguage();
     const isEdit = !!producto;
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -61,8 +60,8 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
     }
 
     async function handleSubmit() {
-        if (!form.nombre.trim()) { setError(t('campoObligatorio')); return; }
-        if (!form.categoria) { setError(t('seleccionaCategoria')); return; }
+        if (!form.nombre.trim()) { setError('El nombre del producto es obligatorio'); return; }
+        if (!form.categoria) { setError('Selecciona una categoría'); return; }
         setSaving(true);
         setError('');
         try {
@@ -81,8 +80,8 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
                     <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg">{isEdit ? t('editarProducto') : t('nuevoProducto')}</h3>
-                        <p className="text-sm text-slate-500 mt-0.5">{isEdit ? t('editarProductoDesc') : t('nuevoProductoDesc')}</p>
+                        <h3 className="font-bold text-slate-900 text-lg">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h3>
+                        <p className="text-sm text-slate-500 mt-0.5">{isEdit ? 'Modifica los datos del producto' : 'Registra un nuevo producto al inventario'}</p>
                     </div>
                     <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={22} />
@@ -101,7 +100,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                 <form onSubmit={e => { e.preventDefault(); handleSubmit(); }} className="flex-1 overflow-y-auto p-5 space-y-5">
                     {/* Nombre */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">{t('producto')} *</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Producto *</label>
                         <input
                             type="text"
                             value={form.nombre}
@@ -114,7 +113,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 
                     {/* Código de barras */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">{t('codigoBarras')}</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Código de barras</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -136,21 +135,21 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                     {/* Categoría + Unidad */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('categoria')} *</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Categoría *</label>
                             <select
                                 value={form.categoria}
                                 onChange={e => handleChange('categoria', e.target.value)}
                                 className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                                 required
                             >
-                                <option value="">— {t('seleccionaCategoria')} —</option>
+                                <option value="">— Selecciona una categoría —</option>
                                 {categorias.filter(c => c.activa !== false).map(c => (
                                     <option key={c.id} value={c.nombre}>{c.icono} {c.nombre}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('unidad')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Unidad</label>
                             <select
                                 value={form.unidad}
                                 onChange={e => handleChange('unidad', e.target.value)}
@@ -164,7 +163,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                     {/* Marca + Contenido/Gramaje */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('marca')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Marca</label>
                             <input
                                 type="text"
                                 value={form.marca}
@@ -174,7 +173,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('gramaje')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Gramaje</label>
                             <input
                                 type="text"
                                 value={form.gramaje}
@@ -188,7 +187,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                     {/* Stock actual + Mínimo */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('stockActual')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock actual</label>
                             <input
                                 type="number"
                                 min="0"
@@ -198,7 +197,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('minDef')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock mínimo</label>
                             <input
                                 type="number"
                                 min="0"
@@ -212,7 +211,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                     {/* Lote + Vencimiento */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('lote')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Lote</label>
                             <input
                                 type="text"
                                 value={form.lote}
@@ -222,7 +221,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">{t('vencimiento')}</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Vencimiento</label>
                             <input
                                 type="date"
                                 value={form.fecha_vencimiento}
@@ -234,7 +233,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 
                     {/* Proveedor */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">{t('proveedor')}</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Proveedor</label>
                         <input
                             type="text"
                             value={form.proveedor}
@@ -246,12 +245,12 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 
                     {/* Descripción */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">{t('descripcionProducto')}</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Descripción</label>
                         <textarea
                             rows={2}
                             value={form.descripcion}
                             onChange={e => handleChange('descripcion', e.target.value)}
-                            placeholder={t('descripcionPlaceholder')}
+                            placeholder="Notas adicionales del producto"
                             className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
                         />
                     </div>
@@ -260,7 +259,7 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-3 p-5 border-t border-slate-100 bg-slate-50 flex-shrink-0">
                     <button type="button" onClick={onClose} className="btn btn-ghost px-6 py-3 text-base font-semibold text-slate-600">
-                        {t('cancelar')}
+                        Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
@@ -268,9 +267,9 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
                         className="btn btn-primary px-6 py-3 text-base font-bold flex items-center gap-2 shadow-sm"
                     >
                         {saving ? (
-                            <><span className="spinner border-white border-t-transparent w-5 h-5" /> {t('guardando')}</>
+                            <><span className="spinner border-white border-t-transparent w-5 h-5" /> Guardando...</>
                         ) : (
-                            <><Save size={18} /> {isEdit ? t('guardarCambios') : t('crearProducto')}</>
+                            <><Save size={18} /> {isEdit ? 'Guardar cambios' : 'Crear producto'}</>
                         )}
                     </button>
                 </div>
@@ -288,7 +287,6 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 //  DeleteConfirmModal
 // ═══════════════════════════════════════════════════════════════════════════
 function DeleteConfirmModal({ producto, onClose, onConfirm }) {
-    const { t } = useLanguage();
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState('');
 
@@ -312,8 +310,8 @@ function DeleteConfirmModal({ producto, onClose, onConfirm }) {
                     <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mb-4">
                         <Trash2 size={28} className="text-red-500" />
                     </div>
-                    <h3 className="font-bold text-slate-900 text-lg">{t('eliminarProducto')}</h3>
-                    <p className="text-sm text-slate-500 mt-2">{t('confirmarEliminar')}</p>
+                    <h3 className="font-bold text-slate-900 text-lg">Eliminar producto</h3>
+                    <p className="text-sm text-slate-500 mt-2">¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
                     <p className="text-base font-bold text-slate-800 mt-2 bg-slate-100 px-4 py-2 rounded-lg">{producto.nombre}</p>
                     {error && (
                         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 w-full text-left">
@@ -323,7 +321,7 @@ function DeleteConfirmModal({ producto, onClose, onConfirm }) {
                 </div>
                 <div className="flex gap-3 mt-6">
                     <button onClick={onClose} className="btn btn-ghost flex-1 py-3 text-base font-semibold text-slate-600">
-                        {t('cancelar')}
+                        Cancelar
                     </button>
                     <button
                         onClick={handleDelete}
@@ -331,7 +329,7 @@ function DeleteConfirmModal({ producto, onClose, onConfirm }) {
                         className="btn btn-danger flex-1 py-3 text-base font-bold flex items-center justify-center gap-2"
                     >
                         {deleting ? <span className="spinner border-white border-t-transparent w-5 h-5" /> : <Trash2 size={18} />}
-                        {t('eliminar')}
+                        Eliminar
                     </button>
                 </div>
             </div>
@@ -343,7 +341,6 @@ function DeleteConfirmModal({ producto, onClose, onConfirm }) {
 //  CategoryManagerModal
 // ═══════════════════════════════════════════════════════════════════════════
 function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEliminar }) {
-    const { t } = useLanguage();
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
     const [newIcon, setNewIcon] = useState('📦');
@@ -387,8 +384,8 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
             <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
                     <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg">{t('gestionCategorias')}</h3>
-                        <p className="text-sm text-slate-500 mt-0.5">{t('gestionCategoriasDesc')}</p>
+                        <h3 className="font-bold text-slate-900 text-lg">Categorías</h3>
+                        <p className="text-sm text-slate-500 mt-0.5">Administra las categorías de productos</p>
                     </div>
                     <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={22} />
@@ -436,7 +433,7 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
                         </div>
                     ))}
                     {categorias.length === 0 && (
-                        <div className="p-8 text-center text-base text-slate-400">{t('sinCategorias')}</div>
+                        <div className="p-8 text-center text-base text-slate-400">Sin categorías</div>
                     )}
                 </div>
 
@@ -448,18 +445,18 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
                 )}
 
                 <form onSubmit={handleAdd} className="p-5 border-t border-slate-100 bg-slate-50 space-y-3 flex-shrink-0">
-                    <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">{t('nuevaCategoria')}</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">Nueva categoría</p>
                     <input
                         type="text" value={newName}
                         onChange={e => setNewName(e.target.value)}
-                        placeholder={t('nombreCategoria')}
+                        placeholder="Nombre de la categoría"
                         className="inp text-base py-3 bg-white border-slate-200 text-slate-900 w-full"
                         required
                     />
                     <input
                         type="text" value={newDesc}
                         onChange={e => setNewDesc(e.target.value)}
-                        placeholder={t('descripcionCategoria')}
+                        placeholder="Descripción (opcional)"
                         className="inp text-base py-3 bg-white border-slate-200 text-slate-900 w-full"
                     />
                     <div className="flex items-center gap-2 flex-wrap">
@@ -479,7 +476,7 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
                     </div>
                     <button type="submit" disabled={saving} className="btn btn-primary w-full py-3 text-base font-bold flex items-center justify-center gap-2">
                         {saving ? <span className="spinner border-white border-t-transparent w-5 h-5" /> : <FolderPlus size={18} />}
-                        {saving ? t('guardando') : t('agregarCategoria')}
+                        {saving ? 'Guardando...' : 'Agregar categoría'}
                     </button>
                 </form>
             </div>
@@ -496,8 +493,10 @@ export default function ProductosPage() {
         crearProducto, actualizarProducto, eliminarProducto,
     } = useProductos();
     const { categorias, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
-    const { role, userName } = useRole();
-    const { t } = useLanguage();
+    const { user } = useAuth();
+    const { ubicacion, ubicacionInfo } = useLocation();
+    const userName = user?.nombre || 'Usuario';
+    const role = user?.rol || 'LOGISTICA';
 
     const [busqueda, setBusqueda] = useState('');
     const [categoria, setCategoria] = useState('Todas');
@@ -514,17 +513,23 @@ export default function ProductosPage() {
         return m;
     }, [categorias]);
 
-    // category counts
+    // filter products by current location
+    const productosUbicacion = useMemo(
+        () => productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion]
+    );
+
+    // category counts (for current location)
     const catCounts = useMemo(() => {
         const c = {};
-        productos.forEach(p => { c[p.categoria] = (c[p.categoria] || 0) + 1; });
+        productosUbicacion.forEach(p => { c[p.categoria] = (c[p.categoria] || 0) + 1; });
         return c;
-    }, [productos]);
+    }, [productosUbicacion]);
 
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
     const productosFiltrados = useMemo(() => {
-        let list = productos
+        let list = productosUbicacion
             .filter(p => categoria === 'Todas' || p.categoria === categoria)
             .filter(p => {
                 const q = busqueda.toLowerCase();
@@ -539,23 +544,23 @@ export default function ProductosPage() {
             return (a.nombre || '').localeCompare(b.nombre || '');
         });
         return list;
-    }, [productos, categoria, busqueda, sortBy]);
+    }, [productosUbicacion, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
         if (id) {
             const { _usuario, ...rest } = data;
             await actualizarProducto(id, rest);
         } else {
-            await crearProducto(data);
+            await crearProducto({ ...data, ubicacion });
         }
-    }, [crearProducto, actualizarProducto]);
+    }, [crearProducto, actualizarProducto, ubicacion]);
 
     const canManage = role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA';
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
-            <Header title={t('productos')} />
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full">
+            <Header title="Productos" />
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
 
                 {/* ── Action bar ── */}
                 {canManage && (
@@ -564,13 +569,13 @@ export default function ProductosPage() {
                             onClick={() => { setEditingProduct(null); setShowProductForm(true); }}
                             className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
                         >
-                            <PlusCircle size={20} /> {t('nuevoProducto')}
+                            <PlusCircle size={20} /> Nuevo producto
                         </button>
                         <button
                             onClick={() => setShowCategoryManager(true)}
                             className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center"
                         >
-                            <Settings2 size={18} /> {t('gestionCategorias')}
+                            <Settings2 size={18} /> Categorías
                         </button>
                     </div>
                 )}
@@ -581,7 +586,7 @@ export default function ProductosPage() {
                         <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
-                            placeholder={t('buscarProducto')}
+                            placeholder="Buscar producto, código de barras o lote"
                             value={busqueda}
                             onChange={e => setBusqueda(e.target.value)}
                             className="inp pl-12 pr-10 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
@@ -594,9 +599,9 @@ export default function ProductosPage() {
                     </div>
                     <div className="flex gap-2 overflow-x-auto no-scrollbar items-center pb-1">
                         {catNames.map(cat => {
-                            const label = cat === 'Todas' ? t('todas') : cat;
+                            const label = cat === 'Todas' ? 'Todas' : cat;
                             const icon = cat !== 'Todas' ? catIconMap[cat] : null;
-                            const count = cat === 'Todas' ? productos.length : (catCounts[cat] || 0);
+                            const count = cat === 'Todas' ? productosUbicacion.length : (catCounts[cat] || 0);
                             return (
                                 <button
                                     key={cat}
@@ -615,7 +620,7 @@ export default function ProductosPage() {
                 {/* ── Product count + Sort ── */}
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-500 font-medium">
-                        {productosFiltrados.length} {t('productos').toLowerCase()}
+                        {productosFiltrados.length} productos
                     </p>
                     <div className="flex items-center gap-1.5">
                         <ArrowUpDown size={14} className="text-slate-400" />
@@ -624,9 +629,9 @@ export default function ProductosPage() {
                             onChange={e => setSortBy(e.target.value)}
                             className="text-xs font-medium text-slate-500 bg-transparent border-none focus:ring-0 cursor-pointer pr-6"
                         >
-                            <option value="nombre">{t('producto')}</option>
-                            <option value="stock">{t('stock')}</option>
-                            <option value="categoria">{t('categoria')}</option>
+                            <option value="nombre">Producto</option>
+                            <option value="stock">Stock</option>
+                            <option value="categoria">Categoría</option>
                         </select>
                     </div>
                 </div>
@@ -639,7 +644,7 @@ export default function ProductosPage() {
                         ))}
                     </div>
                 ) : productosFiltrados.length === 0 ? (
-                    <EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" />
+                    <EmptyState icon={Package} title="Sin resultados" subtitle="Ajusta tus filtros de búsqueda" />
                 ) : (
                     <div className="space-y-3">
                         {productosFiltrados.map(p => (
@@ -668,14 +673,14 @@ export default function ProductosPage() {
                                             <button
                                                 onClick={() => { setEditingProduct(p); setShowProductForm(true); }}
                                                 className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                                                aria-label={t('editar')}
+                                                aria-label="Editar"
                                             >
                                                 <Pencil size={18} />
                                             </button>
                                             <button
                                                 onClick={() => setDeleteProduct(p)}
                                                 className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                aria-label={t('eliminar')}
+                                                aria-label="Eliminar"
                                             >
                                                 <Trash2 size={18} />
                                             </button>

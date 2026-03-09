@@ -1,6 +1,6 @@
 import './globals.css';
-import { RoleProvider } from '@/context/RoleContext';
-import { LanguageProvider } from '@/context/LanguageContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { LocationProvider } from '@/context/LocationContext';
 import { SidebarProvider } from '@/context/SidebarContext';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
@@ -34,8 +34,8 @@ export default function RootLayout({ children }) {
                 <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
             </head>
             <body className="font-sans antialiased overscroll-none">
-                <LanguageProvider>
-                    <RoleProvider>
+                <AuthProvider>
+                    <LocationProvider>
                         <SidebarProvider>
                             <ErrorBoundary>
                                 <div className="flex min-h-[100dvh] min-h-screen bg-app-bg text-slate-900">
@@ -45,8 +45,8 @@ export default function RootLayout({ children }) {
                                 </div>
                             </ErrorBoundary>
                         </SidebarProvider>
-                    </RoleProvider>
-                </LanguageProvider>
+                    </LocationProvider>
+                </AuthProvider>
             </body>
         </html>
     );

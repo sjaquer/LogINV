@@ -1,23 +1,21 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLanguage } from '@/context/LanguageContext';
 import { LayoutDashboard, Package, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function BottomNav() {
     const pathname = usePathname();
-    const { t } = useLanguage();
 
     const items = [
-        { href: '/', label: t('dashboard'), icon: LayoutDashboard },
-        { href: '/productos', label: t('productos'), icon: Package },
-        { href: '/inventario', label: t('inventario'), icon: ClipboardList },
+        { href: '/', label: 'Panel', icon: LayoutDashboard },
+        { href: '/productos', label: 'Productos', icon: Package },
+        { href: '/inventario', label: 'Inventario', icon: ClipboardList },
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] pb-safe">
-            <div className="flex items-stretch justify-around h-16">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 backdrop-blur-lg border-t border-slate-200/80 shadow-[0_-1px_12px_rgba(0,0,0,0.06)]">
+            <div className="flex items-stretch justify-around h-[60px]">
                 {items.map(({ href, label, icon: Icon }) => {
                     const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
                     return (
@@ -25,22 +23,32 @@ export default function BottomNav() {
                             key={href}
                             href={href}
                             className={cn(
-                                'flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors relative',
+                                'flex-1 flex flex-col items-center justify-center gap-0.5 transition-all relative',
                                 isActive
                                     ? 'text-brand-600'
-                                    : 'text-slate-400 active:text-slate-600'
+                                    : 'text-slate-400 active:text-slate-500'
                             )}
                             style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
                             {isActive && (
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-brand-600 rounded-full" />
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-brand-600 rounded-b-full" />
                             )}
-                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                            <span>{label}</span>
+                            <div className={cn(
+                                'flex items-center justify-center w-10 h-8 rounded-xl transition-colors',
+                                isActive && 'bg-brand-50'
+                            )}>
+                                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                            </div>
+                            <span className={cn(
+                                'text-[10px] leading-none',
+                                isActive ? 'font-bold' : 'font-medium'
+                            )}>{label}</span>
                         </Link>
                     );
                 })}
             </div>
+            {/* Safe area spacer for iOS notch devices */}
+            <div className="pb-safe" />
         </nav>
     );
 }

@@ -2,8 +2,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
-import { useRole } from '@/context/RoleContext';
-import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDateTime } from '@/lib/utils';
@@ -18,7 +18,6 @@ import {
 //  TapCountModal – Full-screen counting modal (tap = +1)
 // ═══════════════════════════════════════════════════════════════════════════
 function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }) {
-    const { t } = useLanguage();
     const [count, setCount] = useState(currentCount);
     const [pulse, setPulse] = useState(false);
 
@@ -65,9 +64,9 @@ function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }
                 <p className={`text-8xl sm:text-9xl font-black text-white tabular-nums transition-transform duration-150 ${pulse ? 'scale-110' : 'scale-100'}`}>
                     {count}
                 </p>
-                <p className="text-white/40 text-sm sm:text-base font-medium mt-2 uppercase tracking-wider">{t('conteoFisico')}</p>
+                <p className="text-white/40 text-sm sm:text-base font-medium mt-2 uppercase tracking-wider">Conteo físico</p>
                 <div className="flex items-center gap-4 mt-3">
-                    <span className="text-white/40 text-sm">{t('stockSistema')}: <strong className="text-white/70">{producto.stock_actual}</strong></span>
+                    <span className="text-white/40 text-sm">Stock sistema: <strong className="text-white/70">{producto.stock_actual}</strong></span>
                     {diff !== 0 && (
                         <span className={`text-sm font-bold px-2.5 py-0.5 rounded-full ${diff < 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                             {diff > 0 ? '+' : ''}{diff}
@@ -84,7 +83,7 @@ function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }
                     style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                 >
                     <Plus size={64} className="text-white/90" strokeWidth={3} />
-                    <p className="text-white/80 text-lg sm:text-xl font-bold mt-3">{t('tapsConteo')}</p>
+                    <p className="text-white/80 text-lg sm:text-xl font-bold mt-3">Toca para contar</p>
                 </button>
             </div>
 
@@ -108,13 +107,13 @@ function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }
                     onClick={onDiscard}
                     className="flex-1 py-4 rounded-2xl bg-white/10 text-white/80 font-bold text-base hover:bg-white/20 active:scale-95 transition-all"
                 >
-                    {t('descartarConteo')}
+                    Descartar
                 </button>
                 <button
                     onClick={() => onConfirm(count)}
                     className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base hover:bg-emerald-600 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
                 >
-                    <Check size={22} /> {t('confirmarConteo')}
+                    <Check size={22} /> Confirmar
                 </button>
             </div>
         </div>
@@ -125,7 +124,6 @@ function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }
 //  ConteoHistoryCard
 // ═══════════════════════════════════════════════════════════════════════════
 function ConteoHistoryCard({ conteo, onSelect }) {
-    const { t } = useLanguage();
     const totalItems = conteo.items?.length || 0;
     const conDiff = conteo.items?.filter(i => i.diferencia !== 0).length || 0;
     const isCompleted = conteo.estado === 'COMPLETADO';
@@ -139,16 +137,16 @@ function ConteoHistoryCard({ conteo, onSelect }) {
             <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                     <span className={`inline-block px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                        {isCompleted ? t('conteoCompletado') : t('conteoEnProgreso')}
+                        {isCompleted ? 'Completado' : 'En progreso'}
                     </span>
                     <p className="text-sm text-slate-500 mt-2 font-medium">{conteo.usuario}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{formatDateTime(conteo.fecha)}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                     <p className="text-3xl font-bold text-slate-900">{totalItems}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{t('itemsContados')}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Ítems contados</p>
                     {conDiff > 0 && (
-                        <p className="text-xs text-amber-600 font-bold mt-1">{conDiff} {t('conDiferencias').toLowerCase()}</p>
+                        <p className="text-xs text-amber-600 font-bold mt-1">{conDiff} con diferencias</p>
                     )}
                 </div>
             </div>
@@ -163,7 +161,6 @@ function ConteoHistoryCard({ conteo, onSelect }) {
 //  ConteoDetailModal – view completed count detail
 // ═══════════════════════════════════════════════════════════════════════════
 function ConteoDetailModal({ conteo, onClose }) {
-    const { t } = useLanguage();
     const items = conteo.items || [];
     const conDiff = items.filter(i => i.diferencia !== 0);
     const sinDiff = items.filter(i => i.diferencia === 0);
@@ -179,7 +176,7 @@ function ConteoDetailModal({ conteo, onClose }) {
             <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
                     <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg">{t('detalleConteo')}</h3>
+                        <h3 className="font-bold text-slate-900 text-lg">Detalle del conteo</h3>
                         <p className="text-sm text-slate-500 mt-0.5">{conteo.usuario} · {formatDateTime(conteo.fecha)}</p>
                     </div>
                     <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
@@ -195,14 +192,14 @@ function ConteoDetailModal({ conteo, onClose }) {
                     {conDiff.length > 0 && (
                         <div>
                             <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
-                                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">{t('conDiferencias')} ({conDiff.length})</p>
+                                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Con diferencias ({conDiff.length})</p>
                             </div>
                             {conDiff.map(item => (
                                 <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2 bg-amber-50/30">
                                     <div className="min-w-0 flex-1">
                                         <p className="text-base font-semibold text-slate-800 truncate">{item.producto_nombre}</p>
                                         <p className="text-sm text-slate-500 mt-0.5">
-                                            {t('stockSistema')}: {item.stock_sistema} → {t('conteoFisico')}: {item.conteo_fisico}
+                                            Stock sistema: {item.stock_sistema} → Conteo físico: {item.conteo_fisico}
                                         </p>
                                     </div>
                                     <span className={`text-base font-bold ${item.diferencia < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
@@ -215,7 +212,7 @@ function ConteoDetailModal({ conteo, onClose }) {
                     {sinDiff.length > 0 && (
                         <div>
                             <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100">
-                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">{t('sinDiferencias')} ({sinDiff.length})</p>
+                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Sin diferencias ({sinDiff.length})</p>
                             </div>
                             {sinDiff.map(item => (
                                 <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
@@ -226,7 +223,7 @@ function ConteoDetailModal({ conteo, onClose }) {
                         </div>
                     )}
                     {items.length === 0 && (
-                        <div className="p-8 text-center text-base text-slate-400">{t('sinDatos')}</div>
+                        <div className="p-8 text-center text-base text-slate-400">Sin datos</div>
                     )}
                 </div>
             </div>
@@ -241,8 +238,9 @@ export default function InventarioPage() {
     const { productos, loading: pLoading, updateStock } = useProductos();
     const { categorias } = useCategorias();
     const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
-    const { userName } = useRole();
-    const { t } = useLanguage();
+    const { user } = useAuth();
+    const { ubicacion, ubicacionInfo } = useLocation();
+    const userName = user?.nombre || 'Usuario';
 
     // ── State ──
     const [tab, setTab] = useState('conteo');
@@ -299,11 +297,11 @@ export default function InventarioPage() {
 
     // ── Start new count ──
     const handleNuevoConteo = useCallback(async () => {
-        const id = await crearConteo({ usuario: userName, notas: '', items: [] });
-        setConteoActivo({ id, usuario: userName, estado: 'EN_PROGRESO', items: [], notas: '' });
+        const id = await crearConteo({ usuario: userName, notas: '', items: [], ubicacion });
+        setConteoActivo({ id, usuario: userName, estado: 'EN_PROGRESO', items: [], notas: '', ubicacion });
         setConteoItems([]);
         setNotas('');
-    }, [crearConteo, userName]);
+    }, [crearConteo, userName, ubicacion]);
 
     // ── Open tap modal for product ──
     const openTapCount = useCallback((producto) => {
@@ -335,7 +333,7 @@ export default function InventarioPage() {
 
     // ── Handle barcode scan ──
     const handleBarcodeScan = useCallback((code) => {
-        const matched = productos.find(p => p.codigo_barras === code);
+        const matched = productosUbicacion.find(p => p.codigo_barras === code);
         if (matched) {
             if (conteoActivo) {
                 openTapCount(matched);
@@ -346,7 +344,7 @@ export default function InventarioPage() {
             setScannedFeedback({ type: 'error', code });
         }
         setTimeout(() => setScannedFeedback(null), 3000);
-    }, [productos, conteoActivo, openTapCount]);
+    }, [productosUbicacion, conteoActivo, openTapCount]);
 
     // ── Save current count ──
     const handleSaveConteo = useCallback(async () => {
@@ -383,9 +381,14 @@ export default function InventarioPage() {
     // ── Category names ──
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
-    // ── Products filtered ──
+    // ── Products filtered by location ──
+    const productosUbicacion = useMemo(
+        () => productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion]
+    );
+
     const productosFiltrados = useMemo(() => {
-        return productos
+        return productosUbicacion
             .filter(p => categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro)
             .filter(p => {
                 if (!busqueda.trim()) return true;
@@ -393,7 +396,7 @@ export default function InventarioPage() {
                 return p.nombre.toLowerCase().includes(q)
                     || (p.codigo_barras && p.codigo_barras.includes(q));
             });
-    }, [productos, categoriaFiltro, busqueda]);
+    }, [productosUbicacion, categoriaFiltro, busqueda]);
 
     // ── Summary stats ──
     const summary = useMemo(() => {
@@ -405,13 +408,13 @@ export default function InventarioPage() {
     // ── Completed counts for history ──
     const historialConteos = useMemo(() => {
         return conteos
-            .filter(c => c.estado === 'COMPLETADO')
+            .filter(c => c.estado === 'COMPLETADO' && c.ubicacion === ubicacion)
             .sort((a, b) => {
                 const fA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
                 const fB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
                 return fB - fA;
             });
-    }, [conteos]);
+    }, [conteos, ubicacion]);
 
     // helper: is product already counted?
     const isProductCounted = useCallback((pid) => conteoItems.some(i => i.producto_id === pid), [conteoItems]);
@@ -419,8 +422,8 @@ export default function InventarioPage() {
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
-            <Header title={t('conteoInventario')} />
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full">
+            <Header title="Conteo de inventario" />
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
 
                 {/* ── Tabs ── */}
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm">
@@ -428,13 +431,13 @@ export default function InventarioPage() {
                         onClick={() => setTab('conteo')}
                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'conteo' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
                     >
-                        <ClipboardList size={20} /> {t('conteoInventario')}
+                        <ClipboardList size={20} /> Conteo
                     </button>
                     <button
                         onClick={() => setTab('historial')}
                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'historial' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
                     >
-                        <History size={20} /> {t('historialConteos')}
+                        <History size={20} /> Historial
                     </button>
                 </div>
 
@@ -447,9 +450,9 @@ export default function InventarioPage() {
                         {scannedFeedback && (
                             <div className={`p-3.5 rounded-xl text-base font-medium flex items-center gap-2 animate-fade-in ${scannedFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                 {scannedFeedback.type === 'success' ? (
-                                    <><Check size={18} /> {t('productoEscaneado')}: <strong>{scannedFeedback.name}</strong></>
+                                    <><Check size={18} /> Producto identificado: <strong>{scannedFeedback.name}</strong></>
                                 ) : (
-                                    <><AlertTriangle size={18} /> {t('productoNoEncontrado')} ({scannedFeedback.code})</>
+                                    <><AlertTriangle size={18} /> No se encontró producto con ese código ({scannedFeedback.code})</>
                                 )}
                             </div>
                         )}
@@ -460,13 +463,13 @@ export default function InventarioPage() {
                                 <div className="w-24 h-24 rounded-3xl bg-brand-50 border border-brand-100 flex items-center justify-center mb-6">
                                     <ClipboardList size={44} className="text-brand-600" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-slate-900">{t('conteoInventario')}</h2>
-                                <p className="text-base text-slate-500 mt-2 max-w-sm">{t('tocaParaContar')}</p>
+                                <h2 className="text-2xl font-bold text-slate-900">Conteo de inventario</h2>
+                                <p className="text-base text-slate-500 mt-2 max-w-sm">Toca un producto para contar — {ubicacionInfo.icono} {ubicacionInfo.nombre}</p>
                                 <button
                                     onClick={handleNuevoConteo}
                                     className="btn btn-primary px-8 py-4 mt-8 text-lg font-bold flex items-center gap-3 shadow-lg rounded-2xl"
                                 >
-                                    <Plus size={24} /> {t('nuevoConteo')}
+                                    <Plus size={24} /> Nuevo conteo
                                 </button>
                             </div>
                         )}
@@ -480,7 +483,7 @@ export default function InventarioPage() {
                                         onClick={() => setShowScanner(true)}
                                         className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
                                     >
-                                        <ScanBarcode size={20} /> {t('escanearCodigo')}
+                                        <ScanBarcode size={20} /> Escanear código
                                     </button>
                                     <div className="ml-auto flex items-center gap-2">
                                         <button
@@ -488,7 +491,7 @@ export default function InventarioPage() {
                                             disabled={saving || conteoItems.length === 0}
                                             className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                                         >
-                                            <Save size={18} /> {t('guardarConteo')}
+                                            <Save size={18} /> Guardar conteo
                                         </button>
                                     </div>
                                 </div>
@@ -499,28 +502,28 @@ export default function InventarioPage() {
                                         {/* Progress bar */}
                                         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className="text-sm font-bold text-slate-700">{t('progresoConteo')}</p>
-                                                <p className="text-sm font-bold text-brand-600">{conteoItems.length} / {productos.length}</p>
+                                                <p className="text-sm font-bold text-slate-700">Progreso del conteo</p>
+                                                <p className="text-sm font-bold text-brand-600">{conteoItems.length} / {productosUbicacion.length}</p>
                                             </div>
                                             <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-500"
-                                                    style={{ width: `${productos.length > 0 ? Math.round((conteoItems.length / productos.length) * 100) : 0}%` }}
+                                                    style={{ width: `${productosUbicacion.length > 0 ? Math.round((conteoItems.length / productosUbicacion.length) * 100) : 0}%` }}
                                                 />
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-3 gap-3">
                                         <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-center shadow-sm">
                                             <p className="text-3xl font-bold text-slate-900">{summary.total}</p>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">{t('itemsContados')}</p>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">Ítems contados</p>
                                         </div>
                                         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center shadow-sm">
                                             <p className="text-3xl font-bold text-emerald-700">{summary.sinDiff}</p>
-                                            <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mt-1">{t('sinDiferencias')}</p>
+                                            <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mt-1">Sin diferencias</p>
                                         </div>
                                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-center shadow-sm">
                                             <p className="text-3xl font-bold text-amber-700">{summary.conDiff}</p>
-                                            <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mt-1">{t('conDiferencias')}</p>
+                                            <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mt-1">Con diferencias</p>
                                         </div>
                                     </div>
                                     </div>
@@ -532,7 +535,7 @@ export default function InventarioPage() {
                                         <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="text"
-                                            placeholder={t('buscarProducto')}
+                                            placeholder="Buscar producto, código de barras o lote"
                                             value={busqueda}
                                             onChange={e => setBusqueda(e.target.value)}
                                             className="inp pl-12 pr-10 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
@@ -545,7 +548,7 @@ export default function InventarioPage() {
                                     </div>
                                     <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                                         {catNames.map(cat => {
-                                            const label = cat === 'Todas' ? t('todas') : cat;
+                                            const label = cat === 'Todas' ? 'Todas' : cat;
                                             return (
                                                 <button
                                                     key={cat}
@@ -570,7 +573,7 @@ export default function InventarioPage() {
                                             ))}
                                         </div>
                                     ) : productosFiltrados.length === 0 ? (
-                                        <EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" />
+                                        <EmptyState icon={Package} title="Sin resultados" subtitle="Ajusta tus filtros de búsqueda" />
                                     ) : (
                                         productosFiltrados.map(p => {
                                             const counted = isProductCounted(p.id);
@@ -612,7 +615,7 @@ export default function InventarioPage() {
                                                             {p.gramaje && <span className="text-xs text-slate-400">· {p.gramaje}</span>}
                                                         </div>
                                                         <p className="text-sm text-slate-500 mt-1">
-                                                            {t('stockSistema')}: <strong className="text-slate-700">{p.stock_actual}</strong> {p.unidad}
+                                                            Stock sistema: <strong className="text-slate-700">{p.stock_actual}</strong> {p.unidad}
                                                         </p>
                                                     </div>
 
@@ -640,12 +643,12 @@ export default function InventarioPage() {
 
                                 {/* Notes */}
                                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">{t('notas')}</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Notas</label>
                                     <textarea
                                         rows={2}
                                         value={notas}
                                         onChange={e => setNotas(e.target.value)}
-                                        placeholder={t('notasConteo')}
+                                        placeholder="Observaciones del conteo"
                                         className="inp resize-none text-base py-3 bg-slate-50 border-slate-200 text-slate-900 w-full"
                                     />
                                 </div>
@@ -655,12 +658,12 @@ export default function InventarioPage() {
                                     <button
                                         onClick={handleFinalizarConteo}
                                         disabled={saving}
-                                        className="w-full btn btn-primary py-5 text-lg font-bold flex items-center justify-center gap-3 shadow-lg rounded-2xl"
+                                        className="w-full btn btn-primary py-5 text-lg font-bold flex items-center justify-center gap-3 shadow-lg rounded-2xl mb-2"
                                     >
                                         {saving ? (
-                                            <><span className="spinner border-white border-t-transparent w-6 h-6" /> {t('guardando')}</>
+                                            <><span className="spinner border-white border-t-transparent w-6 h-6" /> Guardando...</>
                                         ) : (
-                                            <><Check size={24} /> {t('finalizarConteo')}</>
+                                            <><Check size={24} /> Finalizar conteo</>
                                         )}
                                     </button>
                                 )}
@@ -682,7 +685,7 @@ export default function InventarioPage() {
                             </div>
                         ) : historialConteos.length === 0 ? (
                             <div className="py-12">
-                                <EmptyState icon={History} title={t('noConteos')} />
+                                <EmptyState icon={History} title="No hay conteos registrados" />
                             </div>
                         ) : (
                             historialConteos.map(c => (

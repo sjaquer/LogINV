@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLanguage } from '@/context/LanguageContext';
 import { useSidebar } from '@/context/SidebarContext';
 import {
     LayoutDashboard,
@@ -15,13 +14,12 @@ import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const { t } = useLanguage();
     const { collapsed, setCollapsed } = useSidebar();
 
     const NAV_ITEMS = [
-        { href: '/', label: t('dashboard'), icon: LayoutDashboard },
-        { href: '/productos', label: t('productos'), icon: Package },
-        { href: '/inventario', label: t('inventario'), icon: ClipboardList },
+        { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
+        { href: '/productos', label: 'Productos', icon: Package },
+        { href: '/inventario', label: 'Inventario', icon: ClipboardList },
     ];
 
     return (
@@ -51,7 +49,7 @@ export default function Sidebar() {
                 <nav className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
                     {!collapsed && (
                         <div className="px-2 py-2 mb-2">
-                            <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">{t('menu')}</p>
+                            <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Navegación</p>
                         </div>
                     )}
                     {NAV_ITEMS.map(({ href, label, icon: Icon }) => {

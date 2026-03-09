@@ -1,6 +1,5 @@
 'use client';
 import { CheckCircle2 } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 export function KPICard({ title, value, subtitle, icon: Icon, color = 'brand', loading }) {
@@ -77,19 +76,13 @@ export function LoadingSkeleton({ rows = 5, cols = 5 }) {
 
 // ─── Empty State ───────────────────────────────────────────────────────────
 export function EmptyState({ icon: Icon = CheckCircle2, title = 'Sin datos', subtitle }) {
-    const { t } = useLanguage();
-
-    // Try to translate if key exists, otherwise use raw text
-    const translatedTitle = t(title) !== title ? t(title) : title;
-    const translatedSubtitle = subtitle ? (t(subtitle) !== subtitle ? t(subtitle) : subtitle) : null;
-
     return (
         <div className="flex flex-col items-center justify-center py-10 sm:py-16 text-center animate-fade-in px-4">
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex items-center justify-center mb-4 sm:mb-5 relative">
                 <Icon size={24} className="sm:w-7 sm:h-7 text-slate-400 relative z-10" />
             </div>
-            <p className="text-base sm:text-lg font-semibold text-slate-700">{translatedTitle}</p>
-            {translatedSubtitle && <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm">{translatedSubtitle}</p>}
+            <p className="text-base sm:text-lg font-semibold text-slate-700">{title}</p>
+            {subtitle && <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm">{subtitle}</p>}
         </div>
     );
 }
