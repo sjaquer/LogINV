@@ -4,10 +4,8 @@ import { createPortal } from 'react-dom';
 import { Wine, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
 
 const USUARIOS = [
-    { id: 'user1', nombre: 'Carlos Paredes', rol: 'LOGISTICA', hash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4' },
-    { id: 'user2', nombre: 'Miguel Rodríguez', rol: 'PLANTA', hash: 'f8638b979b2f4f793ddb6dbd197e0ee25a7a6ea32b0ae22f5e3c5d119d839e75' },
-    { id: 'user3', nombre: 'Ana Quispe', rol: 'ADMIN', hash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' },
-    { id: 'user4', nombre: 'Luis Mendoza', rol: 'GERENCIA', hash: 'fc613b4dfd6736a7bd268c8a0e74ed0d1c04a959f59dd74ef2874983fd443fc9' },
+    { id: 'user1', nombre: 'Maria Zambrano', rol: 'LOGISTICA', hash: '0d866ba9f9fd0f2cbb2134daf52356d2021a3686352d5c19d967305bf9e4bbdc' },
+    { id: 'user2', nombre: 'Sebastian Jaque', rol: 'ADMIN', hash: 'a537a9c80b4ad75197c4e3e11faaf1963b2c0c033270a42c6a25655e752f4fc1' },
 ];
 
 async function hashPassword(password) {
