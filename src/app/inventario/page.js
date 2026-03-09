@@ -257,17 +257,26 @@ export default function InventarioPage() {
 
     const loading = pLoading || cLoading;
 
-    // ── Resume in-progress count on load ──
+    // ── Reset active conteo when location changes ──
+    useEffect(() => {
+        if (conteoActivo && conteoActivo.ubicacion !== ubicacion) {
+            setConteoActivo(null);
+            setConteoItems([]);
+            setNotas('');
+        }
+    }, [ubicacion, conteoActivo]);
+
+    // ── Resume in-progress count on load (filtered by current location) ──
     useEffect(() => {
         if (!cLoading && conteos.length > 0) {
-            const enProgreso = conteos.find(c => c.estado === 'EN_PROGRESO');
+            const enProgreso = conteos.find(c => c.estado === 'EN_PROGRESO' && c.ubicacion === ubicacion);
             if (enProgreso && !conteoActivo) {
                 setConteoActivo(enProgreso);
                 setConteoItems(enProgreso.items || []);
                 setNotas(enProgreso.notas || '');
             }
         }
-    }, [cLoading, conteos, conteoActivo]);
+    }, [cLoading, conteos, conteoActivo, ubicacion]);
 
     // ── LocalStorage backup for conteo items ──
     useEffect(() => {
@@ -285,15 +294,16 @@ export default function InventarioPage() {
                 const backup = localStorage.getItem('loginv_conteo_backup');
                 if (backup) {
                     const { id, items, notas: n } = JSON.parse(backup);
-                    if (items?.length > 0 && conteos.find(c => c.id === id && c.estado === 'EN_PROGRESO')) {
-                        setConteoActivo(conteos.find(c => c.id === id));
+                    const match = conteos.find(c => c.id === id && c.estado === 'EN_PROGRESO' && c.ubicacion === ubicacion);
+                    if (items?.length > 0 && match) {
+                        setConteoActivo(match);
                         setConteoItems(items);
                         setNotas(n || '');
                     }
                 }
             } catch (_) {}
         }
-    }, [cLoading, conteoActivo, conteos]);
+    }, [cLoading, conteoActivo, conteos, ubicacion]);
 
     // ── Start new count ──
     const handleNuevoConteo = useCallback(async () => {

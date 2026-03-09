@@ -1,5 +1,6 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Wine, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
 
 const USUARIOS = [
@@ -21,6 +22,33 @@ function LoginScreen({ onLogin }) {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+    const selectorRef = useRef(null);
+    const [dropdownStyle, setDropdownStyle] = useState({});
+
+    useEffect(() => {
+        function updatePosition() {
+            if (!selectorRef.current) return;
+            const rect = selectorRef.current.getBoundingClientRect();
+            setDropdownStyle({
+                position: 'fixed',
+                top: rect.bottom + window.scrollY + 8,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+                zIndex: 9999,
+            });
+        }
+
+        if (showDropdown) {
+            updatePosition();
+            window.addEventListener('resize', updatePosition);
+            window.addEventListener('scroll', updatePosition, true);
+        }
+
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+        };
+    }, [showDropdown]);
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -60,8 +88,9 @@ function LoginScreen({ onLogin }) {
                         {/* User selector */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Usuario</label>
-                            <div className="relative z-20">
+                            <div className="relative">
                                 <button
+                                    ref={selectorRef}
                                     type="button"
                                     onClick={() => setShowDropdown(!showDropdown)}
                                     className="w-full flex items-center gap-3 px-4 py-3.5 border border-slate-200 rounded-xl text-left hover:border-brand-300 transition-colors bg-white"
@@ -87,31 +116,37 @@ function LoginScreen({ onLogin }) {
                                     <ChevronDown size={18} className="text-slate-400 ml-auto flex-shrink-0" />
                                 </button>
 
-                                {showDropdown && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-20 py-1 animate-fade-in">
-                                        {USUARIOS.map(u => (
-                                            <button
-                                                key={u.id}
-                                                type="button"
-                                                onClick={() => { setSelectedUser(u); setShowDropdown(false); setError(''); }}
-                                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${selectedUser?.id === u.id ? 'bg-brand-50' : ''}`}
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
-                                                    <User size={16} className="text-brand-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-slate-800">{u.nombre}</p>
-                                                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{u.rol}</p>
-                                                </div>
-                                                {selectedUser?.id === u.id && (
-                                                    <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                {/* dropdown will be rendered in a portal below */}
                             </div>
                         </div>
+
+                        {showDropdown && selectorRef.current && createPortal(
+                            <div
+                                style={dropdownStyle}
+                                className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 animate-fade-in"
+                            >
+                                {USUARIOS.map(u => (
+                                    <button
+                                        key={u.id}
+                                        type="button"
+                                        onClick={() => { setSelectedUser(u); setShowDropdown(false); setError(''); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${selectedUser?.id === u.id ? 'bg-brand-50' : ''}`}
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
+                                            <User size={16} className="text-brand-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-800">{u.nombre}</p>
+                                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{u.rol}</p>
+                                        </div>
+                                        {selectedUser?.id === u.id && (
+                                            <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>,
+                            document.body
+                        )}
 
                         {/* Password */}
                         <div>
