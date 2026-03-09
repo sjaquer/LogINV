@@ -1,13 +1,16 @@
 'use client';
 import { useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { useProductos, useConteos, useMovimientos } from '@/hooks/useFirestore';
 import { useLanguage } from '@/context/LanguageContext';
+import { useRole } from '@/context/RoleContext';
 import Header from '@/components/layout/Header';
 import { KPICard, SemaforoBadge, StockBar, EmptyState } from '@/components/ui/SharedComponents';
 import { daysUntil, formatDate, formatDateTime, semaforoRowBg } from '@/lib/utils';
 import {
     AlertTriangle, Package, ClipboardCheck, TrendingDown,
-    FileText, Check, X as XIcon,
+    FileText, Check, X as XIcon, Wine, ClipboardList,
+    ArrowRight, ScanBarcode,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -110,6 +113,7 @@ export default function DashboardPage() {
     const { conteos, loading: cLoading } = useConteos();
     const { movimientos, loading: mLoading } = useMovimientos();
     const { t } = useLanguage();
+    const { userName } = useRole();
 
     // ── KPI: products below stock minimum ──
     const alertasStock = useMemo(
@@ -176,6 +180,55 @@ export default function DashboardPage() {
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title={t('dashboard')} />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-8 animate-fade-in max-w-7xl mx-auto w-full">
+
+                {/* ── Welcome Hero ── */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 p-5 sm:p-8 text-white shadow-lg">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                                <Wine size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-white/70 font-medium">{t('bienvenido')}</p>
+                                <p className="text-lg sm:text-xl font-bold">{userName}</p>
+                            </div>
+                        </div>
+                        <p className="text-white/60 text-sm mt-1">{t('resumenDelDia')}</p>
+                    </div>
+                </div>
+
+                {/* ── Quick Actions ── */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <Link href="/inventario" className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-brand-200 transition-all group active:scale-[0.98]" style={{ WebkitTapHighlightColor: 'transparent' }}>
+                        <div className="w-11 h-11 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-100 transition-colors">
+                            <ClipboardList size={22} className="text-brand-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-slate-800 truncate">{t('nuevoConteo')}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{t('iniciarConteo')}</p>
+                        </div>
+                    </Link>
+                    <Link href="/productos" className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group active:scale-[0.98]" style={{ WebkitTapHighlightColor: 'transparent' }}>
+                        <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
+                            <Package size={22} className="text-emerald-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-slate-800 truncate">{t('productos')}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{t('verCatalogo')}</p>
+                        </div>
+                    </Link>
+                    <Link href="/inventario" className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-amber-200 transition-all group active:scale-[0.98] col-span-2 sm:col-span-1" style={{ WebkitTapHighlightColor: 'transparent' }}>
+                        <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
+                            <ScanBarcode size={22} className="text-amber-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-slate-800 truncate">{t('escanearCodigo')}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{t('escaneoRapido')}</p>
+                        </div>
+                    </Link>
+                </div>
 
                 {/* ── KPI Cards ── */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">

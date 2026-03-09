@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSidebar } from '@/context/SidebarContext';
 import {
@@ -10,8 +9,6 @@ import {
     Wine,
     ChevronLeft,
     ChevronRight,
-    Menu,
-    X,
     ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,7 +17,6 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { t } = useLanguage();
     const { collapsed, setCollapsed } = useSidebar();
-    const [mobileOpen, setMobileOpen] = useState(false);
 
     const NAV_ITEMS = [
         { href: '/', label: t('dashboard'), icon: LayoutDashboard },
@@ -30,31 +26,11 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Mobile toggle button */}
-            <button
-                className="fixed top-3.5 left-3 z-[60] lg:hidden bg-white border border-slate-200 p-2.5 rounded-xl shadow-md text-slate-600 hover:text-brand-600 hover:bg-slate-50 active:scale-95 transition-all"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Toggle menu"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-                {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-
-            {/* Mobile overlay */}
-            {mobileOpen && (
-                <div
-                    className="fixed inset-0 z-[55] bg-slate-900/30 backdrop-blur-sm lg:hidden transition-all"
-                    onClick={() => setMobileOpen(false)}
-                />
-            )}
-
-            {/* Sidebar panel */}
+            {/* Sidebar panel – desktop only */}
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-[58] h-full flex flex-col bg-white border-r border-slate-200 shadow-xl lg:shadow-none transition-all duration-300',
+                    'fixed top-0 left-0 z-[58] h-full flex-col bg-white border-r border-slate-200 shadow-none transition-all duration-300 hidden lg:flex',
                     collapsed ? 'w-[72px]' : 'w-64',
-                    'lg:translate-x-0',
-                    mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 )}
                 style={{ height: '100dvh' }}
             >
@@ -84,7 +60,6 @@ export default function Sidebar() {
                             <Link
                                 key={href}
                                 href={href}
-                                onClick={() => setMobileOpen(false)}
                                 className={cn(
                                     'group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative',
                                     isActive 

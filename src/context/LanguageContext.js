@@ -158,6 +158,10 @@ const translations = {
         descartarConteo: 'Descartar',
         notas: 'Notas',
         notasConteo: 'Observaciones del conteo',
+        resumenDelDia: 'Resumen del día — control de tu inventario',
+        verCatalogo: 'Ver catálogo',
+        escaneoRapido: 'Identificar producto',
+        progresoConteo: 'Progreso del conteo',
     },
     en: {
         dashboard: 'Dashboard',
@@ -298,6 +302,10 @@ const translations = {
         descartarConteo: 'Discard',
         notas: 'Notes',
         notasConteo: 'Count observations',
+        resumenDelDia: 'Daily summary — manage your inventory',
+        verCatalogo: 'View catalog',
+        escaneoRapido: 'Identify product',
+        progresoConteo: 'Count progress',
     },
     zh: {
         dashboard: '控制面板',
@@ -438,6 +446,10 @@ const translations = {
         descartarConteo: '放弃',
         notas: '备注',
         notasConteo: '盘点备注',
+        resumenDelDia: '每日摘要 — 管理您的库存',
+        verCatalogo: '查看目录',
+        escaneoRapido: '识别产品',
+        progresoConteo: '盘点进度',
     },
     ja: {
         dashboard: 'ダッシュボード',
@@ -578,6 +590,10 @@ const translations = {
         descartarConteo: '破棄',
         notas: 'メモ',
         notasConteo: '棚卸メモ',
+        resumenDelDia: '日次サマリー — 在庫管理',
+        verCatalogo: 'カタログを見る',
+        escaneoRapido: '製品を識別',
+        progresoConteo: '棚卸進捗',
     }
 };
 

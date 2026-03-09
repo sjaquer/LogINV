@@ -70,7 +70,7 @@ export default function Header({ title }) {
     return (
         <>
             <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300 min-w-0">
-                <div className="pl-11 lg:pl-0 min-w-0 flex-1">
+                <div className="min-w-0 flex-1">
                     <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-0.5 flex items-center gap-1.5 truncate">
                         <span className="hidden sm:inline">{t('bienvenido')}</span> <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300 flex-shrink-0"></span> <span className="truncate">{ROLE_USERS[role]}</span>
                     </p>

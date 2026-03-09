@@ -4,74 +4,14 @@ import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useRole } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { EmptyState } from '@/components/ui/SharedComponents';
+import { EmptyState, StockBar } from '@/components/ui/SharedComponents';
+import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDate } from '@/lib/utils';
 import {
     Search, X, Plus, Package, Trash2, Pencil,
     PlusCircle, Save, AlertTriangle, FolderPlus,
-    Settings2, Camera, CameraOff, ScanBarcode, ChevronRight,
+    Settings2, ScanBarcode, ChevronRight, ArrowUpDown,
 } from 'lucide-react';
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  BarcodeScanner – reusable camera barcode scanner
-// ═══════════════════════════════════════════════════════════════════════════
-function BarcodeScanner({ onScan, onClose }) {
-    const { t } = useLanguage();
-    const scannerRef = useRef(null);
-    const containerRef = useRef(null);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        let html5QrCode = null;
-        let mounted = true;
-        (async () => {
-            try {
-                const { Html5Qrcode } = await import('html5-qrcode');
-                if (!mounted || !containerRef.current) return;
-                html5QrCode = new Html5Qrcode('barcode-reader-prod');
-                scannerRef.current = html5QrCode;
-                await html5QrCode.start(
-                    { facingMode: 'environment' },
-                    { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.777 },
-                    (decodedText) => { onScan(decodedText); },
-                    () => {}
-                );
-            } catch (err) {
-                if (mounted) setError(err?.message || t('camaraNoDisponible'));
-            }
-        })();
-        return () => { mounted = false; html5QrCode?.stop().catch(() => {}); };
-    }, [onScan, t]);
-
-    return (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                        <Camera size={20} className="text-brand-600" />
-                        <h3 className="font-bold text-slate-900 text-base">{t('escanearCodigo')}</h3>
-                    </div>
-                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={22} />
-                    </button>
-                </div>
-                <div className="relative bg-black">
-                    <div id="barcode-reader-prod" ref={containerRef} className="w-full" />
-                    {error && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-6 text-center">
-                            <CameraOff size={40} className="text-slate-400 mb-3" />
-                            <p className="text-base font-medium">{t('camaraNoDisponible')}</p>
-                            <p className="text-sm text-slate-400 mt-2">{t('permisosCamara')}</p>
-                        </div>
-                    )}
-                </div>
-                <div className="p-4 bg-slate-50 text-center">
-                    <p className="text-sm text-slate-500">{t('permisosCamara')}</p>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  ProductFormModal – Full product registration / edit
@@ -84,6 +24,12 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [showScanner, setShowScanner] = useState(false);
+
+    useEffect(() => {
+        function handleKey(e) { if (e.key === 'Escape') onClose(); }
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [onClose]);
 
     const [form, setForm] = useState({
         nombre: producto?.nombre || '',
@@ -555,15 +501,30 @@ export default function ProductosPage() {
 
     const [busqueda, setBusqueda] = useState('');
     const [categoria, setCategoria] = useState('Todas');
+    const [sortBy, setSortBy] = useState('nombre');
     const [showProductForm, setShowProductForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [deleteProduct, setDeleteProduct] = useState(null);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
 
+    // category map: nombre → icono
+    const catIconMap = useMemo(() => {
+        const m = {};
+        categorias.forEach(c => { m[c.nombre] = c.icono || '📦'; });
+        return m;
+    }, [categorias]);
+
+    // category counts
+    const catCounts = useMemo(() => {
+        const c = {};
+        productos.forEach(p => { c[p.categoria] = (c[p.categoria] || 0) + 1; });
+        return c;
+    }, [productos]);
+
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
     const productosFiltrados = useMemo(() => {
-        return productos
+        let list = productos
             .filter(p => categoria === 'Todas' || p.categoria === categoria)
             .filter(p => {
                 const q = busqueda.toLowerCase();
@@ -571,7 +532,14 @@ export default function ProductosPage() {
                     || (p.codigo_barras && p.codigo_barras.includes(q))
                     || (p.lote && p.lote.toLowerCase().includes(q));
             });
-    }, [productos, categoria, busqueda]);
+        // Sort
+        list = [...list].sort((a, b) => {
+            if (sortBy === 'stock') return a.stock_actual - b.stock_actual;
+            if (sortBy === 'categoria') return (a.categoria || '').localeCompare(b.categoria || '');
+            return (a.nombre || '').localeCompare(b.nombre || '');
+        });
+        return list;
+    }, [productos, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
         if (id) {
@@ -616,32 +584,51 @@ export default function ProductosPage() {
                             placeholder={t('buscarProducto')}
                             value={busqueda}
                             onChange={e => setBusqueda(e.target.value)}
-                            className="inp pl-12 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
+                            className="inp pl-12 pr-10 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
                         />
+                        {busqueda && (
+                            <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 text-slate-400" aria-label="Limpiar búsqueda">
+                                <X size={18} />
+                            </button>
+                        )}
                     </div>
                     <div className="flex gap-2 overflow-x-auto no-scrollbar items-center pb-1">
                         {catNames.map(cat => {
                             const label = cat === 'Todas' ? t('todas') : cat;
+                            const icon = cat !== 'Todas' ? catIconMap[cat] : null;
+                            const count = cat === 'Todas' ? productos.length : (catCounts[cat] || 0);
                             return (
                                 <button
                                     key={cat}
                                     onClick={() => setCategoria(cat)}
-                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all shadow-sm whitespace-nowrap ${
+                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all shadow-sm whitespace-nowrap flex items-center gap-1.5 ${
                                         categoria === cat
                                             ? 'bg-brand-50 text-brand-700 border-brand-200 ring-1 ring-brand-500/10'
                                             : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                     }`}
-                                >{label}</button>
+                                >{icon && <span>{icon}</span>}{label} <span className="text-[10px] opacity-60">({count})</span></button>
                             );
                         })}
                     </div>
                 </div>
 
-                {/* ── Product count ── */}
+                {/* ── Product count + Sort ── */}
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-500 font-medium">
                         {productosFiltrados.length} {t('productos').toLowerCase()}
                     </p>
+                    <div className="flex items-center gap-1.5">
+                        <ArrowUpDown size={14} className="text-slate-400" />
+                        <select
+                            value={sortBy}
+                            onChange={e => setSortBy(e.target.value)}
+                            className="text-xs font-medium text-slate-500 bg-transparent border-none focus:ring-0 cursor-pointer pr-6"
+                        >
+                            <option value="nombre">{t('producto')}</option>
+                            <option value="stock">{t('stock')}</option>
+                            <option value="categoria">{t('categoria')}</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* ── Product Cards (mobile-first) ── */}
@@ -665,15 +652,13 @@ export default function ProductosPage() {
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
                                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            <span className="text-xs font-semibold text-brand-600 uppercase">{p.categoria}</span>
+                                            <span className="text-xs font-semibold text-brand-600 uppercase">{catIconMap[p.categoria] || '📦'} {p.categoria}</span>
                                             {p.marca && <span className="text-xs text-slate-400">· {p.marca}</span>}
                                             {p.gramaje && <span className="text-xs text-slate-400">· {p.gramaje}</span>}
                                         </div>
                                         <div className="flex items-center gap-3 mt-2 text-sm">
                                             <span className="font-bold text-slate-800">{p.stock_actual} <span className="text-slate-400 font-normal text-xs">{p.unidad}</span></span>
-                                            {p.codigo_barras && (
-                                                <span className="text-xs text-slate-400 font-mono">{p.codigo_barras}</span>
-                                            )}
+                                            <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />
                                         </div>
                                     </div>
 
@@ -683,14 +668,14 @@ export default function ProductosPage() {
                                             <button
                                                 onClick={() => { setEditingProduct(p); setShowProductForm(true); }}
                                                 className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                                                title={t('editar')}
+                                                aria-label={t('editar')}
                                             >
                                                 <Pencil size={18} />
                                             </button>
                                             <button
                                                 onClick={() => setDeleteProduct(p)}
                                                 className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                title={t('eliminar')}
+                                                aria-label={t('eliminar')}
                                             >
                                                 <Trash2 size={18} />
                                             </button>

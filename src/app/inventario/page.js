@@ -5,74 +5,14 @@ import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
 import { useRole } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
+import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDateTime } from '@/lib/utils';
 import {
     Search, X, Plus, Minus, Package,
-    Save, AlertTriangle, Camera, CameraOff,
+    Save, AlertTriangle,
     Check, ClipboardList, History, ScanBarcode,
-    ChevronRight, RotateCcw, Undo2,
+    ChevronRight, RotateCcw,
 } from 'lucide-react';
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  BarcodeScanner – camera-based barcode scanning via html5-qrcode
-// ═══════════════════════════════════════════════════════════════════════════
-function BarcodeScanner({ onScan, onClose }) {
-    const { t } = useLanguage();
-    const scannerRef = useRef(null);
-    const containerRef = useRef(null);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        let html5QrCode = null;
-        let mounted = true;
-        (async () => {
-            try {
-                const { Html5Qrcode } = await import('html5-qrcode');
-                if (!mounted || !containerRef.current) return;
-                html5QrCode = new Html5Qrcode('barcode-reader-inv');
-                scannerRef.current = html5QrCode;
-                await html5QrCode.start(
-                    { facingMode: 'environment' },
-                    { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.777 },
-                    (decodedText) => { onScan(decodedText); },
-                    () => {}
-                );
-            } catch (err) {
-                if (mounted) setError(err?.message || t('camaraNoDisponible'));
-            }
-        })();
-        return () => { mounted = false; html5QrCode?.stop().catch(() => {}); };
-    }, [onScan, t]);
-
-    return (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                        <Camera size={20} className="text-brand-600" />
-                        <h3 className="font-bold text-slate-900 text-base">{t('escanearCodigo')}</h3>
-                    </div>
-                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={22} />
-                    </button>
-                </div>
-                <div className="relative bg-black">
-                    <div id="barcode-reader-inv" ref={containerRef} className="w-full" />
-                    {error && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-6 text-center">
-                            <CameraOff size={40} className="text-slate-400 mb-3" />
-                            <p className="text-base font-medium">{t('camaraNoDisponible')}</p>
-                            <p className="text-sm text-slate-400 mt-2">{t('permisosCamara')}</p>
-                        </div>
-                    )}
-                </div>
-                <div className="p-4 bg-slate-50 text-center">
-                    <p className="text-sm text-slate-500">{t('permisosCamara')}</p>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  TapCountModal – Full-screen counting modal (tap = +1)
@@ -82,14 +22,22 @@ function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }
     const [count, setCount] = useState(currentCount);
     const [pulse, setPulse] = useState(false);
 
+    useEffect(() => {
+        function handleKey(e) { if (e.key === 'Escape') onClose(); }
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [onClose]);
+
     const handleTap = useCallback(() => {
         setCount(prev => prev + 1);
         setPulse(true);
+        if (navigator.vibrate) navigator.vibrate(30);
         setTimeout(() => setPulse(false), 150);
     }, []);
 
     const handleMinus = useCallback(() => {
         setCount(prev => Math.max(0, prev - 1));
+        if (navigator.vibrate) navigator.vibrate(15);
     }, []);
 
     const handleReset = useCallback(() => {
@@ -220,6 +168,12 @@ function ConteoDetailModal({ conteo, onClose }) {
     const conDiff = items.filter(i => i.diferencia !== 0);
     const sinDiff = items.filter(i => i.diferencia === 0);
 
+    useEffect(() => {
+        function handleKey(e) { if (e.key === 'Escape') onClose(); }
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [onClose]);
+
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
             <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -317,6 +271,32 @@ export default function InventarioPage() {
         }
     }, [cLoading, conteos, conteoActivo]);
 
+    // ── LocalStorage backup for conteo items ──
+    useEffect(() => {
+        if (conteoActivo && conteoItems.length > 0) {
+            try {
+                localStorage.setItem('loginv_conteo_backup', JSON.stringify({ id: conteoActivo.id, items: conteoItems, notas }));
+            } catch (_) { /* quota exceeded, ignore */ }
+        }
+    }, [conteoItems, conteoActivo, notas]);
+
+    // ── Restore from localStorage if no active conteo found ──
+    useEffect(() => {
+        if (!cLoading && !conteoActivo) {
+            try {
+                const backup = localStorage.getItem('loginv_conteo_backup');
+                if (backup) {
+                    const { id, items, notas: n } = JSON.parse(backup);
+                    if (items?.length > 0 && conteos.find(c => c.id === id && c.estado === 'EN_PROGRESO')) {
+                        setConteoActivo(conteos.find(c => c.id === id));
+                        setConteoItems(items);
+                        setNotas(n || '');
+                    }
+                }
+            } catch (_) {}
+        }
+    }, [cLoading, conteoActivo, conteos]);
+
     // ── Start new count ──
     const handleNuevoConteo = useCallback(async () => {
         const id = await crearConteo({ usuario: userName, notas: '', items: [] });
@@ -394,6 +374,7 @@ export default function InventarioPage() {
             setConteoActivo(null);
             setConteoItems([]);
             setNotas('');
+            try { localStorage.removeItem('loginv_conteo_backup'); } catch (_) {}
         } finally {
             setSaving(false);
         }
@@ -514,7 +495,21 @@ export default function InventarioPage() {
 
                                 {/* Summary strip */}
                                 {conteoItems.length > 0 && (
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-3">
+                                        {/* Progress bar */}
+                                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-sm font-bold text-slate-700">{t('progresoConteo')}</p>
+                                                <p className="text-sm font-bold text-brand-600">{conteoItems.length} / {productos.length}</p>
+                                            </div>
+                                            <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-500"
+                                                    style={{ width: `${productos.length > 0 ? Math.round((conteoItems.length / productos.length) * 100) : 0}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
                                         <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-center shadow-sm">
                                             <p className="text-3xl font-bold text-slate-900">{summary.total}</p>
                                             <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">{t('itemsContados')}</p>
@@ -528,6 +523,7 @@ export default function InventarioPage() {
                                             <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mt-1">{t('conDiferencias')}</p>
                                         </div>
                                     </div>
+                                    </div>
                                 )}
 
                                 {/* Search + category filter */}
@@ -539,8 +535,13 @@ export default function InventarioPage() {
                                             placeholder={t('buscarProducto')}
                                             value={busqueda}
                                             onChange={e => setBusqueda(e.target.value)}
-                                            className="inp pl-12 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
+                                            className="inp pl-12 pr-10 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
                                         />
+                                        {busqueda && (
+                                            <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 text-slate-400" aria-label="Limpiar búsqueda">
+                                                <X size={18} />
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                                         {catNames.map(cat => {
