@@ -341,6 +341,15 @@ export default function InventarioPage() {
         setTapProduct(null);
     }, [tapProduct]);
 
+    // ── Category names ──
+    const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
+
+    // ── Products filtered by location ──  ← debe declararse ANTES de handleBarcodeScan
+    const productosUbicacion = useMemo(
+        () => productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion]
+    );
+
     // ── Handle barcode scan ──
     const handleBarcodeScan = useCallback((code) => {
         const matched = productosUbicacion.find(p => p.codigo_barras === code);
@@ -387,15 +396,6 @@ export default function InventarioPage() {
             setSaving(false);
         }
     }, [conteoActivo, conteoItems, notas, actualizarConteo, finalizarConteo, updateStock, userName]);
-
-    // ── Category names ──
-    const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
-
-    // ── Products filtered by location ──
-    const productosUbicacion = useMemo(
-        () => productos.filter(p => p.ubicacion === ubicacion),
-        [productos, ubicacion]
-    );
 
     const productosFiltrados = useMemo(() => {
         return productosUbicacion

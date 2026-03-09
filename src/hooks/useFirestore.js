@@ -62,7 +62,7 @@ async function getFirestore() {
 function firebaseError(operation, err) {
     const code = err?.code || '';
     const msg = err?.message || String(err);
-    console.error(`[MolinoINV] Error en ${operation}:`, code, msg);
+    console.error(`[LogINV] Error en ${operation}:`, code, msg);
 
     if (code === 'permission-denied' || code === 'PERMISSION_DENIED' || msg.includes('Missing or insufficient permissions')) {
         throw new Error(
@@ -107,12 +107,12 @@ export function useCategorias() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener categorias:', err.code, err.message);
+                        console.error('[LogINV] Error listener categorias:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         // Fallback: try without orderBy if index is missing
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            console.warn('[MolinoINV] Intentando sin orderBy...');
+                            console.warn('[LogINV] Intentando sin orderBy...');
                             const qSimple = fs.collection(db, 'categorias');
                             unsub = fs.onSnapshot(qSimple,
                                 (snap) => {
@@ -121,7 +121,7 @@ export function useCategorias() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback categorias:', fallbackErr);
+                                    console.error('[LogINV] Error fallback categorias:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -129,7 +129,7 @@ export function useCategorias() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup categorias:', err);
+                console.error('[LogINV] Error setup categorias:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -221,7 +221,7 @@ export function useProductos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener productos:', err.code, err.message);
+                        console.error('[LogINV] Error listener productos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -233,7 +233,7 @@ export function useProductos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback productos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback productos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -241,7 +241,7 @@ export function useProductos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup productos:', err);
+                console.error('[LogINV] Error setup productos:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -273,6 +273,7 @@ export function useProductos() {
                     tipo: 'INGRESO',
                     cantidad: data.stock_actual,
                     usuario: data._usuario || 'Sistema',
+                    ubicacion: data.ubicacion || '',
                     fecha: mockTimestamp(),
                     motivo_merma: null,
                     notas: 'Stock inicial al crear producto',
@@ -302,6 +303,7 @@ export function useProductos() {
                     tipo: 'INGRESO',
                     cantidad: data.stock_actual,
                     usuario,
+                    ubicacion: docData.ubicacion || '',
                     fecha: fs.serverTimestamp(),
                     motivo_merma: null,
                     notas: 'Stock inicial al crear producto',
@@ -374,6 +376,7 @@ export function useProductos() {
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
                 usuario,
+                ubicacion: prod.ubicacion || '',
                 fecha: mockTimestamp(),
                 motivo_merma: null,
             };
@@ -395,6 +398,7 @@ export function useProductos() {
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
                 usuario,
+                ubicacion: prodSnap?.ubicacion || '',
                 fecha: fs.serverTimestamp(),
                 motivo_merma: null,
             });
@@ -419,6 +423,7 @@ export function useProductos() {
                 tipo: 'MERMA',
                 cantidad,
                 usuario,
+                ubicacion: prod.ubicacion || '',
                 fecha: mockTimestamp(),
                 motivo_merma: motivo,
             };
@@ -442,6 +447,7 @@ export function useProductos() {
                 tipo: 'MERMA',
                 cantidad,
                 usuario,
+                ubicacion: prodSnap.ubicacion || '',
                 fecha: fs.serverTimestamp(),
                 motivo_merma: motivo,
             });
@@ -483,7 +489,7 @@ export function useRequerimientos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener requerimientos:', err.code, err.message);
+                        console.error('[LogINV] Error listener requerimientos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -495,7 +501,7 @@ export function useRequerimientos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback requerimientos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback requerimientos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -503,7 +509,7 @@ export function useRequerimientos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup requerimientos:', err);
+                console.error('[LogINV] Error setup requerimientos:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -600,7 +606,7 @@ export function useMovimientos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener movimientos:', err.code, err.message);
+                        console.error('[LogINV] Error listener movimientos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -612,7 +618,7 @@ export function useMovimientos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback movimientos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback movimientos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -620,7 +626,7 @@ export function useMovimientos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup movimientos:', err);
+                console.error('[LogINV] Error setup movimientos:', err);
                 setLoading(false);
                 setError(err.message);
             }

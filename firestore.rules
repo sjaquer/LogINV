@@ -15,6 +15,15 @@
 //  Si en el futuro integras Firebase Auth, agrega `request.auth != null`
 //  a cada regla de read/write.
 //
+//  COLECCIONES:
+//    productos      – Inventario de productos por ubicación
+//    categorias     – Categorías de productos
+//    movimientos    – Log inmutable de movimientos de stock
+//    conteos        – Conteos diarios de inventario físico
+//    requerimientos – Solicitudes de compra / reposición
+//
+//  UBICACIONES VÁLIDAS: BAR_1, BAR_2, ALMACEN
+//
 // ═══════════════════════════════════════════════════════════════════════════
 
 rules_version = '2';
@@ -23,18 +32,18 @@ service cloud.firestore {
 
     // ── Funciones auxiliares ─────────────────────────────────────────────
 
-    // Limitar tamaño del documento a ~50KB (previene abuso de almacenamiento)
+    // Limitar cantidad de campos del documento (previene abuso)
     function docSizeOk() {
       return request.resource.data.keys().size() < 30;
     }
 
-    // Validar que un campo string no exceda cierta longitud
+    // Validar que un campo string no exceda cierta longitud (tolerante si el campo no existe)
     function strLenOk(field, maxLen) {
       return !request.resource.data.keys().hasAny([field])
              || (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
     }
 
-    // Validar que un campo numérico esté en rango
+    // Validar que un campo numérico esté en rango (tolerante si el campo no existe)
     function numRangeOk(field, minVal, maxVal) {
       return !request.resource.data.keys().hasAny([field])
              || (request.resource.data[field] is number
@@ -42,12 +51,21 @@ service cloud.firestore {
                  && request.resource.data[field] <= maxVal);
     }
 
+    // Validar ubicación válida
+    function ubicacionValida(field) {
+      return !request.resource.data.keys().hasAny([field])
+             || request.resource.data[field] in ['BAR_1', 'BAR_2', 'ALMACEN'];
+    }
+
     // ── Productos ───────────────────────────────────────────────────────
+    //  Campos requeridos: nombre, categoria, stock_actual, ubicacion
+    //  Campos opcionales: stock_minimo_rop, unidad, codigo_barras, lote,
+    //                     fecha_vencimiento, ultima_actualizacion, fecha_creacion, activo
     match /productos/{productoId} {
       allow read: if true;
 
       allow create: if docSizeOk()
-                    && request.resource.data.keys().hasAll(['nombre', 'categoria', 'stock_actual'])
+                    && request.resource.data.keys().hasAll(['nombre', 'categoria', 'stock_actual', 'ubicacion'])
                     && request.resource.data.nombre is string
                     && request.resource.data.nombre.size() > 0
                     && request.resource.data.nombre.size() <= 200
@@ -56,34 +74,28 @@ service cloud.firestore {
                     && request.resource.data.stock_actual is number
                     && request.resource.data.stock_actual >= 0
                     && request.resource.data.stock_actual <= 999999
+                    && request.resource.data.ubicacion in ['BAR_1', 'BAR_2', 'ALMACEN']
                     && numRangeOk('stock_minimo_rop', 0, 999999)
                     && strLenOk('codigo_barras', 50)
                     && strLenOk('unidad', 50)
-                    && strLenOk('lote', 100)
-                    && strLenOk('marca', 200)
-                    && strLenOk('gramaje', 100)
-                    && strLenOk('contenido', 200)
-                    && strLenOk('proveedor', 200)
-                    && strLenOk('descripcion', 500);
+                    && strLenOk('lote', 100);
 
       allow update: if docSizeOk()
                     && strLenOk('nombre', 200)
                     && strLenOk('categoria', 100)
                     && numRangeOk('stock_actual', 0, 999999)
                     && numRangeOk('stock_minimo_rop', 0, 999999)
+                    && ubicacionValida('ubicacion')
                     && strLenOk('codigo_barras', 50)
                     && strLenOk('unidad', 50)
-                    && strLenOk('lote', 100)
-                    && strLenOk('marca', 200)
-                    && strLenOk('gramaje', 100)
-                    && strLenOk('contenido', 200)
-                    && strLenOk('proveedor', 200)
-                    && strLenOk('descripcion', 500);
+                    && strLenOk('lote', 100);
 
       allow delete: if true;
     }
 
     // ── Categorías ──────────────────────────────────────────────────────
+    //  Campos requeridos: nombre
+    //  Campos opcionales: descripcion, icono, color, orden, activa, fecha_creacion
     match /categorias/{categoriaId} {
       allow read: if true;
 
@@ -94,18 +106,23 @@ service cloud.firestore {
                     && request.resource.data.nombre.size() <= 100
                     && strLenOk('descripcion', 300)
                     && strLenOk('icono', 10)
-                    && strLenOk('color', 20);
+                    && strLenOk('color', 20)
+                    && numRangeOk('orden', 0, 100);
 
       allow update: if docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300)
                     && strLenOk('icono', 10)
-                    && strLenOk('color', 20);
+                    && strLenOk('color', 20)
+                    && numRangeOk('orden', 0, 100);
 
       allow delete: if true;
     }
 
     // ── Movimientos de stock ────────────────────────────────────────────
+    //  Campos requeridos: producto_id, tipo, cantidad
+    //  Campos opcionales: nombre_producto, usuario, ubicacion, fecha, motivo_merma, notas
+    //  Log inmutable — no se editan ni eliminan
     match /movimientos/{movimientoId} {
       allow read: if true;
 
@@ -113,50 +130,59 @@ service cloud.firestore {
                     && request.resource.data.keys().hasAll(['producto_id', 'tipo', 'cantidad'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.tipo is string
-                    && request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE']
+                    && request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE', 'CONTEO']
                     && request.resource.data.cantidad is number
                     && request.resource.data.cantidad >= 0
                     && request.resource.data.cantidad <= 999999
+                    && ubicacionValida('ubicacion')
                     && strLenOk('nombre_producto', 200)
                     && strLenOk('usuario', 100)
-                    && strLenOk('motivo_merma', 300)
+                    && strLenOk('motivo_merma', 500)
                     && strLenOk('notas', 500);
 
-      // Los movimientos son un log inmutable — no se editan ni eliminan
       allow update: if false;
       allow delete: if false;
     }
 
     // ── Conteos de inventario ───────────────────────────────────────────
+    //  Campos requeridos: usuario, estado, ubicacion
+    //  Campos opcionales: fecha, items (array), notas, fecha_cierre
+    //  Los conteos no se eliminan (historial)
     match /conteos/{conteoId} {
       allow read: if true;
 
       allow create: if docSizeOk()
-                    && request.resource.data.keys().hasAll(['usuario', 'estado'])
+                    && request.resource.data.keys().hasAll(['usuario', 'estado', 'ubicacion'])
                     && request.resource.data.usuario is string
                     && request.resource.data.usuario.size() <= 100
                     && request.resource.data.estado is string
                     && request.resource.data.estado in ['EN_PROGRESO', 'COMPLETADO']
-                    && strLenOk('notas', 500);
+                    && request.resource.data.ubicacion in ['BAR_1', 'BAR_2', 'ALMACEN']
+                    && strLenOk('notas', 1000);
 
       allow update: if docSizeOk()
                     && strLenOk('usuario', 100)
-                    && strLenOk('notas', 500);
+                    && strLenOk('notas', 1000);
 
       allow delete: if false;
     }
 
-    // ── Requerimientos (legacy, mantenido por compatibilidad) ───────────
+    // ── Requerimientos (solicitudes de compra / reposición) ─────────────
+    //  Campos requeridos: solicitante, estado
+    //  Campos opcionales: items (array), logs (array), fecha_creacion
     match /requerimientos/{requerimientoId} {
       allow read: if true;
 
       allow create: if docSizeOk()
-                    && request.resource.data.keys().hasAll(['producto_id', 'estado'])
-                    && request.resource.data.producto_id is string
+                    && request.resource.data.keys().hasAll(['solicitante', 'estado'])
+                    && request.resource.data.solicitante is string
+                    && request.resource.data.solicitante.size() <= 100
                     && request.resource.data.estado is string
-                    && strLenOk('notas', 500);
+                    && request.resource.data.estado in ['PENDIENTE', 'APROBADO_ADMIN', 'VALIDADO_GERENCIA', 'RECHAZADO', 'COMPRADO'];
 
-      allow update: if docSizeOk();
+      allow update: if docSizeOk()
+                    && strLenOk('solicitante', 100);
+
       allow delete: if true;
     }
 
