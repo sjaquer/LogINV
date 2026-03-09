@@ -1,241 +1,73 @@
 'use client';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
-import { useProductos, useCategorias } from '@/hooks/useFirestore';
+import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
 import { useRole } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { SemaforoBadge, StockBar, LoadingSkeleton, EmptyState } from '@/components/ui/SharedComponents';
-import { daysUntil, formatDate } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/SharedComponents';
+import { formatDateTime } from '@/lib/utils';
 import {
-    Search, X, Plus, Minus, Package, Trash2, Pencil,
-    PlusCircle, Save, AlertTriangle, FolderPlus, Settings2,
+    Search, X, Plus, Minus, Package,
+    Save, AlertTriangle, Camera, CameraOff,
+    Check, ClipboardList, History, ScanBarcode,
+    ChevronRight, RotateCcw, Undo2,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  ProductFormModal – Create / Edit a product
+//  BarcodeScanner – camera-based barcode scanning via html5-qrcode
 // ═══════════════════════════════════════════════════════════════════════════
-function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
+function BarcodeScanner({ onScan, onClose }) {
     const { t } = useLanguage();
-    const isEdit = !!producto;
-
-    const toDateStr = (v) => {
-        if (!v) return '';
-        const d = v?.toDate ? v.toDate() : new Date(v);
-        return d.toISOString().split('T')[0];
-    };
-
-    const [form, setForm] = useState({
-        nombre: producto?.nombre || '',
-        categoria: producto?.categoria || (categorias[0]?.nombre || ''),
-        stock_actual: producto?.stock_actual ?? 0,
-        stock_minimo_rop: producto?.stock_minimo_rop ?? 10,
-        unidad: producto?.unidad || 'sacos',
-        fecha_vencimiento: toDateStr(producto?.fecha_vencimiento),
-        lote: producto?.lote || '',
-        peso_unitario: producto?.peso_unitario ?? '',
-        descripcion: producto?.descripcion || '',
-        proveedor: producto?.proveedor || '',
-    });
-    const [saving, setSaving] = useState(false);
+    const scannerRef = useRef(null);
+    const containerRef = useRef(null);
     const [error, setError] = useState('');
 
-    function handleChange(field, val) {
-        setForm(prev => ({ ...prev, [field]: val }));
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        if (!form.nombre.trim()) { setError(t('campoObligatorio')); return; }
-        if (!form.categoria) { setError(t('seleccionaCategoria')); return; }
-        setSaving(true);
-        setError('');
-        try {
-            const data = {
-                ...form,
-                stock_actual: Number(form.stock_actual) || 0,
-                stock_minimo_rop: Number(form.stock_minimo_rop) || 0,
-                peso_unitario: form.peso_unitario ? Number(form.peso_unitario) : null,
-                _usuario: userName,
-            };
-            await onSave(data, producto?.id);
-            onClose();
-        } catch (err) {
-            setError(err.message || 'Error');
-        } finally {
-            setSaving(false);
-        }
-    }
-
-    const UNIDADES = ['sacos', 'frascos', 'bloques', 'kg', 'litros', 'cajas', 'unidades'];
+    useEffect(() => {
+        let html5QrCode = null;
+        let mounted = true;
+        (async () => {
+            try {
+                const { Html5Qrcode } = await import('html5-qrcode');
+                if (!mounted || !containerRef.current) return;
+                html5QrCode = new Html5Qrcode('barcode-reader-inv');
+                scannerRef.current = html5QrCode;
+                await html5QrCode.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.777 },
+                    (decodedText) => { onScan(decodedText); },
+                    () => {}
+                );
+            } catch (err) {
+                if (mounted) setError(err?.message || t('camaraNoDisponible'));
+            }
+        })();
+        return () => { mounted = false; html5QrCode?.stop().catch(() => {}); };
+    }, [onScan, t]);
 
     return (
-        <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div
-                className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[90vh] sm:max-h-[90vh] flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 bg-white flex-shrink-0">
-                    <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg sm:text-xl truncate">{isEdit ? t('editarProducto') : t('nuevoProducto')}</h3>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">{isEdit ? t('editarProductoDesc') : t('nuevoProductoDesc')}</p>
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
+            <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                        <Camera size={20} className="text-brand-600" />
+                        <h3 className="font-bold text-slate-900 text-base">{t('escanearCodigo')}</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <X size={22} />
                     </button>
                 </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+                <div className="relative bg-black">
+                    <div id="barcode-reader-inv" ref={containerRef} className="w-full" />
                     {error && (
-                        <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-xl">
-                            <AlertTriangle size={16} /> {error}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-6 text-center">
+                            <CameraOff size={40} className="text-slate-400 mb-3" />
+                            <p className="text-base font-medium">{t('camaraNoDisponible')}</p>
+                            <p className="text-sm text-slate-400 mt-2">{t('permisosCamara')}</p>
                         </div>
                     )}
-
-                    {/* Nombre */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('producto')} *</label>
-                        <input
-                            type="text"
-                            value={form.nombre}
-                            onChange={(e) => handleChange('nombre', e.target.value)}
-                            placeholder="Ej: Saco Alimento Pollo Engorde x40kg"
-                            className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            required
-                        />
-                    </div>
-
-                    {/* Categoría + Unidad */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('categoria')} *</label>
-                            <select
-                                value={form.categoria}
-                                onChange={(e) => handleChange('categoria', e.target.value)}
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                                required
-                            >
-                                <option value="">—</option>
-                                {categorias.filter(c => c.activa !== false).map(c => (
-                                    <option key={c.id} value={c.nombre}>{c.icono} {c.nombre}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('unidad')}</label>
-                            <select
-                                value={form.unidad}
-                                onChange={(e) => handleChange('unidad', e.target.value)}
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            >
-                                {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Stock + Mínimo */}
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('stockActual')}</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={form.stock_actual}
-                                onChange={(e) => handleChange('stock_actual', e.target.value)}
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('minDef')} (ROP)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={form.stock_minimo_rop}
-                                onChange={(e) => handleChange('stock_minimo_rop', e.target.value)}
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Peso + Lote */}
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('peso')} ({t('kg')}/u)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={form.peso_unitario}
-                                onChange={(e) => handleChange('peso_unitario', e.target.value)}
-                                placeholder="Ej: 40"
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('lote')}</label>
-                            <input
-                                type="text"
-                                value={form.lote}
-                                onChange={(e) => handleChange('lote', e.target.value)}
-                                placeholder="Ej: L-2026-0301"
-                                className="inp text-sm bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Fecha vencimiento */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('vencimiento')}</label>
-                        <input
-                            type="date"
-                            value={form.fecha_vencimiento}
-                            onChange={(e) => handleChange('fecha_vencimiento', e.target.value)}
-                            className="inp text-sm bg-white border-slate-200 text-slate-900"
-                        />
-                    </div>
-
-                    {/* Proveedor */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('proveedor')}</label>
-                        <input
-                            type="text"
-                            value={form.proveedor}
-                            onChange={(e) => handleChange('proveedor', e.target.value)}
-                            placeholder="Ej: Molinos del Centro SAC"
-                            className="inp text-sm bg-white border-slate-200 text-slate-900"
-                        />
-                    </div>
-
-                    {/* Descripción */}
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('descripcionProducto')}</label>
-                        <textarea
-                            rows={2}
-                            value={form.descripcion}
-                            onChange={(e) => handleChange('descripcion', e.target.value)}
-                            placeholder={t('descripcionPlaceholder')}
-                            className="inp resize-none text-sm bg-white border-slate-200 text-slate-900"
-                        />
-                    </div>
-                </form>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex-shrink-0">
-                    <button type="button" onClick={onClose} className="btn btn-ghost px-4 sm:px-5 py-2.5 text-sm font-semibold text-slate-600">
-                        {t('cancelar')}
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={saving}
-                        className="btn btn-primary px-4 sm:px-6 py-2.5 text-sm font-bold flex items-center gap-2 shadow-sm"
-                    >
-                        {saving ? (
-                            <><span className="spinner border-white border-t-transparent w-4 h-4" /> {t('guardando')}</>
-                        ) : (
-                            <><Save size={16} /> {isEdit ? t('guardarCambios') : t('crearProducto')}</>
-                        )}
-                    </button>
+                </div>
+                <div className="p-4 bg-slate-50 text-center">
+                    <p className="text-sm text-slate-500">{t('permisosCamara')}</p>
                 </div>
             </div>
         </div>
@@ -243,657 +75,637 @@ function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  DeleteConfirmModal
+//  TapCountModal – Full-screen counting modal (tap = +1)
 // ═══════════════════════════════════════════════════════════════════════════
-function DeleteConfirmModal({ producto, onClose, onConfirm }) {
+function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }) {
     const { t } = useLanguage();
-    const [deleting, setDeleting] = useState(false);
-    const [error, setError] = useState('');
+    const [count, setCount] = useState(currentCount);
+    const [pulse, setPulse] = useState(false);
 
-    async function handleDelete() {
-        setDeleting(true);
-        setError('');
-        try {
-            await onConfirm(producto.id);
-            onClose();
-        } catch (err) {
-            setError(err.message || 'Error al eliminar producto');
-        } finally {
-            setDeleting(false);
-        }
-    }
+    const handleTap = useCallback(() => {
+        setCount(prev => prev + 1);
+        setPulse(true);
+        setTimeout(() => setPulse(false), 150);
+    }, []);
+
+    const handleMinus = useCallback(() => {
+        setCount(prev => Math.max(0, prev - 1));
+    }, []);
+
+    const handleReset = useCallback(() => {
+        setCount(0);
+    }, []);
+
+    const diff = count - producto.stock_actual;
 
     return (
-        <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-white max-w-sm" onClick={(e) => e.stopPropagation()}>
-                <div className="flex flex-col items-center text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mb-4">
-                        <Trash2 size={24} className="text-red-500" />
-                    </div>
-                    <h3 className="font-bold text-slate-900 text-lg">{t('eliminarProducto')}</h3>
-                    <p className="text-sm text-slate-500 mt-2">{t('confirmarEliminar')}</p>
-                    <p className="text-sm font-bold text-slate-800 mt-1 bg-slate-100 px-3 py-1 rounded-lg">{producto.nombre}</p>
-                    {error && (
-                        <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 w-full text-left">
-                            {error}
-                        </div>
+        <div className="fixed inset-0 z-50 bg-slate-900/95 flex flex-col animate-fade-in select-none" style={{ WebkitTapHighlightColor: 'transparent' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 flex-shrink-0">
+                <button onClick={onClose} className="p-3 rounded-2xl bg-white/10 text-white/80 hover:bg-white/20 active:scale-95 transition-all">
+                    <X size={24} />
+                </button>
+                <div className="text-center flex-1 px-4 min-w-0">
+                    <p className="text-white font-bold text-lg sm:text-xl truncate">{producto.nombre}</p>
+                    <p className="text-white/50 text-sm">{producto.categoria} {producto.gramaje ? `· ${producto.gramaje}` : ''}</p>
+                </div>
+                <div className="w-12" /> {/* spacer */}
+            </div>
+
+            {/* Current count display */}
+            <div className="flex flex-col items-center justify-center px-6 py-4 flex-shrink-0">
+                <p className={`text-8xl sm:text-9xl font-black text-white tabular-nums transition-transform duration-150 ${pulse ? 'scale-110' : 'scale-100'}`}>
+                    {count}
+                </p>
+                <p className="text-white/40 text-sm sm:text-base font-medium mt-2 uppercase tracking-wider">{t('conteoFisico')}</p>
+                <div className="flex items-center gap-4 mt-3">
+                    <span className="text-white/40 text-sm">{t('stockSistema')}: <strong className="text-white/70">{producto.stock_actual}</strong></span>
+                    {diff !== 0 && (
+                        <span className={`text-sm font-bold px-2.5 py-0.5 rounded-full ${diff < 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                            {diff > 0 ? '+' : ''}{diff}
+                        </span>
                     )}
                 </div>
-                <div className="flex gap-3 mt-6">
-                    <button onClick={onClose} className="btn btn-ghost flex-1 py-2.5 text-sm font-semibold text-slate-600">
-                        {t('cancelar')}
-                    </button>
-                    <button
-                        onClick={handleDelete}
-                        disabled={deleting}
-                        className="btn btn-danger flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2"
-                    >
-                        {deleting ? <span className="spinner border-white border-t-transparent w-4 h-4" /> : <Trash2 size={16} />}
-                        {t('eliminar')}
-                    </button>
-                </div>
+            </div>
+
+            {/* TAP ZONE – big touch area */}
+            <div className="flex-1 flex items-center justify-center px-6 py-4">
+                <button
+                    onClick={handleTap}
+                    className={`w-full max-w-sm aspect-square rounded-[2rem] bg-brand-600 hover:bg-brand-700 active:scale-95 active:bg-brand-800 transition-all duration-100 flex flex-col items-center justify-center shadow-2xl shadow-brand-500/30 border-4 border-brand-400/20 ${pulse ? 'scale-95' : 'scale-100'}`}
+                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
+                    <Plus size={64} className="text-white/90" strokeWidth={3} />
+                    <p className="text-white/80 text-lg sm:text-xl font-bold mt-3">{t('tapsConteo')}</p>
+                </button>
+            </div>
+
+            {/* Bottom controls */}
+            <div className="flex items-center gap-3 p-4 sm:p-6 flex-shrink-0 pb-safe">
+                <button
+                    onClick={handleReset}
+                    className="p-4 rounded-2xl bg-white/10 text-white/60 hover:bg-white/20 active:scale-95 transition-all"
+                    title="Reset"
+                >
+                    <RotateCcw size={24} />
+                </button>
+                <button
+                    onClick={handleMinus}
+                    className="p-4 rounded-2xl bg-white/10 text-white/60 hover:bg-white/20 active:scale-95 transition-all"
+                    title="-1"
+                >
+                    <Minus size={24} />
+                </button>
+                <button
+                    onClick={onDiscard}
+                    className="flex-1 py-4 rounded-2xl bg-white/10 text-white/80 font-bold text-base hover:bg-white/20 active:scale-95 transition-all"
+                >
+                    {t('descartarConteo')}
+                </button>
+                <button
+                    onClick={() => onConfirm(count)}
+                    className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base hover:bg-emerald-600 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
+                >
+                    <Check size={22} /> {t('confirmarConteo')}
+                </button>
             </div>
         </div>
     );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  CategoryManagerModal
+//  ConteoHistoryCard
 // ═══════════════════════════════════════════════════════════════════════════
-function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEliminar }) {
+function ConteoHistoryCard({ conteo, onSelect }) {
     const { t } = useLanguage();
-    const [newName, setNewName] = useState('');
-    const [newDesc, setNewDesc] = useState('');
-    const [newIcon, setNewIcon] = useState('📦');
-    const [newColor, setNewColor] = useState('#6366f1');
-    const [editingId, setEditingId] = useState(null);
-    const [editName, setEditName] = useState('');
-    const [error, setError] = useState('');
-    const [saving, setSaving] = useState(false);
+    const totalItems = conteo.items?.length || 0;
+    const conDiff = conteo.items?.filter(i => i.diferencia !== 0).length || 0;
+    const isCompleted = conteo.estado === 'COMPLETADO';
 
-    async function handleAdd(e) {
-        e.preventDefault();
-        if (!newName.trim()) return;
-        setSaving(true);
-        setError('');
-        try {
-            await onCrear({ nombre: newName.trim(), descripcion: newDesc.trim(), icono: newIcon, color: newColor });
-            setNewName(''); setNewDesc(''); setNewIcon('📦'); setNewColor('#6366f1');
-        } catch (err) {
-            setError(err.message || 'Error al crear categoría');
-        } finally {
-            setSaving(false);
-        }
-    }
+    return (
+        <button
+            type="button"
+            onClick={() => onSelect(conteo)}
+            className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:shadow-md transition-all group"
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                    <span className={`inline-block px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                        {isCompleted ? t('conteoCompletado') : t('conteoEnProgreso')}
+                    </span>
+                    <p className="text-sm text-slate-500 mt-2 font-medium">{conteo.usuario}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{formatDateTime(conteo.fecha)}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                    <p className="text-3xl font-bold text-slate-900">{totalItems}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{t('itemsContados')}</p>
+                    {conDiff > 0 && (
+                        <p className="text-xs text-amber-600 font-bold mt-1">{conDiff} {t('conDiferencias').toLowerCase()}</p>
+                    )}
+                </div>
+            </div>
+            {conteo.notas && (
+                <p className="text-xs text-slate-400 mt-2 line-clamp-1 italic">&quot;{conteo.notas}&quot;</p>
+            )}
+        </button>
+    );
+}
 
-    async function handleSaveEdit(id) {
-        if (!editName.trim()) return;
-        setError('');
-        try {
-            await onActualizar(id, { nombre: editName.trim() });
-            setEditingId(null);
-        } catch (err) {
-            setError(err.message || 'Error al actualizar categoría');
-        }
-    }
-
-    async function handleEliminar(id) {
-        setError('');
-        try {
-            await onEliminar(id);
-        } catch (err) {
-            setError(err.message || 'Error al eliminar categoría');
-        }
-    }
-
-    const ICONS = ['📦', '🐔', '🐄', '🐷', '🌾', '💊', '🧪', '🏭', '🛢️', '⚗️'];
-    const COLORS = ['#f59e0b', '#10b981', '#f472b6', '#8b5cf6', '#ef4444', '#3b82f6', '#14b8a6', '#f97316'];
+// ═══════════════════════════════════════════════════════════════════════════
+//  ConteoDetailModal – view completed count detail
+// ═══════════════════════════════════════════════════════════════════════════
+function ConteoDetailModal({ conteo, onClose }) {
+    const { t } = useLanguage();
+    const items = conteo.items || [];
+    const conDiff = items.filter(i => i.diferencia !== 0);
+    const sinDiff = items.filter(i => i.diferencia === 0);
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 bg-white flex-shrink-0">
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
                     <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-base sm:text-lg truncate">{t('gestionCategorias')}</h3>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">{t('gestionCategoriasDesc')}</p>
+                        <h3 className="font-bold text-slate-900 text-lg">{t('detalleConteo')}</h3>
+                        <p className="text-sm text-slate-500 mt-0.5">{conteo.usuario} · {formatDateTime(conteo.fecha)}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <X size={22} />
                     </button>
                 </div>
-
-                {/* Existing categories */}
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-                    {categorias.map((cat) => (
-                        <div key={cat.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 group hover:bg-slate-50 transition-colors">
-                            <span className="text-xl flex-shrink-0">{cat.icono || '📦'}</span>
-                            {editingId === cat.id ? (
-                                <div className="flex-1 flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        className="inp text-sm flex-1 bg-white border-slate-200 text-slate-900"
-                                        autoFocus
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(cat.id)}
-                                    />
-                                    <button onClick={() => handleSaveEdit(cat.id)} className="btn btn-primary btn-sm text-xs px-3">
-                                        <Save size={14} />
-                                    </button>
-                                    <button onClick={() => setEditingId(null)} className="btn btn-ghost btn-sm text-xs px-2">
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-slate-800 text-sm">{cat.nombre}</p>
-                                        {cat.descripcion && <p className="text-xs text-slate-400 truncate">{cat.descripcion}</p>}
-                                    </div>
-                                    <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => { setEditingId(cat.id); setEditName(cat.nombre); }}
-                                            className="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600 transition-colors"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => onEliminar(cat.id)}
-                                            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    ))}
-                    {categorias.length === 0 && (
-                        <div className="p-8 text-center text-sm text-slate-400">{t('sinCategorias')}</div>
-                    )}
-                </div>
-
-                {/* Error display */}
-                {error && (
-                    <div className="mx-4 sm:mx-6 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
-                        <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
-                        <span>{error}</span>
+                {conteo.notas && (
+                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 text-sm text-slate-600 italic">
+                        &quot;{conteo.notas}&quot;
                     </div>
                 )}
-
-                {/* Add new */}
-                <form onSubmit={handleAdd} className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 space-y-3 flex-shrink-0">
-                    <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">{t('nuevaCategoria')}</p>
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder={t('nombreCategoria')}
-                            className="inp text-sm flex-1 bg-white border-slate-200 text-slate-900"
-                            required
-                        />
-                    </div>
-                    <input
-                        type="text"
-                        value={newDesc}
-                        onChange={(e) => setNewDesc(e.target.value)}
-                        placeholder={t('descripcionCategoria')}
-                        className="inp text-sm bg-white border-slate-200 text-slate-900"
-                    />
-                    <div className="flex items-center gap-3">
-                        <div className="flex gap-1.5 flex-wrap">
-                            {ICONS.map(icon => (
-                                <button key={icon} type="button" onClick={() => setNewIcon(icon)}
-                                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-base border transition-all ${newIcon === icon ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-200' : 'border-slate-200 hover:bg-slate-50'}`}
-                                >
-                                    {icon}
-                                </button>
+                <div className="flex-1 overflow-y-auto">
+                    {conDiff.length > 0 && (
+                        <div>
+                            <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
+                                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">{t('conDiferencias')} ({conDiff.length})</p>
+                            </div>
+                            {conDiff.map(item => (
+                                <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2 bg-amber-50/30">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-base font-semibold text-slate-800 truncate">{item.producto_nombre}</p>
+                                        <p className="text-sm text-slate-500 mt-0.5">
+                                            {t('stockSistema')}: {item.stock_sistema} → {t('conteoFisico')}: {item.conteo_fisico}
+                                        </p>
+                                    </div>
+                                    <span className={`text-base font-bold ${item.diferencia < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                        {item.diferencia > 0 ? '+' : ''}{item.diferencia}
+                                    </span>
+                                </div>
                             ))}
                         </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        {COLORS.map(color => (
-                            <button key={color} type="button" onClick={() => setNewColor(color)}
-                                className={`w-6 h-6 rounded-full border-2 transition-all ${newColor === color ? 'border-slate-900 scale-110' : 'border-transparent'}`}
-                                style={{ backgroundColor: color }}
-                            />
-                        ))}
-                    </div>
-                    <button type="submit" disabled={saving} className="btn btn-primary w-full py-2.5 text-sm font-bold flex items-center justify-center gap-2">
-                        {saving ? <span className="spinner border-white border-t-transparent w-4 h-4" /> : <FolderPlus size={16} />}
-                        {saving ? t('guardando') || 'Guardando...' : t('agregarCategoria')}
-                    </button>
-                </form>
+                    )}
+                    {sinDiff.length > 0 && (
+                        <div>
+                            <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100">
+                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">{t('sinDiferencias')} ({sinDiff.length})</p>
+                            </div>
+                            {sinDiff.map(item => (
+                                <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
+                                    <p className="text-base text-slate-700 truncate flex-1">{item.producto_nombre}</p>
+                                    <span className="text-base text-emerald-500 flex items-center gap-1"><Check size={16} /> {item.conteo_fisico}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {items.length === 0 && (
+                        <div className="p-8 text-center text-base text-slate-400">{t('sinDatos')}</div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  StockModal (quick stock update / loss registration)
+//  INVENTORY PAGE – Tap-to-count daily counting tool
 // ═══════════════════════════════════════════════════════════════════════════
-function StockModal({ producto, onClose, onUpdateStock, onMerma, userName }) {
+export default function InventarioPage() {
+    const { productos, loading: pLoading, updateStock } = useProductos();
+    const { categorias } = useCategorias();
+    const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
+    const { userName } = useRole();
     const { t } = useLanguage();
-    const [modo, setModo] = useState('stock');
-    const [cantidad, setCantidad] = useState(0);
-    const [motivo, setMotivo] = useState('');
+
+    // ── State ──
+    const [tab, setTab] = useState('conteo');
+    const [conteoItems, setConteoItems] = useState([]);
+    const [conteoActivo, setConteoActivo] = useState(null);
+    const [notas, setNotas] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+    const [busqueda, setBusqueda] = useState('');
+    const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
+    const [scannedFeedback, setScannedFeedback] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState('');
+    const [detailConteo, setDetailConteo] = useState(null);
+    const [tapProduct, setTapProduct] = useState(null); // product being counted via tap
 
-    const dias = daysUntil(producto.fecha_vencimiento);
+    const loading = pLoading || cLoading;
 
-    async function handleSubmit(e) {
-        e.preventDefault();
-        if (cantidad <= 0) return;
-        setSaving(true);
-        setError('');
-        try {
-            if (modo === 'merma') {
-                await onMerma(producto.id, cantidad, userName, motivo);
-            } else {
-                const nuevoStock = producto.stock_actual + cantidad;
-                await onUpdateStock(producto.id, nuevoStock, userName);
+    // ── Resume in-progress count on load ──
+    useEffect(() => {
+        if (!cLoading && conteos.length > 0) {
+            const enProgreso = conteos.find(c => c.estado === 'EN_PROGRESO');
+            if (enProgreso && !conteoActivo) {
+                setConteoActivo(enProgreso);
+                setConteoItems(enProgreso.items || []);
+                setNotas(enProgreso.notas || '');
             }
-            setSuccess(true);
-            setTimeout(() => { setSuccess(false); setCantidad(0); setMotivo(''); }, 1500);
-        } catch (err) {
-            setError(err.message || 'Error al actualizar stock');
+        }
+    }, [cLoading, conteos, conteoActivo]);
+
+    // ── Start new count ──
+    const handleNuevoConteo = useCallback(async () => {
+        const id = await crearConteo({ usuario: userName, notas: '', items: [] });
+        setConteoActivo({ id, usuario: userName, estado: 'EN_PROGRESO', items: [], notas: '' });
+        setConteoItems([]);
+        setNotas('');
+    }, [crearConteo, userName]);
+
+    // ── Open tap modal for product ──
+    const openTapCount = useCallback((producto) => {
+        const existing = conteoItems.find(i => i.producto_id === producto.id);
+        setTapProduct({ ...producto, _existingCount: existing ? existing.conteo_fisico : 0 });
+    }, [conteoItems]);
+
+    // ── Confirm tap count for a product ──
+    const handleTapConfirm = useCallback((count) => {
+        if (!tapProduct) return;
+        setConteoItems(prev => {
+            const exists = prev.find(i => i.producto_id === tapProduct.id);
+            if (exists) {
+                return prev.map(i => i.producto_id === tapProduct.id
+                    ? { ...i, conteo_fisico: count, diferencia: count - i.stock_sistema }
+                    : i
+                );
+            }
+            return [...prev, {
+                producto_id: tapProduct.id,
+                producto_nombre: tapProduct.nombre,
+                conteo_fisico: count,
+                stock_sistema: tapProduct.stock_actual,
+                diferencia: count - tapProduct.stock_actual,
+            }];
+        });
+        setTapProduct(null);
+    }, [tapProduct]);
+
+    // ── Handle barcode scan ──
+    const handleBarcodeScan = useCallback((code) => {
+        const matched = productos.find(p => p.codigo_barras === code);
+        if (matched) {
+            if (conteoActivo) {
+                openTapCount(matched);
+            }
+            setScannedFeedback({ type: 'success', name: matched.nombre });
+            setShowScanner(false);
+        } else {
+            setScannedFeedback({ type: 'error', code });
+        }
+        setTimeout(() => setScannedFeedback(null), 3000);
+    }, [productos, conteoActivo, openTapCount]);
+
+    // ── Save current count ──
+    const handleSaveConteo = useCallback(async () => {
+        if (!conteoActivo) return;
+        setSaving(true);
+        try {
+            await actualizarConteo(conteoActivo.id, { items: conteoItems, notas });
         } finally {
             setSaving(false);
         }
-    }
+    }, [conteoActivo, conteoItems, notas, actualizarConteo]);
 
-    return (
-        <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className="flex items-start justify-between p-4 sm:p-6 border-b border-slate-100 bg-white">
-                    <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-slate-900 text-xl leading-tight truncate">{producto.nombre}</h3>
-                        <div className="flex items-center gap-2 mt-1.5">
-                            <span className="badge-gray px-2 py-0.5 bg-slate-100 border-slate-200 text-slate-600">{t(producto.categoria?.toLowerCase())}</span>
-                            <SemaforoBadge days={dias} />
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="ml-3 p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0">
-                        <X size={20} />
-                    </button>
-                </div>
+    // ── Finalize count & adjust stock ──
+    const handleFinalizarConteo = useCallback(async () => {
+        if (!conteoActivo || conteoItems.length === 0) return;
+        setSaving(true);
+        try {
+            await actualizarConteo(conteoActivo.id, { items: conteoItems, notas });
+            await finalizarConteo(conteoActivo.id);
+            for (const item of conteoItems) {
+                if (item.diferencia !== 0) {
+                    await updateStock(item.producto_id, item.conteo_fisico, userName);
+                }
+            }
+            setConteoActivo(null);
+            setConteoItems([]);
+            setNotas('');
+        } finally {
+            setSaving(false);
+        }
+    }, [conteoActivo, conteoItems, notas, actualizarConteo, finalizarConteo, updateStock, userName]);
 
-                {/* Stock display */}
-                <div className="px-4 sm:px-6 py-4 sm:py-5 bg-slate-50 border-b border-slate-100">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs text-brand-600 font-bold uppercase tracking-wider">{t('stockActual')}</p>
-                            <p className="text-3xl sm:text-4xl font-bold text-slate-900 mt-1">
-                                {producto.stock_actual} <span className="text-base sm:text-lg text-slate-400 font-normal ml-1">{producto.unidad || 'u'}</span>
-                            </p>
-                            {producto.peso_unitario && (
-                                <p className="text-sm text-slate-500 mt-1 font-medium">
-                                    {t('pesoTotal')}: <strong className="text-slate-700">{(producto.stock_actual * producto.peso_unitario).toLocaleString()} {t('kg')}</strong>
-                                    <span className="text-slate-400 ml-1">({producto.peso_unitario} {t('kg')}/u)</span>
-                                </p>
-                            )}
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs text-slate-500 font-semibold">{t('minDef')}</p>
-                            <p className="text-lg font-bold text-slate-700 mt-1">{producto.stock_minimo_rop} {producto.unidad || 'u'}</p>
-                            <div className="mt-2 scale-110 transform origin-right">
-                                <StockBar actual={producto.stock_actual} minimo={producto.stock_minimo_rop} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 sm:gap-4 mt-3 flex-wrap">
-                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            {t('vencimiento')}: <strong className="text-slate-700">{formatDate(producto.fecha_vencimiento)}</strong>
-                        </p>
-                        {producto.lote && (
-                            <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
-                                {t('lote')}: <strong className="text-slate-700 font-mono">{producto.lote}</strong>
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex border-b border-slate-200 bg-white">
-                    <button onClick={() => setModo('stock')} className={`flex-1 py-3.5 text-sm font-semibold transition-all ${modo === 'stock' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
-                        📦 {t('actualizarStock')}
-                    </button>
-                    <button onClick={() => setModo('merma')} className={`flex-1 py-3.5 text-sm font-semibold transition-all ${modo === 'merma' ? 'text-rose-600 border-b-2 border-rose-600 bg-rose-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
-                        🗑️ {t('registrarMerma')}
-                    </button>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 bg-white">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-600 mb-2">
-                            {modo === 'stock' ? t('cantidadIngresar') : t('cantidadBaja')}
-                        </label>
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <button type="button" onClick={() => setCantidad(Math.max(0, cantidad - 1))} className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700 active:scale-95 transition-all shadow-sm">
-                                <Minus size={20} />
-                            </button>
-                            <input type="number" min="0" value={cantidad} onChange={(e) => setCantidad(Math.max(0, parseInt(e.target.value) || 0))} className="inp text-center text-2xl sm:text-3xl font-bold h-12 sm:h-14 flex-1 tracking-wider text-slate-900 bg-slate-50 border-slate-200" />
-                            <button type="button" onClick={() => setCantidad(cantidad + 1)} className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700 active:scale-95 transition-all shadow-sm">
-                                <Plus size={20} />
-                            </button>
-                        </div>
-                        <div className="flex gap-2 mt-3">
-                            {[1, 5, 10, 25, 50].map((n) => (
-                                <button key={n} type="button" onClick={() => setCantidad(n)}
-                                    className="flex-1 py-2 text-sm font-medium rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-all active:scale-95 shadow-sm"
-                                >+{n}</button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {modo === 'merma' && (
-                        <div className="animate-fade-in">
-                            <label className="block text-sm font-medium text-slate-600 mb-2">{t('motivoMerma')}</label>
-                            <textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder={t('ejMotivoMerma')} className="inp resize-none text-sm placeholder:text-slate-400 bg-slate-50 border-slate-200 text-slate-900" required />
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
-                            <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    <button type="submit" disabled={saving || cantidad === 0}
-                        className={`w-full py-4 rounded-xl font-bold text-base transition-all active:scale-95 shadow-lg ${success ? 'bg-emerald-500 text-white' : modo === 'merma' ? 'btn-danger justify-center' : 'btn-primary justify-center'} ${saving || cantidad === 0 ? 'opacity-50 cursor-not-allowed transform-none shadow-none' : ''}`}
-                    >
-                        {success ? '✅ ' + t('stockActualizado') : saving ? t('guardando') : modo === 'merma' ? '🗑️ ' + t('registrarMerma') : '✅ ' + t('actualizarStock')}
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  INVENTORY PAGE
-// ═══════════════════════════════════════════════════════════════════════════
-export default function InventarioPage() {
-    const {
-        productos, loading,
-        crearProducto, actualizarProducto, eliminarProducto,
-        updateStock, registrarMerma,
-    } = useProductos();
-    const { categorias, error: catError, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
-    const { role, userName } = useRole();
-    const { t } = useLanguage();
-
-    const [busqueda, setBusqueda] = useState('');
-    const [categoria, setCategoria] = useState('Todas');
-    const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-    const [showProductForm, setShowProductForm] = useState(false);
-    const [editingProduct, setEditingProduct] = useState(null);
-    const [deleteProduct, setDeleteProduct] = useState(null);
-    const [showCategoryManager, setShowCategoryManager] = useState(false);
-
+    // ── Category names ──
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
+    // ── Products filtered ──
     const productosFiltrados = useMemo(() => {
         return productos
-            .filter((p) => categoria === 'Todas' || p.categoria === categoria)
-            .filter((p) => {
+            .filter(p => categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro)
+            .filter(p => {
+                if (!busqueda.trim()) return true;
                 const q = busqueda.toLowerCase();
-                return p.nombre.toLowerCase().includes(q) || (p.lote && p.lote.toLowerCase().includes(q));
+                return p.nombre.toLowerCase().includes(q)
+                    || (p.codigo_barras && p.codigo_barras.includes(q));
             });
-    }, [productos, categoria, busqueda]);
+    }, [productos, categoriaFiltro, busqueda]);
 
-    const handleSaveProduct = useCallback(async (data, id) => {
-        if (id) {
-            const { _usuario, ...rest } = data;
-            await actualizarProducto(id, rest);
-        } else {
-            await crearProducto(data);
-        }
-    }, [crearProducto, actualizarProducto]);
+    // ── Summary stats ──
+    const summary = useMemo(() => {
+        const total = conteoItems.length;
+        const conDiff = conteoItems.filter(i => i.diferencia !== 0).length;
+        return { total, conDiff, sinDiff: total - conDiff };
+    }, [conteoItems]);
 
-    const canManage = role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA';
+    // ── Completed counts for history ──
+    const historialConteos = useMemo(() => {
+        return conteos
+            .filter(c => c.estado === 'COMPLETADO')
+            .sort((a, b) => {
+                const fA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                const fB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
+                return fB - fA;
+            });
+    }, [conteos]);
+
+    // helper: is product already counted?
+    const isProductCounted = useCallback((pid) => conteoItems.some(i => i.producto_id === pid), [conteoItems]);
+    const getConteoForProduct = useCallback((pid) => conteoItems.find(i => i.producto_id === pid), [conteoItems]);
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
-            <Header title={t('inventario')} />
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-7xl mx-auto w-full">
+            <Header title={t('conteoInventario')} />
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full">
 
-                {/* ── Action bar ── */}
-                {canManage && (
-                    <div className="flex flex-wrap items-center gap-3">
-                        <button
-                            onClick={() => { setEditingProduct(null); setShowProductForm(true); }}
-                            className="btn btn-primary px-5 py-2.5 text-sm font-bold flex items-center gap-2 shadow-sm"
-                        >
-                            <PlusCircle size={18} /> {t('nuevoProducto')}
-                        </button>
-                        <button
-                            onClick={() => setShowCategoryManager(true)}
-                            className="btn btn-ghost px-4 py-2.5 text-sm font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50"
-                        >
-                            <Settings2 size={16} /> {t('gestionCategorias')}
-                        </button>
-                    </div>
-                )}
-
-                {/* ── Filters ── */}
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1 md:max-w-md">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder={t('buscarProducto')}
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            className="inp pl-11 py-3 text-sm h-12 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500"
-                        />
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar items-center pb-1">
-                        {catNames.map((cat) => {
-                            const translatedCat = cat === 'Todas' ? t('todas') : cat;
-                            return (
-                                <button
-                                    key={cat}
-                                    onClick={() => setCategoria(cat)}
-                                    className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-all shadow-sm whitespace-nowrap ${categoria === cat
-                                        ? 'bg-brand-50 text-brand-700 border-brand-200 shadow-sm ring-1 ring-brand-500/10'
-                                        : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    {translatedCat}
-                                </button>
-                            );
-                        })}
-                    </div>
+                {/* ── Tabs ── */}
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm">
+                    <button
+                        onClick={() => setTab('conteo')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'conteo' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                    >
+                        <ClipboardList size={20} /> {t('conteoInventario')}
+                    </button>
+                    <button
+                        onClick={() => setTab('historial')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'historial' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                    >
+                        <History size={20} /> {t('historialConteos')}
+                    </button>
                 </div>
 
-                {/* ── Desktop Table ── */}
-                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden hidden md:block">
-                    <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{t('productos')}</h2>
-                            <span className="badge-gray bg-slate-100 border-slate-200 text-slate-600">{productosFiltrados.length}</span>
-                        </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="data-table w-full">
-                            <thead className="bg-slate-50 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('producto')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('lote')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('categoria')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('stockActual')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('peso')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('min')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('nivel')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('vencimiento')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('alerta')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('accion')}</th>
-                                </tr>
-                            </thead>
-                            {loading ? (
-                                <LoadingSkeleton rows={8} cols={10} />
-                            ) : (
-                                <tbody>
-                                    {productosFiltrados.length === 0 ? (
-                                        <tr><td colSpan={10}><div className="p-8"><EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" /></div></td></tr>
-                                    ) : (
-                                        productosFiltrados.map((p) => {
-                                            const dias = daysUntil(p.fecha_vencimiento);
-                                            const pesoTotal = p.peso_unitario ? (p.stock_actual * p.peso_unitario) : null;
+                {/* ══════════════════════════════════════════════════════ */}
+                {/*  TAB: CONTEO                                          */}
+                {/* ══════════════════════════════════════════════════════ */}
+                {tab === 'conteo' && (
+                    <>
+                        {/* Scanned feedback toast */}
+                        {scannedFeedback && (
+                            <div className={`p-3.5 rounded-xl text-base font-medium flex items-center gap-2 animate-fade-in ${scannedFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                {scannedFeedback.type === 'success' ? (
+                                    <><Check size={18} /> {t('productoEscaneado')}: <strong>{scannedFeedback.name}</strong></>
+                                ) : (
+                                    <><AlertTriangle size={18} /> {t('productoNoEncontrado')} ({scannedFeedback.code})</>
+                                )}
+                            </div>
+                        )}
+
+                        {/* No active count → Start */}
+                        {!conteoActivo && (
+                            <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-center">
+                                <div className="w-24 h-24 rounded-3xl bg-brand-50 border border-brand-100 flex items-center justify-center mb-6">
+                                    <ClipboardList size={44} className="text-brand-600" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-slate-900">{t('conteoInventario')}</h2>
+                                <p className="text-base text-slate-500 mt-2 max-w-sm">{t('tocaParaContar')}</p>
+                                <button
+                                    onClick={handleNuevoConteo}
+                                    className="btn btn-primary px-8 py-4 mt-8 text-lg font-bold flex items-center gap-3 shadow-lg rounded-2xl"
+                                >
+                                    <Plus size={24} /> {t('nuevoConteo')}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Active count */}
+                        {conteoActivo && (
+                            <div className="space-y-4">
+                                {/* Action bar */}
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                    <button
+                                        onClick={() => setShowScanner(true)}
+                                        className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
+                                    >
+                                        <ScanBarcode size={20} /> {t('escanearCodigo')}
+                                    </button>
+                                    <div className="ml-auto flex items-center gap-2">
+                                        <button
+                                            onClick={handleSaveConteo}
+                                            disabled={saving || conteoItems.length === 0}
+                                            className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                            <Save size={18} /> {t('guardarConteo')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Summary strip */}
+                                {conteoItems.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-center shadow-sm">
+                                            <p className="text-3xl font-bold text-slate-900">{summary.total}</p>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mt-1">{t('itemsContados')}</p>
+                                        </div>
+                                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center shadow-sm">
+                                            <p className="text-3xl font-bold text-emerald-700">{summary.sinDiff}</p>
+                                            <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mt-1">{t('sinDiferencias')}</p>
+                                        </div>
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-center shadow-sm">
+                                            <p className="text-3xl font-bold text-amber-700">{summary.conDiff}</p>
+                                            <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold mt-1">{t('conDiferencias')}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Search + category filter */}
+                                <div className="space-y-3">
+                                    <div className="relative">
+                                        <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder={t('buscarProducto')}
+                                            value={busqueda}
+                                            onChange={e => setBusqueda(e.target.value)}
+                                            className="inp pl-12 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 focus:ring-brand-500/10 focus:border-brand-500 w-full"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                        {catNames.map(cat => {
+                                            const label = cat === 'Todas' ? t('todas') : cat;
                                             return (
-                                                <tr
+                                                <button
+                                                    key={cat}
+                                                    onClick={() => setCategoriaFiltro(cat)}
+                                                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all shadow-sm whitespace-nowrap ${
+                                                        categoriaFiltro === cat
+                                                            ? 'bg-brand-50 text-brand-700 border-brand-200 ring-1 ring-brand-500/10'
+                                                            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                                    }`}
+                                                >{label}</button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Product grid — tap to count */}
+                                <div className="space-y-2">
+                                    {loading ? (
+                                        <div className="space-y-3">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <div key={i} className="bg-white border border-slate-200 rounded-xl h-20 animate-pulse shadow-sm" />
+                                            ))}
+                                        </div>
+                                    ) : productosFiltrados.length === 0 ? (
+                                        <EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" />
+                                    ) : (
+                                        productosFiltrados.map(p => {
+                                            const counted = isProductCounted(p.id);
+                                            const conteoInfo = counted ? getConteoForProduct(p.id) : null;
+                                            const diff = conteoInfo ? conteoInfo.diferencia : 0;
+                                            return (
+                                                <button
                                                     key={p.id}
-                                                    className={`${dias <= 3 ? 'bg-red-50 hover:bg-red-100/50' : dias <= 7 ? 'bg-amber-50 hover:bg-amber-100/50' : 'hover:bg-slate-50'} border-b border-slate-100 transition-colors cursor-pointer group`}
-                                                    onClick={() => setProductoSeleccionado(p)}
+                                                    onClick={() => openTapCount(p)}
+                                                    className={`w-full text-left rounded-xl border p-4 flex items-center gap-4 transition-all active:scale-[0.98] shadow-sm ${
+                                                        counted
+                                                            ? diff !== 0
+                                                                ? 'bg-amber-50 border-amber-200 hover:shadow-md'
+                                                                : 'bg-emerald-50/50 border-emerald-200 hover:shadow-md'
+                                                            : 'bg-white border-slate-200 hover:shadow-md hover:border-slate-300'
+                                                    }`}
+                                                    style={{ WebkitTapHighlightColor: 'transparent' }}
                                                 >
-                                                    <td className="px-6 py-4">
-                                                        <p className="font-bold text-slate-800 group-hover:text-brand-600 transition-colors">{p.nombre}</p>
-                                                        {p.proveedor && <p className="text-xs text-slate-400 mt-0.5">{p.proveedor}</p>}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-mono text-slate-500">{p.lote || '—'}</td>
-                                                    <td className="px-6 py-4"><span className="badge-gray bg-white border-slate-200">{p.categoria}</span></td>
-                                                    <td className="px-6 py-4 font-bold text-slate-900 text-base">{p.stock_actual} <span className="text-slate-400 text-xs font-normal">{p.unidad}</span></td>
-                                                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{pesoTotal != null ? `${pesoTotal.toLocaleString()} ${t('kg')}` : '—'}</td>
-                                                    <td className="px-6 py-4 text-slate-500 font-medium">{p.stock_minimo_rop}</td>
-                                                    <td className="px-6 py-4 w-32"><StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} /></td>
-                                                    <td className="px-6 py-4 text-sm text-slate-500 font-medium">{formatDate(p.fecha_vencimiento)}</td>
-                                                    <td className="px-6 py-4"><SemaforoBadge days={dias} /></td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-1">
-                                                            <button className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors" title={t('actualizarStock')} onClick={(e) => { e.stopPropagation(); setProductoSeleccionado(p); }}>
-                                                                <Package size={16} />
-                                                            </button>
-                                                            {canManage && (
-                                                                <>
-                                                                    <button className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors" title={t('editarProducto')} onClick={(e) => { e.stopPropagation(); setEditingProduct(p); setShowProductForm(true); }}>
-                                                                        <Pencil size={16} />
-                                                                    </button>
-                                                                    <button className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" title={t('eliminarProducto')} onClick={(e) => { e.stopPropagation(); setDeleteProduct(p); }}>
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                </>
-                                                            )}
+                                                    {/* Icon / Status */}
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-lg font-bold ${
+                                                        counted
+                                                            ? diff !== 0
+                                                                ? 'bg-amber-100 text-amber-700'
+                                                                : 'bg-emerald-100 text-emerald-700'
+                                                            : 'bg-slate-100 text-slate-400'
+                                                    }`}>
+                                                        {counted ? (
+                                                            <span className="text-xl font-black">{conteoInfo.conteo_fisico}</span>
+                                                        ) : (
+                                                            <Plus size={24} />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs font-semibold text-brand-600 uppercase">{p.categoria}</span>
+                                                            {p.gramaje && <span className="text-xs text-slate-400">· {p.gramaje}</span>}
                                                         </div>
-                                                    </td>
-                                                </tr>
+                                                        <p className="text-sm text-slate-500 mt-1">
+                                                            {t('stockSistema')}: <strong className="text-slate-700">{p.stock_actual}</strong> {p.unidad}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Right: status badge / arrow */}
+                                                    <div className="flex-shrink-0">
+                                                        {counted ? (
+                                                            diff !== 0 ? (
+                                                                <span className={`text-base font-bold px-3 py-1.5 rounded-full ${diff < 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                    {diff > 0 ? '+' : ''}{diff}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                                                                    <Check size={20} className="text-emerald-600" />
+                                                                </span>
+                                                            )
+                                                        ) : (
+                                                            <ChevronRight size={22} className="text-slate-300" />
+                                                        )}
+                                                    </div>
+                                                </button>
                                             );
                                         })
                                     )}
-                                </tbody>
-                            )}
-                        </table>
-                    </div>
-                </div>
-
-                {/* ── Mobile Card Grid ── */}
-                <div className="md:hidden space-y-4">
-                    {loading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 p-4 h-28 rounded-xl animate-pulse shadow-sm" />
-                        ))
-                    ) : productosFiltrados.length === 0 ? (
-                        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm"><EmptyState icon={Package} title="sinResultados" subtitle="ajustaFiltros" /></div>
-                    ) : (
-                        productosFiltrados.map((p) => {
-                            const dias = daysUntil(p.fecha_vencimiento);
-                            const pesoTotal = p.peso_unitario ? (p.stock_actual * p.peso_unitario) : null;
-                            return (
-                                <div
-                                    key={p.id}
-                                    className={`w-full text-left bg-white border border-slate-200 p-5 rounded-xl transition-all shadow-sm hover:shadow-md ${dias <= 3 ? 'border-l-red-500 border-l-4 bg-red-50/50' : dias <= 7 ? 'border-l-amber-500 border-l-4 bg-amber-50/50' : 'border-l-4 border-l-transparent'}`}
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0" onClick={() => setProductoSeleccionado(p)}>
-                                            <p className="font-bold text-slate-900 text-lg leading-tight truncate">{p.nombre}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <p className="text-xs text-brand-600 font-medium uppercase tracking-wide">{p.categoria}</p>
-                                                {p.lote && <span className="text-xs text-slate-400 font-mono">· {p.lote}</span>}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                            <SemaforoBadge days={dias} />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-end gap-4 mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100" onClick={() => setProductoSeleccionado(p)}>
-                                        <div>
-                                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('stock')}</p>
-                                            <p className="font-bold text-slate-900 text-xl mt-0.5">{p.stock_actual} <span className="text-slate-400 text-sm font-normal">{p.unidad}</span></p>
-                                            {pesoTotal != null && <p className="text-[10px] text-slate-400 font-medium mt-0.5">{pesoTotal.toLocaleString()} {t('kg')}</p>}
-                                        </div>
-                                        <div className="flex-1 mb-1.5">
-                                            <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('minDef')}</p>
-                                            <p className="text-sm font-bold text-slate-700 mt-1">{p.stock_minimo_rop}</p>
-                                        </div>
-                                    </div>
-                                    {/* Mobile action buttons */}
-                                    {canManage && (
-                                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                                            <button onClick={() => setProductoSeleccionado(p)} className="btn btn-ghost btn-sm text-xs flex-1 text-brand-600 font-semibold">
-                                                📦 {t('stock')}
-                                            </button>
-                                            <button onClick={() => { setEditingProduct(p); setShowProductForm(true); }} className="btn btn-ghost btn-sm text-xs flex-1 text-slate-600 font-semibold">
-                                                <Pencil size={14} className="mr-1" /> {t('editar')}
-                                            </button>
-                                            <button onClick={() => setDeleteProduct(p)} className="btn btn-ghost btn-sm text-xs text-red-500 font-semibold px-3">
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
-                            );
-                        })
-                    )}
-                </div>
+
+                                {/* Notes */}
+                                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">{t('notas')}</label>
+                                    <textarea
+                                        rows={2}
+                                        value={notas}
+                                        onChange={e => setNotas(e.target.value)}
+                                        placeholder={t('notasConteo')}
+                                        className="inp resize-none text-base py-3 bg-slate-50 border-slate-200 text-slate-900 w-full"
+                                    />
+                                </div>
+
+                                {/* Finalize */}
+                                {conteoItems.length > 0 && (
+                                    <button
+                                        onClick={handleFinalizarConteo}
+                                        disabled={saving}
+                                        className="w-full btn btn-primary py-5 text-lg font-bold flex items-center justify-center gap-3 shadow-lg rounded-2xl"
+                                    >
+                                        {saving ? (
+                                            <><span className="spinner border-white border-t-transparent w-6 h-6" /> {t('guardando')}</>
+                                        ) : (
+                                            <><Check size={24} /> {t('finalizarConteo')}</>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* ══════════════════════════════════════════════════════ */}
+                {/*  TAB: HISTORIAL                                        */}
+                {/* ══════════════════════════════════════════════════════ */}
+                {tab === 'historial' && (
+                    <div className="space-y-3">
+                        {loading ? (
+                            <div className="space-y-3">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="bg-white border border-slate-200 rounded-xl h-28 animate-pulse shadow-sm" />
+                                ))}
+                            </div>
+                        ) : historialConteos.length === 0 ? (
+                            <div className="py-12">
+                                <EmptyState icon={History} title={t('noConteos')} />
+                            </div>
+                        ) : (
+                            historialConteos.map(c => (
+                                <ConteoHistoryCard key={c.id} conteo={c} onSelect={setDetailConteo} />
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* ── Modals ── */}
-            {productoSeleccionado && (
-                <StockModal
-                    producto={productoSeleccionado}
-                    onClose={() => setProductoSeleccionado(null)}
-                    onUpdateStock={updateStock}
-                    onMerma={registrarMerma}
-                    userName={userName}
-                />
+            {showScanner && (
+                <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />
             )}
-
-            {showProductForm && (
-                <ProductFormModal
-                    producto={editingProduct}
-                    categorias={categorias}
-                    onClose={() => { setShowProductForm(false); setEditingProduct(null); }}
-                    onSave={handleSaveProduct}
-                    userName={userName}
-                />
+            {detailConteo && (
+                <ConteoDetailModal conteo={detailConteo} onClose={() => setDetailConteo(null)} />
             )}
-
-            {deleteProduct && (
-                <DeleteConfirmModal
-                    producto={deleteProduct}
-                    onClose={() => setDeleteProduct(null)}
-                    onConfirm={eliminarProducto}
-                />
-            )}
-
-            {showCategoryManager && (
-                <CategoryManagerModal
-                    categorias={categorias}
-                    onClose={() => setShowCategoryManager(false)}
-                    onCrear={crearCategoria}
-                    onActualizar={actualizarCategoria}
-                    onEliminar={eliminarCategoria}
+            {tapProduct && conteoActivo && (
+                <TapCountModal
+                    producto={tapProduct}
+                    currentCount={tapProduct._existingCount}
+                    onConfirm={handleTapConfirm}
+                    onDiscard={() => setTapProduct(null)}
+                    onClose={() => setTapProduct(null)}
                 />
             )}
         </div>

@@ -1,5 +1,5 @@
 'use client';
-import { TrendingDown, ShoppingCart, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
@@ -31,40 +31,6 @@ export function KPICard({ title, value, subtitle, icon: Icon, color = 'brand', l
             <p className="text-[10px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">{subtitle}</p>
         </div>
     );
-}
-
-// ─── Status Badge ──────────────────────────────────────────────────────────
-export function StatusBadge({ estado }) {
-    const { language } = useLanguage();
-
-    const LABELS = {
-        es: {
-            PENDIENTE: 'Pendiente',
-            APROBADO_ADMIN: 'Aprobado · Admin',
-            VALIDADO_GERENCIA: 'Validado · Gerencia',
-            RECHAZADO: 'Rechazado',
-            COMPRADO: 'Comprado',
-        },
-        en: {
-            PENDIENTE: 'Pending',
-            APROBADO_ADMIN: 'Approved · Admin',
-            VALIDADO_GERENCIA: 'Validated · Mgmt',
-            RECHAZADO: 'Rejected',
-            COMPRADO: 'Purchased',
-        },
-    };
-
-    const CLS = {
-        PENDIENTE: 'badge-yellow',
-        APROBADO_ADMIN: 'badge-blue',
-        VALIDADO_GERENCIA: 'badge-green',
-        RECHAZADO: 'badge-red',
-        COMPRADO: 'badge-purple',
-    };
-
-    const label = LABELS[language]?.[estado] || LABELS.en[estado] || estado;
-    const cls = CLS[estado] || 'badge-gray';
-    return <span className={cls}>● {label}</span>;
 }
 
 // ─── Semáforo Row Badge ────────────────────────────────────────────────────

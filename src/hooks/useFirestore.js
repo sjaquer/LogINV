@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS,
-    MOCK_CATEGORIAS,
+    MOCK_CATEGORIAS, MOCK_CONTEOS,
 } from '@/lib/mockDataStore';
 
 // ─── Detect if Firebase is configured ────────────────────────────────────
@@ -11,7 +11,7 @@ const USE_MOCK = typeof window !== 'undefined'
     : true;
 
 if (typeof window !== 'undefined') {
-    console.log('[MolinoINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
+    console.log('[LogINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
 }
 
 // ─── Helpers for mock timestamps ──────────────────────────────────────────
@@ -25,12 +25,14 @@ let mockProductos = [...MOCK_PRODUCTOS];
 let mockRequerimientos = [...MOCK_REQUERIMIENTOS];
 let mockMovimientos = [...MOCK_MOVIMIENTOS];
 let mockCategorias = [...MOCK_CATEGORIAS];
+let mockConteos = [...MOCK_CONTEOS];
 
 const listeners = {
     productos: new Set(),
     requerimientos: new Set(),
     movimientos: new Set(),
     categorias: new Set(),
+    conteos: new Set(),
 };
 
 function notify(key) {
@@ -39,6 +41,7 @@ function notify(key) {
         requerimientos: mockRequerimientos,
         movimientos: mockMovimientos,
         categorias: mockCategorias,
+        conteos: mockConteos,
     };
     listeners[key].forEach(fn => fn([...dataMap[key]]));
 }
@@ -626,4 +629,123 @@ export function useMovimientos() {
     }, []);
 
     return { movimientos, loading, error };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  useConteos – Daily inventory counts
+// ═══════════════════════════════════════════════════════════════════════════
+export function useConteos() {
+    const [conteos, setConteos] = useState(USE_MOCK ? mockConteos : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (USE_MOCK) {
+            setConteos([...mockConteos]);
+            listeners.conteos.add(setConteos);
+            return () => listeners.conteos.delete(setConteos);
+        }
+        let unsub;
+        (async () => {
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'conteos'), fs.orderBy('fecha', 'desc'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setConteos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[LogINV] Error listener conteos:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            const qSimple = fs.collection(db, 'conteos');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setConteos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[LogINV] Error fallback conteos:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[LogINV] Error setup conteos:', err);
+                setLoading(false);
+                setError(err.message);
+            }
+        })();
+        return () => unsub?.();
+    }, []);
+
+    const crearConteo = useCallback(async (data) => {
+        if (USE_MOCK) {
+            const newConteo = {
+                id: 'cnt_' + Date.now(),
+                ...data,
+                fecha: mockTimestamp(),
+                estado: 'EN_PROGRESO',
+                items: data.items || [],
+                fecha_cierre: null,
+            };
+            mockConteos = [newConteo, ...mockConteos];
+            notify('conteos');
+            return newConteo.id;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            const ref = await fs.addDoc(fs.collection(db, 'conteos'), {
+                ...data,
+                fecha: fs.serverTimestamp(),
+                estado: 'EN_PROGRESO',
+                items: data.items || [],
+                fecha_cierre: null,
+            });
+            return ref.id;
+        } catch (err) {
+            firebaseError('crearConteo', err);
+        }
+    }, []);
+
+    const actualizarConteo = useCallback(async (id, data) => {
+        if (USE_MOCK) {
+            mockConteos = mockConteos.map(c => c.id === id ? { ...c, ...data } : c);
+            notify('conteos');
+            return;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'conteos', id), data);
+        } catch (err) {
+            firebaseError('actualizarConteo', err);
+        }
+    }, []);
+
+    const finalizarConteo = useCallback(async (id) => {
+        if (USE_MOCK) {
+            mockConteos = mockConteos.map(c =>
+                c.id === id ? { ...c, estado: 'COMPLETADO', fecha_cierre: mockTimestamp() } : c
+            );
+            notify('conteos');
+            return;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'conteos', id), {
+                estado: 'COMPLETADO',
+                fecha_cierre: fs.serverTimestamp(),
+            });
+        } catch (err) {
+            firebaseError('finalizarConteo', err);
+        }
+    }, []);
+
+    return { conteos, loading, error, crearConteo, actualizarConteo, finalizarConteo };
 }

@@ -7,13 +7,12 @@ import { useSidebar } from '@/context/SidebarContext';
 import {
     LayoutDashboard,
     Package,
-    ShoppingCart,
-    ArrowLeftRight,
-    Wheat,
+    Wine,
     ChevronLeft,
     ChevronRight,
     Menu,
     X,
+    ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,9 +24,8 @@ export default function Sidebar() {
 
     const NAV_ITEMS = [
         { href: '/', label: t('dashboard'), icon: LayoutDashboard },
-        { href: '/inventario', label: t('inventario'), icon: Package },
-        { href: '/compras', label: t('compras'), icon: ShoppingCart },
-        { href: '/mermas', label: t('mermas'), icon: ArrowLeftRight },
+        { href: '/productos', label: t('productos'), icon: Package },
+        { href: '/inventario', label: t('inventario'), icon: ClipboardList },
     ];
 
     return (
@@ -63,12 +61,12 @@ export default function Sidebar() {
                 {/* Logo */}
                 <div className={cn('flex items-center gap-3 px-6 py-6 border-b border-slate-100', collapsed && 'justify-center px-2')}>
                     <div className="flex-shrink-0 w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-md shadow-brand-500/20">
-                        <Wheat size={20} className="text-white" />
+                        <Wine size={20} className="text-white" />
                     </div>
                     {!collapsed && (
                         <div>
                             <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">LOG-INV</p>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Gestión de Stock</p>
+                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Control de Inventario</p>
                         </div>
                     )}
                 </div>

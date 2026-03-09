@@ -1,5 +1,5 @@
 // src/lib/mockDataStore.js
-// Mock data – Empresa Agroindustrial Alimentaria Veterinaria (Molino de Alimento Balanceado)
+// Mock data – Control de Inventario para Bar / Restaurante
 
 function daysFromNow(days) {
     const d = new Date();
@@ -15,119 +15,90 @@ function daysAgo(days) {
 
 // ─── CATEGORÍAS ──
 export const MOCK_CATEGORIAS = [
-    { id: 'cat1', nombre: 'Aves', descripcion: 'Alimento balanceado y suplementos para aves', color: '#f59e0b', icono: '🐔', orden: 1, activa: true, fecha_creacion: daysAgo(90) },
-    { id: 'cat2', nombre: 'Ganado', descripcion: 'Alimento y sales minerales para ganado vacuno', color: '#10b981', icono: '🐄', orden: 2, activa: true, fecha_creacion: daysAgo(90) },
-    { id: 'cat3', nombre: 'Porcinos', descripcion: 'Alimento balanceado para cerdos en todas las etapas', color: '#f472b6', icono: '🐷', orden: 3, activa: true, fecha_creacion: daysAgo(90) },
-    { id: 'cat4', nombre: 'Materia Prima', descripcion: 'Insumos base para formulación de alimento', color: '#8b5cf6', icono: '🌾', orden: 4, activa: true, fecha_creacion: daysAgo(90) },
-    { id: 'cat5', nombre: 'Veterinario', descripcion: 'Medicamentos, vacunas e insumos veterinarios', color: '#ef4444', icono: '💊', orden: 5, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat1', nombre: 'Licores', descripcion: 'Bebidas alcohólicas destiladas y licores', color: '#8b5cf6', icono: '🥃', orden: 1, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat2', nombre: 'Cervezas', descripcion: 'Cervezas nacionales e importadas', color: '#f59e0b', icono: '🍺', orden: 2, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat3', nombre: 'Vinos', descripcion: 'Vinos tintos, blancos y espumantes', color: '#ef4444', icono: '🍷', orden: 3, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat4', nombre: 'Bebidas sin alcohol', descripcion: 'Gaseosas, jugos, agua y energizantes', color: '#10b981', icono: '🥤', orden: 4, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat5', nombre: 'Insumos Bar', descripcion: 'Garnish, syrups, hielo y complementos', color: '#3b82f6', icono: '🍋', orden: 5, activa: true, fecha_creacion: daysAgo(90) },
+    { id: 'cat6', nombre: 'Snacks', descripcion: 'Bocaditos, frutos secos y acompañamientos', color: '#f97316', icono: '🥜', orden: 6, activa: true, fecha_creacion: daysAgo(90) },
 ];
 
-// ─── PRODUCTOS: Sacos de alimento balanceado, insumos de molino, materias primas ──
+// ─── PRODUCTOS ──
 export const MOCK_PRODUCTOS = [
-    // Alimento Aves
-    { id: 'p1', nombre: 'Saco Alimento Pollo Engorde x40kg', categoria: 'Aves', stock_actual: 18, stock_minimo_rop: 50, unidad: 'sacos', fecha_vencimiento: daysFromNow(45), ultima_actualizacion: daysAgo(1), lote: 'L-2026-0301', peso_unitario: 40 },
-    { id: 'p2', nombre: 'Saco Alimento Pollo Inicio x40kg', categoria: 'Aves', stock_actual: 12, stock_minimo_rop: 30, unidad: 'sacos', fecha_vencimiento: daysFromNow(30), ultima_actualizacion: daysAgo(0), lote: 'L-2026-0289', peso_unitario: 40 },
-    { id: 'p3', nombre: 'Saco Alimento Gallina Ponedora x40kg', categoria: 'Aves', stock_actual: 35, stock_minimo_rop: 25, unidad: 'sacos', fecha_vencimiento: daysFromNow(60), ultima_actualizacion: daysAgo(2), lote: 'L-2026-0295', peso_unitario: 40 },
-    { id: 'p4', nombre: 'Premezcla Vitamínica Aves x25kg', categoria: 'Aves', stock_actual: 5, stock_minimo_rop: 10, unidad: 'sacos', fecha_vencimiento: daysFromNow(90), ultima_actualizacion: daysAgo(3), lote: 'L-2026-0210', peso_unitario: 25 },
+    // Licores
+    { id: 'p1', nombre: 'Vodka Absolut 750ml', categoria: 'Licores', stock_actual: 8, stock_minimo_rop: 5, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(1), lote: 'VOD-2026-01', codigo_barras: '7750182000123' },
+    { id: 'p2', nombre: 'Ron Havana Club 750ml', categoria: 'Licores', stock_actual: 3, stock_minimo_rop: 4, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(0), lote: 'RON-2026-02', codigo_barras: '7750182000456' },
+    { id: 'p3', nombre: 'Whisky Johnnie Walker Black', categoria: 'Licores', stock_actual: 5, stock_minimo_rop: 3, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(2), lote: 'WHI-2026-01', codigo_barras: '5000267024004' },
+    { id: 'p4', nombre: 'Tequila José Cuervo 750ml', categoria: 'Licores', stock_actual: 2, stock_minimo_rop: 3, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(1), lote: 'TEQ-2026-01', codigo_barras: '7501035010109' },
+    { id: 'p5', nombre: 'Pisco Quebranta 750ml', categoria: 'Licores', stock_actual: 6, stock_minimo_rop: 4, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(0), lote: 'PIS-2026-01', codigo_barras: '7750106000789' },
 
-    // Alimento Ganado
-    { id: 'p5', nombre: 'Saco Alimento Ganado Lechero x50kg', categoria: 'Ganado', stock_actual: 40, stock_minimo_rop: 30, unidad: 'sacos', fecha_vencimiento: daysFromNow(75), ultima_actualizacion: daysAgo(1), lote: 'L-2026-0315', peso_unitario: 50 },
-    { id: 'p6', nombre: 'Saco Alimento Ganado Engorde x50kg', categoria: 'Ganado', stock_actual: 8, stock_minimo_rop: 25, unidad: 'sacos', fecha_vencimiento: daysFromNow(55), ultima_actualizacion: daysAgo(0), lote: 'L-2026-0310', peso_unitario: 50 },
-    { id: 'p7', nombre: 'Saco Sales Minerales Ganado x25kg', categoria: 'Ganado', stock_actual: 15, stock_minimo_rop: 20, unidad: 'sacos', fecha_vencimiento: daysFromNow(180), ultima_actualizacion: daysAgo(5), lote: 'L-2026-0280', peso_unitario: 25 },
-    { id: 'p8', nombre: 'Bloque Sal Mineralizado 10kg', categoria: 'Ganado', stock_actual: 22, stock_minimo_rop: 15, unidad: 'bloques', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(7), lote: 'L-2026-0250', peso_unitario: 10 },
+    // Cervezas
+    { id: 'p6', nombre: 'Cerveza Cusqueña Dorada 330ml', categoria: 'Cervezas', stock_actual: 48, stock_minimo_rop: 24, unidad: 'unidades', fecha_vencimiento: daysFromNow(90), ultima_actualizacion: daysAgo(1), lote: 'CER-2026-10', codigo_barras: '7750182001001' },
+    { id: 'p7', nombre: 'Cerveza Corona Extra 355ml', categoria: 'Cervezas', stock_actual: 12, stock_minimo_rop: 24, unidad: 'unidades', fecha_vencimiento: daysFromNow(60), ultima_actualizacion: daysAgo(0), lote: 'CER-2026-11', codigo_barras: '7501064100017' },
+    { id: 'p8', nombre: 'Cerveza Pilsen Callao 620ml', categoria: 'Cervezas', stock_actual: 30, stock_minimo_rop: 20, unidad: 'unidades', fecha_vencimiento: daysFromNow(75), ultima_actualizacion: daysAgo(2), lote: 'CER-2026-12', codigo_barras: '7750182002002' },
 
-    // Alimento Porcinos
-    { id: 'p9', nombre: 'Saco Alimento Cerdo Crecimiento x40kg', categoria: 'Porcinos', stock_actual: 6, stock_minimo_rop: 20, unidad: 'sacos', fecha_vencimiento: daysFromNow(35), ultima_actualizacion: daysAgo(2), lote: 'L-2026-0298', peso_unitario: 40 },
-    { id: 'p10', nombre: 'Saco Alimento Cerdo Engorde x40kg', categoria: 'Porcinos', stock_actual: 10, stock_minimo_rop: 20, unidad: 'sacos', fecha_vencimiento: daysFromNow(40), ultima_actualizacion: daysAgo(1), lote: 'L-2026-0302', peso_unitario: 40 },
-    { id: 'p11', nombre: 'Saco Alimento Cerda Gestante x40kg', categoria: 'Porcinos', stock_actual: 3, stock_minimo_rop: 10, unidad: 'sacos', fecha_vencimiento: daysFromNow(5), ultima_actualizacion: daysAgo(0), lote: 'L-2026-0265', peso_unitario: 40 },
+    // Vinos
+    { id: 'p9', nombre: 'Vino Tinto Casillero del Diablo', categoria: 'Vinos', stock_actual: 4, stock_minimo_rop: 6, unidad: 'botellas', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(3), lote: 'VIN-2026-01', codigo_barras: '7804320063001' },
+    { id: 'p10', nombre: 'Vino Blanco Concha y Toro', categoria: 'Vinos', stock_actual: 3, stock_minimo_rop: 4, unidad: 'botellas', fecha_vencimiento: daysFromNow(180), ultima_actualizacion: daysAgo(1), lote: 'VIN-2026-02', codigo_barras: '7804320087543' },
+    { id: 'p11', nombre: 'Espumante Chandon Brut', categoria: 'Vinos', stock_actual: 2, stock_minimo_rop: 3, unidad: 'botellas', fecha_vencimiento: daysFromNow(5), ultima_actualizacion: daysAgo(0), lote: 'ESP-2026-01', codigo_barras: '7790975000015' },
 
-    // Materias Primas
-    { id: 'p12', nombre: 'Maíz Amarillo Molido x50kg', categoria: 'Materia Prima', stock_actual: 120, stock_minimo_rop: 80, unidad: 'sacos', fecha_vencimiento: daysFromNow(120), ultima_actualizacion: daysAgo(3), lote: 'L-2026-0320', peso_unitario: 50 },
-    { id: 'p13', nombre: 'Torta de Soya x50kg', categoria: 'Materia Prima', stock_actual: 25, stock_minimo_rop: 40, unidad: 'sacos', fecha_vencimiento: daysFromNow(90), ultima_actualizacion: daysAgo(2), lote: 'L-2026-0308', peso_unitario: 50 },
-    { id: 'p14', nombre: 'Harina de Pescado x25kg', categoria: 'Materia Prima', stock_actual: 10, stock_minimo_rop: 15, unidad: 'sacos', fecha_vencimiento: daysFromNow(3), ultima_actualizacion: daysAgo(1), lote: 'L-2026-0275', peso_unitario: 25 },
-    { id: 'p15', nombre: 'Afrecho de Trigo x40kg', categoria: 'Materia Prima', stock_actual: 55, stock_minimo_rop: 30, unidad: 'sacos', fecha_vencimiento: daysFromNow(150), ultima_actualizacion: daysAgo(4), lote: 'L-2026-0312', peso_unitario: 40 },
-    { id: 'p16', nombre: 'Carbonato de Calcio x25kg', categoria: 'Materia Prima', stock_actual: 30, stock_minimo_rop: 20, unidad: 'sacos', fecha_vencimiento: daysFromNow(365), ultima_actualizacion: daysAgo(10), lote: 'L-2026-0240', peso_unitario: 25 },
+    // Bebidas sin alcohol
+    { id: 'p12', nombre: 'Coca-Cola 500ml', categoria: 'Bebidas sin alcohol', stock_actual: 36, stock_minimo_rop: 24, unidad: 'unidades', fecha_vencimiento: daysFromNow(120), ultima_actualizacion: daysAgo(1), lote: 'BEB-2026-01', codigo_barras: '7750183000100' },
+    { id: 'p13', nombre: 'Agua San Mateo 600ml', categoria: 'Bebidas sin alcohol', stock_actual: 24, stock_minimo_rop: 30, unidad: 'unidades', fecha_vencimiento: daysFromNow(180), ultima_actualizacion: daysAgo(2), lote: 'BEB-2026-02', codigo_barras: '7750105000200' },
+    { id: 'p14', nombre: 'Red Bull 250ml', categoria: 'Bebidas sin alcohol', stock_actual: 6, stock_minimo_rop: 12, unidad: 'unidades', fecha_vencimiento: daysFromNow(3), ultima_actualizacion: daysAgo(0), lote: 'BEB-2026-03', codigo_barras: '9002490100070' },
+    { id: 'p15', nombre: 'Tónica Schweppes 350ml', categoria: 'Bebidas sin alcohol', stock_actual: 18, stock_minimo_rop: 12, unidad: 'unidades', fecha_vencimiento: daysFromNow(90), ultima_actualizacion: daysAgo(1), lote: 'BEB-2026-04', codigo_barras: '7750183000300' },
 
-    // Insumos Veterinarios
-    { id: 'p17', nombre: 'Antibiótico Oxitetraciclina x1kg', categoria: 'Veterinario', stock_actual: 4, stock_minimo_rop: 8, unidad: 'frascos', fecha_vencimiento: daysFromNow(7), ultima_actualizacion: daysAgo(1), lote: 'L-2026-0188', peso_unitario: 1 },
-    { id: 'p18', nombre: 'Desparasitante Bovino Ivermectina', categoria: 'Veterinario', stock_actual: 6, stock_minimo_rop: 10, unidad: 'frascos', fecha_vencimiento: daysFromNow(60), ultima_actualizacion: daysAgo(3), lote: 'L-2026-0200', peso_unitario: 0.5 },
-    { id: 'p19', nombre: 'Vacuna Newcastle Aviar x500 dosis', categoria: 'Veterinario', stock_actual: 2, stock_minimo_rop: 5, unidad: 'frascos', fecha_vencimiento: daysFromNow(14), ultima_actualizacion: daysAgo(0), lote: 'L-2026-0220', peso_unitario: 0.1 },
-    { id: 'p20', nombre: 'Vitamina AD3E Inyectable x100ml', categoria: 'Veterinario', stock_actual: 8, stock_minimo_rop: 6, unidad: 'frascos', fecha_vencimiento: daysFromNow(180), ultima_actualizacion: daysAgo(5), lote: 'L-2026-0195', peso_unitario: 0.1 },
+    // Insumos Bar
+    { id: 'p16', nombre: 'Limones Frescos', categoria: 'Insumos Bar', stock_actual: 30, stock_minimo_rop: 20, unidad: 'unidades', fecha_vencimiento: daysFromNow(7), ultima_actualizacion: daysAgo(0), lote: 'INS-2026-01', codigo_barras: null },
+    { id: 'p17', nombre: 'Jarabe de Goma 750ml', categoria: 'Insumos Bar', stock_actual: 2, stock_minimo_rop: 3, unidad: 'botellas', fecha_vencimiento: daysFromNow(180), ultima_actualizacion: daysAgo(1), lote: 'INS-2026-02', codigo_barras: '7750190000555' },
+    { id: 'p18', nombre: 'Hielo en Bolsa 3kg', categoria: 'Insumos Bar', stock_actual: 5, stock_minimo_rop: 8, unidad: 'bolsas', fecha_vencimiento: daysFromNow(2), ultima_actualizacion: daysAgo(0), lote: 'INS-2026-03', codigo_barras: null },
+
+    // Snacks
+    { id: 'p19', nombre: 'Maní Salado 200g', categoria: 'Snacks', stock_actual: 15, stock_minimo_rop: 10, unidad: 'bolsas', fecha_vencimiento: daysFromNow(60), ultima_actualizacion: daysAgo(3), lote: 'SNK-2026-01', codigo_barras: '7750182005001' },
+    { id: 'p20', nombre: 'Papas Lays Clásicas 150g', categoria: 'Snacks', stock_actual: 10, stock_minimo_rop: 12, unidad: 'bolsas', fecha_vencimiento: daysFromNow(45), ultima_actualizacion: daysAgo(1), lote: 'SNK-2026-02', codigo_barras: '7622210146571' },
 ];
 
-// ─── REQUERIMIENTOS ──
-export const MOCK_REQUERIMIENTOS = [
+// ─── CONTEOS DIARIOS ──
+export const MOCK_CONTEOS = [
     {
-        id: 'r1',
-        fecha_creacion: daysAgo(1),
-        solicitante: 'Jefe de Planta Rodríguez',
+        id: 'cnt1',
+        fecha: daysAgo(0),
+        usuario: 'Bartender García',
+        estado: 'EN_PROGRESO',
         items: [
-            { producto_nombre: 'Saco Alimento Pollo Engorde x40kg', cantidad: 80, justificacion: 'Producción semanal – lote de pollos en fase final de engorde' },
-            { producto_nombre: 'Premezcla Vitamínica Aves x25kg', cantidad: 10, justificacion: 'Stock crítico, se necesita para formulación' },
+            { producto_id: 'p1', producto_nombre: 'Vodka Absolut 750ml', conteo_fisico: 8, stock_sistema: 8, diferencia: 0 },
+            { producto_id: 'p2', producto_nombre: 'Ron Havana Club 750ml', conteo_fisico: 3, stock_sistema: 3, diferencia: 0 },
+            { producto_id: 'p6', producto_nombre: 'Cerveza Cusqueña Dorada 330ml', conteo_fisico: 46, stock_sistema: 48, diferencia: -2 },
         ],
-        estado: 'PENDIENTE',
-        logs: [{ usuario: 'Jefe de Planta Rodríguez', accion: 'Creó el requerimiento de producción', fecha: new Date(Date.now() - 1 * 86400000).toISOString() }],
+        notas: 'Conteo de apertura del turno mañana',
+        fecha_cierre: null,
     },
     {
-        id: 'r2',
-        fecha_creacion: daysAgo(3),
-        solicitante: 'Encargado Almacén Torres',
+        id: 'cnt2',
+        fecha: daysAgo(1),
+        usuario: 'Bartender López',
+        estado: 'COMPLETADO',
         items: [
-            { producto_nombre: 'Torta de Soya x50kg', cantidad: 40, justificacion: 'Materia prima para formulación mensual' },
-            { producto_nombre: 'Maíz Amarillo Molido x50kg', cantidad: 100, justificacion: 'Reposición para producción continua' },
+            { producto_id: 'p1', producto_nombre: 'Vodka Absolut 750ml', conteo_fisico: 9, stock_sistema: 9, diferencia: 0 },
+            { producto_id: 'p7', producto_nombre: 'Cerveza Corona Extra 355ml', conteo_fisico: 22, stock_sistema: 24, diferencia: -2 },
+            { producto_id: 'p12', producto_nombre: 'Coca-Cola 500ml', conteo_fisico: 35, stock_sistema: 36, diferencia: -1 },
+            { producto_id: 'p14', producto_nombre: 'Red Bull 250ml', conteo_fisico: 8, stock_sistema: 8, diferencia: 0 },
         ],
-        estado: 'APROBADO_ADMIN',
-        logs: [
-            { usuario: 'Encargado Almacén Torres', accion: 'Creó el requerimiento de materia prima', fecha: new Date(Date.now() - 3 * 86400000).toISOString() },
-            { usuario: 'Administrador Quispe', accion: 'Aprobó como Administración', fecha: new Date(Date.now() - 2 * 86400000).toISOString() },
-        ],
-    },
-    {
-        id: 'r3',
-        fecha_creacion: daysAgo(6),
-        solicitante: 'Veterinario Sánchez',
-        items: [
-            { producto_nombre: 'Vacuna Newcastle Aviar x500 dosis', cantidad: 10, justificacion: 'Campaña de vacunación trimestral galpones 1-5' },
-            { producto_nombre: 'Antibiótico Oxitetraciclina x1kg', cantidad: 8, justificacion: 'Tratamiento preventivo lote porcino' },
-        ],
-        estado: 'COMPRADO',
-        logs: [
-            { usuario: 'Veterinario Sánchez', accion: 'Creó el requerimiento veterinario', fecha: new Date(Date.now() - 6 * 86400000).toISOString() },
-            { usuario: 'Administrador Quispe', accion: 'Aprobó como Administración', fecha: new Date(Date.now() - 5 * 86400000).toISOString() },
-            { usuario: 'Gerente General Mendoza', accion: 'Validó como Gerencia', fecha: new Date(Date.now() - 4 * 86400000).toISOString() },
-            { usuario: 'Jefe Logística Paredes', accion: 'Marcó como Comprado – OC #2026-0087', fecha: new Date(Date.now() - 3 * 86400000).toISOString() },
-        ],
-    },
-    {
-        id: 'r4',
-        fecha_creacion: daysAgo(5),
-        solicitante: 'Jefe de Planta Rodríguez',
-        items: [
-            { producto_nombre: 'Saco Alimento Ganado Engorde x50kg', cantidad: 30, justificacion: 'Despacho urgente a granja El Porvenir' },
-            { producto_nombre: 'Saco Sales Minerales Ganado x25kg', cantidad: 15, justificacion: 'Complemento nutricional faltante' },
-        ],
-        estado: 'VALIDADO_GERENCIA',
-        logs: [
-            { usuario: 'Jefe de Planta Rodríguez', accion: 'Creó el requerimiento', fecha: new Date(Date.now() - 5 * 86400000).toISOString() },
-            { usuario: 'Administrador Quispe', accion: 'Aprobó como Administración', fecha: new Date(Date.now() - 4 * 86400000).toISOString() },
-            { usuario: 'Gerente General Mendoza', accion: 'Validó como Gerencia', fecha: new Date(Date.now() - 3 * 86400000).toISOString() },
-        ],
+        notas: 'Conteo de cierre nocturno',
+        fecha_cierre: daysAgo(1),
     },
 ];
 
 // ─── MOVIMIENTOS ──
 export const MOCK_MOVIMIENTOS = [
-    { id: 'm1', producto_id: 'p14', nombre_producto: 'Harina de Pescado x25kg', tipo: 'MERMA', cantidad: 5, usuario: 'Encargado Almacén Torres', fecha: daysAgo(1), motivo_merma: 'Sacos rotos por humedad en zona de almacenamiento' },
-    { id: 'm2', producto_id: 'p11', nombre_producto: 'Saco Alimento Cerda Gestante x40kg', tipo: 'MERMA', cantidad: 2, usuario: 'Jefe de Planta Rodríguez', fecha: daysAgo(2), motivo_merma: 'Producto vencido – lote L-2026-0265' },
-    { id: 'm3', producto_id: 'p17', nombre_producto: 'Antibiótico Oxitetraciclina x1kg', tipo: 'MERMA', cantidad: 1, usuario: 'Veterinario Sánchez', fecha: daysAgo(3), motivo_merma: 'Frasco dañado durante transporte interno' },
-    { id: 'm4', producto_id: 'p12', nombre_producto: 'Maíz Amarillo Molido x50kg', tipo: 'INGRESO', cantidad: 200, usuario: 'Jefe Logística Paredes', fecha: daysAgo(4), motivo_merma: null },
-    { id: 'm5', producto_id: 'p1', nombre_producto: 'Saco Alimento Pollo Engorde x40kg', tipo: 'INGRESO', cantidad: 100, usuario: 'Jefe Logística Paredes', fecha: daysAgo(5), motivo_merma: null },
-    { id: 'm6', producto_id: 'p5', nombre_producto: 'Saco Alimento Ganado Lechero x50kg', tipo: 'SALIDA', cantidad: 20, usuario: 'Encargado Almacén Torres', fecha: daysAgo(1), motivo_merma: null },
-    { id: 'm7', producto_id: 'p9', nombre_producto: 'Saco Alimento Cerdo Crecimiento x40kg', tipo: 'SALIDA', cantidad: 15, usuario: 'Jefe de Planta Rodríguez', fecha: daysAgo(2), motivo_merma: null },
-    { id: 'm8', producto_id: 'p13', nombre_producto: 'Torta de Soya x50kg', tipo: 'INGRESO', cantidad: 60, usuario: 'Jefe Logística Paredes', fecha: daysAgo(6), motivo_merma: null },
-    { id: 'm9', producto_id: 'p3', nombre_producto: 'Saco Alimento Gallina Ponedora x40kg', tipo: 'SALIDA', cantidad: 25, usuario: 'Encargado Almacén Torres', fecha: daysAgo(0), motivo_merma: null },
-    { id: 'm10', producto_id: 'p15', nombre_producto: 'Afrecho de Trigo x40kg', tipo: 'INGRESO', cantidad: 40, usuario: 'Jefe Logística Paredes', fecha: daysAgo(8), motivo_merma: null },
-    { id: 'm11', producto_id: 'p6', nombre_producto: 'Saco Alimento Ganado Engorde x50kg', tipo: 'MERMA', cantidad: 3, usuario: 'Encargado Almacén Torres', fecha: daysAgo(4), motivo_merma: 'Contaminación por roedores detectada en inspección' },
-    { id: 'm12', producto_id: 'p2', nombre_producto: 'Saco Alimento Pollo Inicio x40kg', tipo: 'SALIDA', cantidad: 10, usuario: 'Jefe de Planta Rodríguez', fecha: daysAgo(0), motivo_merma: null },
+    { id: 'm1', producto_id: 'p7', nombre_producto: 'Cerveza Corona Extra 355ml', tipo: 'CONTEO', cantidad: -2, usuario: 'Bartender López', fecha: daysAgo(1), motivo_merma: 'Diferencia detectada en conteo diario' },
+    { id: 'm2', producto_id: 'p12', nombre_producto: 'Coca-Cola 500ml', tipo: 'CONTEO', cantidad: -1, usuario: 'Bartender López', fecha: daysAgo(1), motivo_merma: 'Ajuste por conteo diario' },
+    { id: 'm3', producto_id: 'p6', nombre_producto: 'Cerveza Cusqueña Dorada 330ml', tipo: 'INGRESO', cantidad: 24, usuario: 'Admin Paredes', fecha: daysAgo(2), motivo_merma: null },
+    { id: 'm4', producto_id: 'p1', nombre_producto: 'Vodka Absolut 750ml', tipo: 'INGRESO', cantidad: 6, usuario: 'Admin Paredes', fecha: daysAgo(3), motivo_merma: null },
+    { id: 'm5', producto_id: 'p14', nombre_producto: 'Red Bull 250ml', tipo: 'INGRESO', cantidad: 12, usuario: 'Admin Paredes', fecha: daysAgo(4), motivo_merma: null },
+    { id: 'm6', producto_id: 'p11', nombre_producto: 'Espumante Chandon Brut', tipo: 'CONTEO', cantidad: -1, usuario: 'Bartender García', fecha: daysAgo(3), motivo_merma: 'Botella no registrada como vendida' },
 ];
+
+// Mantener compatibilidad con imports existentes
+export const MOCK_REQUERIMIENTOS = [];
 
