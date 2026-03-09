@@ -121,7 +121,8 @@ service cloud.firestore {
 
     // ── Movimientos de stock ────────────────────────────────────────────
     //  Campos requeridos: producto_id, tipo, cantidad
-    //  Campos opcionales: nombre_producto, usuario, ubicacion, fecha, motivo_merma, notas
+    //  Campos opcionales: producto_nombre, usuario, ubicacion, fecha,
+    //                     stock_anterior, stock_nuevo, motivo, motivo_merma, notas
     //  Log inmutable — no se editan ni eliminan
     match /movimientos/{movimientoId} {
       allow read: if true;
@@ -135,10 +136,14 @@ service cloud.firestore {
                     && request.resource.data.cantidad >= 0
                     && request.resource.data.cantidad <= 999999
                     && ubicacionValida('ubicacion')
+                    && strLenOk('producto_nombre', 200)
                     && strLenOk('nombre_producto', 200)
                     && strLenOk('usuario', 100)
+                    && strLenOk('motivo', 500)
                     && strLenOk('motivo_merma', 500)
-                    && strLenOk('notas', 500);
+                    && strLenOk('notas', 500)
+                    && numRangeOk('stock_anterior', 0, 999999)
+                    && numRangeOk('stock_nuevo', 0, 999999);
 
       allow update: if false;
       allow delete: if false;

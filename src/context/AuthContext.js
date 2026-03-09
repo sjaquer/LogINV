@@ -4,11 +4,18 @@ import { createPortal } from 'react-dom';
 import { Wine, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
 
 const USUARIOS = [
-    { id: 'user1', nombre: 'Carlos Paredes', rol: 'LOGISTICA', password: '1234' },
-    { id: 'user2', nombre: 'Miguel Rodríguez', rol: 'PLANTA', password: '5678' },
-    { id: 'user3', nombre: 'Ana Quispe', rol: 'ADMIN', password: 'admin' },
-    { id: 'user4', nombre: 'Luis Mendoza', rol: 'GERENCIA', password: 'master' },
+    { id: 'user1', nombre: 'Carlos Paredes', rol: 'LOGISTICA', hash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4' },
+    { id: 'user2', nombre: 'Miguel Rodríguez', rol: 'PLANTA', hash: 'f8638b979b2f4f793ddb6dbd197e0ee25a7a6ea32b0ae22f5e3c5d119d839e75' },
+    { id: 'user3', nombre: 'Ana Quispe', rol: 'ADMIN', hash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' },
+    { id: 'user4', nombre: 'Luis Mendoza', rol: 'GERENCIA', hash: 'fc613b4dfd6736a7bd268c8a0e74ed0d1c04a959f59dd74ef2874983fd443fc9' },
 ];
+
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 const AuthContext = createContext({
     user: null,
@@ -50,14 +57,16 @@ function LoginScreen({ onLogin }) {
         };
     }, [showDropdown]);
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         if (!selectedUser) {
             setError('Selecciona un usuario');
             return;
         }
         const user = USUARIOS.find(u => u.id === selectedUser.id);
-        if (user && password === user.password) {
+        if (!user) { setError('Usuario no encontrado'); return; }
+        const inputHash = await hashPassword(password);
+        if (inputHash === user.hash) {
             onLogin(user);
         } else {
             setError('Contraseña incorrecta');

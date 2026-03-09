@@ -346,6 +346,7 @@ export default function InventarioPage() {
     // Date range filter for historial
     const [fechaDesde, setFechaDesde] = useState('');
     const [fechaHasta, setFechaHasta] = useState('');
+    const [recoveredFromBackup, setRecoveredFromBackup] = useState(false);
 
     const loading = pLoading || cLoading;
 
@@ -398,6 +399,8 @@ export default function InventarioPage() {
                         setConteoActivo(match);
                         setConteoItems(items);
                         setNotas(n || '');
+                        setRecoveredFromBackup(true);
+                        setTimeout(() => setRecoveredFromBackup(false), 4000);
                     }
                 }
             } catch (_) {}
@@ -583,7 +586,13 @@ export default function InventarioPage() {
             <PullToRefresh onRefresh={handleRefresh}>
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
 
-                {/* GENERAL location banner */}
+                {/* Recovery toast*/}
+                {recoveredFromBackup && (
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm text-emerald-700 dark:text-emerald-300 animate-fade-in">
+                        <span>💾</span>
+                        <span>Conteo restaurado desde respaldo local</span>
+                    </div>
+                )}
                 {isGeneral && tab === 'conteo' && (
                     <div className="flex items-center gap-3 p-3.5 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-700">
                         <MapPin size={18} className="flex-shrink-0" />
