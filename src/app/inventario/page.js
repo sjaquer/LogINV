@@ -1,18 +1,20 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
-import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
+import { useProductos, useCategorias, useConteos, useCrearMovimiento } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from '@/context/LocationContext';
+import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 import { formatDateTime } from '@/lib/utils';
 import {
     Search, X, Plus, Minus, Package,
     Save, AlertTriangle,
     Check, ClipboardList, History, ScanBarcode,
-    ChevronRight, RotateCcw,
+    ChevronRight, RotateCcw, MapPin, Calendar,
+    ArrowDownCircle, ArrowUpCircle, Zap,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -233,14 +235,94 @@ function ConteoDetailModal({ conteo, onClose }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  QuickStockModal – Quick add/subtract stock for a product
+// ═══════════════════════════════════════════════════════════════════════════
+function QuickStockModal({ producto, tipo, onConfirm, onClose }) {
+    const [cantidad, setCantidad] = useState(1);
+    const [motivo, setMotivo] = useState('');
+
+    useEffect(() => {
+        function handleKey(e) { if (e.key === 'Escape') onClose(); }
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [onClose]);
+
+    const isIngreso = tipo === 'INGRESO';
+
+    return (
+        <div className="modal-overlay animate-fade-in" onClick={onClose}>
+            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-white max-w-sm" onClick={e => e.stopPropagation()}>
+                <div className="flex flex-col items-center text-center">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${isIngreso ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
+                        {isIngreso ? <ArrowDownCircle size={28} className="text-emerald-600" /> : <ArrowUpCircle size={28} className="text-amber-600" />}
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-lg">{isIngreso ? 'Ingreso rápido' : 'Salida rápida'}</h3>
+                    <p className="text-sm text-slate-500 mt-1">{producto.nombre}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Stock actual: <strong>{producto.stock_actual}</strong> {producto.unidad}</p>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Cantidad</label>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => setCantidad(c => Math.max(1, c - 1))} className="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                                <Minus size={18} />
+                            </button>
+                            <input
+                                type="number"
+                                min="1"
+                                value={cantidad}
+                                onChange={e => setCantidad(Math.max(1, Number(e.target.value) || 1))}
+                                className="inp text-center text-2xl font-bold py-3 flex-1 bg-white border-slate-200 text-slate-900"
+                            />
+                            <button onClick={() => setCantidad(c => c + 1)} className="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                                <Plus size={18} />
+                            </button>
+                        </div>
+                        {!isIngreso && cantidad > producto.stock_actual && (
+                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertTriangle size={12} /> Excede el stock actual</p>
+                        )}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Motivo (opcional)</label>
+                        <input
+                            type="text"
+                            value={motivo}
+                            onChange={e => setMotivo(e.target.value)}
+                            placeholder={isIngreso ? 'Ej: Recepción de pedido' : 'Ej: Consumo diario'}
+                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900 w-full"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button onClick={onClose} className="btn btn-ghost flex-1 py-3 text-base font-semibold text-slate-600">
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={() => onConfirm(cantidad, motivo)}
+                        disabled={!isIngreso && cantidad > producto.stock_actual}
+                        className={`btn flex-1 py-3 text-base font-bold flex items-center justify-center gap-2 ${isIngreso ? 'btn-primary' : 'bg-amber-500 hover:bg-amber-600 text-white rounded-xl'} disabled:opacity-50`}
+                    >
+                        {isIngreso ? <ArrowDownCircle size={18} /> : <ArrowUpCircle size={18} />}
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  INVENTORY PAGE – Tap-to-count daily counting tool
 // ═══════════════════════════════════════════════════════════════════════════
 export default function InventarioPage() {
     const { productos, loading: pLoading, updateStock } = useProductos();
     const { categorias } = useCategorias();
     const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
+    const crearMovimiento = useCrearMovimiento();
     const { user } = useAuth();
-    const { ubicacion, ubicacionInfo } = useLocation();
+    const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
     const { setHideBottomNav } = useSidebar();
     const userName = user?.nombre || 'Usuario';
 
@@ -255,16 +337,24 @@ export default function InventarioPage() {
     const [scannedFeedback, setScannedFeedback] = useState(null);
     const [saving, setSaving] = useState(false);
     const [detailConteo, setDetailConteo] = useState(null);
-    const [tapProduct, setTapProduct] = useState(null); // product being counted via tap
+    const [tapProduct, setTapProduct] = useState(null);
+
+    // Quick stock state
+    const [quickStockProduct, setQuickStockProduct] = useState(null);
+    const [quickStockTipo, setQuickStockTipo] = useState('INGRESO');
+
+    // Date range filter for historial
+    const [fechaDesde, setFechaDesde] = useState('');
+    const [fechaHasta, setFechaHasta] = useState('');
 
     const loading = pLoading || cLoading;
 
     // ── Ocultar BottomNav cuando hay un modal a pantalla completa ──
     useEffect(() => {
-        const open = !!(tapProduct && conteoActivo) || !!showScanner || !!detailConteo;
+        const open = !!(tapProduct && conteoActivo) || !!showScanner || !!detailConteo || !!quickStockProduct;
         setHideBottomNav(open);
         return () => setHideBottomNav(false);
-    }, [tapProduct, conteoActivo, showScanner, detailConteo, setHideBottomNav]);
+    }, [tapProduct, conteoActivo, showScanner, detailConteo, quickStockProduct, setHideBottomNav]);
 
     // ── Reset active conteo when location changes ──
     useEffect(() => {
@@ -355,8 +445,8 @@ export default function InventarioPage() {
 
     // ── Products filtered by location ──  ← debe declararse ANTES de handleBarcodeScan
     const productosUbicacion = useMemo(
-        () => productos.filter(p => p.ubicacion === ubicacion),
-        [productos, ubicacion]
+        () => isGeneral ? productos : productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion, isGeneral]
     );
 
     // ── Handle barcode scan ──
@@ -406,6 +496,36 @@ export default function InventarioPage() {
         }
     }, [conteoActivo, conteoItems, notas, actualizarConteo, finalizarConteo, updateStock, userName]);
 
+    // ── Quick stock entry/exit ──
+    const handleQuickStock = useCallback(async (cantidad, motivo) => {
+        if (!quickStockProduct) return;
+        setSaving(true);
+        try {
+            const newStock = quickStockTipo === 'INGRESO'
+                ? quickStockProduct.stock_actual + cantidad
+                : Math.max(0, quickStockProduct.stock_actual - cantidad);
+            await updateStock(quickStockProduct.id, newStock, userName);
+            await crearMovimiento({
+                producto_id: quickStockProduct.id,
+                producto_nombre: quickStockProduct.nombre,
+                tipo: quickStockTipo,
+                cantidad,
+                stock_anterior: quickStockProduct.stock_actual,
+                stock_nuevo: newStock,
+                usuario: userName,
+                ubicacion: quickStockProduct.ubicacion,
+                motivo: motivo || (quickStockTipo === 'INGRESO' ? 'Ingreso rápido' : 'Salida rápida'),
+            });
+            setQuickStockProduct(null);
+        } finally {
+            setSaving(false);
+        }
+    }, [quickStockProduct, quickStockTipo, updateStock, crearMovimiento, userName]);
+
+    const handleRefresh = useCallback(() => {
+        return new Promise(resolve => setTimeout(resolve, 600));
+    }, []);
+
     const productosFiltrados = useMemo(() => {
         return productosUbicacion
             .filter(p => categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro)
@@ -424,16 +544,34 @@ export default function InventarioPage() {
         return { total, conDiff, sinDiff: total - conDiff };
     }, [conteoItems]);
 
-    // ── Completed counts for history ──
+    // ── Completed counts for history (with date range filter) ──
     const historialConteos = useMemo(() => {
-        return conteos
-            .filter(c => c.estado === 'COMPLETADO' && c.ubicacion === ubicacion)
+        let list = conteos
+            .filter(c => c.estado === 'COMPLETADO' && (isGeneral || c.ubicacion === ubicacion))
             .sort((a, b) => {
                 const fA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
                 const fB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
                 return fB - fA;
             });
-    }, [conteos, ubicacion]);
+
+        if (fechaDesde) {
+            const desde = new Date(fechaDesde);
+            desde.setHours(0, 0, 0, 0);
+            list = list.filter(c => {
+                const f = c.fecha?.toDate ? c.fecha.toDate() : new Date(c.fecha);
+                return f >= desde;
+            });
+        }
+        if (fechaHasta) {
+            const hasta = new Date(fechaHasta);
+            hasta.setHours(23, 59, 59, 999);
+            list = list.filter(c => {
+                const f = c.fecha?.toDate ? c.fecha.toDate() : new Date(c.fecha);
+                return f <= hasta;
+            });
+        }
+        return list;
+    }, [conteos, ubicacion, isGeneral, fechaDesde, fechaHasta]);
 
     // helper: is product already counted?
     const isProductCounted = useCallback((pid) => conteoItems.some(i => i.producto_id === pid), [conteoItems]);
@@ -442,19 +580,34 @@ export default function InventarioPage() {
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Conteo de inventario" />
+            <PullToRefresh onRefresh={handleRefresh}>
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
+
+                {/* GENERAL location banner */}
+                {isGeneral && tab === 'conteo' && (
+                    <div className="flex items-center gap-3 p-3.5 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-700">
+                        <MapPin size={18} className="flex-shrink-0" />
+                        <span>Selecciona una ubicación específica para crear conteos. La vista General solo permite consultar el historial y registrar movimientos rápidos.</span>
+                    </div>
+                )}
 
                 {/* ── Tabs ── */}
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm">
                     <button
                         onClick={() => setTab('conteo')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'conteo' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${tab === 'conteo' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
                     >
                         <ClipboardList size={20} /> Conteo
                     </button>
                     <button
+                        onClick={() => setTab('rapido')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${tab === 'rapido' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                    >
+                        <Zap size={20} /> Rápido
+                    </button>
+                    <button
                         onClick={() => setTab('historial')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-base font-semibold transition-all ${tab === 'historial' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${tab === 'historial' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
                     >
                         <History size={20} /> Historial
                     </button>
@@ -476,8 +629,19 @@ export default function InventarioPage() {
                             </div>
                         )}
 
-                        {/* No active count → Start */}
-                        {!conteoActivo && (
+                        {/* GENERAL: cannot create conteo */}
+                        {isGeneral && !conteoActivo && (
+                            <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-center">
+                                <div className="w-24 h-24 rounded-3xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-6">
+                                    <MapPin size={44} className="text-violet-500" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-slate-900">Vista General</h2>
+                                <p className="text-base text-slate-500 mt-2 max-w-sm">Para crear un conteo, selecciona una ubicación específica (Bar 1, Bar 2 o Almacén) desde el selector de ubicación.</p>
+                            </div>
+                        )}
+
+                        {/* No active count → Start (only when NOT general) */}
+                        {!conteoActivo && !isGeneral && (
                             <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-center">
                                 <div className="w-24 h-24 rounded-3xl bg-brand-50 border border-brand-100 flex items-center justify-center mb-6">
                                     <ClipboardList size={44} className="text-brand-600" />
@@ -692,10 +856,120 @@ export default function InventarioPage() {
                 )}
 
                 {/* ══════════════════════════════════════════════════════ */}
+                {/*  TAB: RÁPIDO (Quick stock entry/exit)                 */}
+                {/* ══════════════════════════════════════════════════════ */}
+                {tab === 'rapido' && (
+                    <div className="space-y-4">
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-1">
+                                <Zap size={18} className="text-emerald-500" /> Movimientos rápidos
+                            </h3>
+                            <p className="text-xs text-slate-500">Registra ingresos o salidas rápidas sin crear un conteo completo.</p>
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative">
+                            <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Buscar producto..."
+                                value={busqueda}
+                                onChange={e => setBusqueda(e.target.value)}
+                                className="inp pl-12 pr-10 py-3.5 text-base h-14 shadow-sm bg-white border-slate-200 text-slate-900 w-full"
+                            />
+                            {busqueda && (
+                                <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 text-slate-400">
+                                    <X size={18} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Product list with +/- buttons */}
+                        {loading ? (
+                            <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-white border border-slate-200 rounded-xl h-20 animate-pulse" />)}</div>
+                        ) : productosFiltrados.length === 0 ? (
+                            <EmptyState icon={Package} title="Sin resultados" />
+                        ) : (
+                            <div className="space-y-2">
+                                {productosFiltrados.map(p => {
+                                    const ubicInfo = isGeneral ? UBICACIONES.find(u => u.id === p.ubicacion) : null;
+                                    return (
+                                        <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-xs text-slate-500">{p.categoria}</span>
+                                                    {ubicInfo && (
+                                                        <span className="text-[10px] font-bold text-slate-400">{ubicInfo.icono} {ubicInfo.nombre}</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-slate-600 mt-1">Stock: <strong className="text-slate-800">{p.stock_actual}</strong> {p.unidad}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <button
+                                                    onClick={() => { setQuickStockProduct(p); setQuickStockTipo('SALIDA'); }}
+                                                    className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 hover:bg-amber-100 active:scale-95 transition-all"
+                                                    title="Salida"
+                                                >
+                                                    <ArrowUpCircle size={20} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setQuickStockProduct(p); setQuickStockTipo('INGRESO'); }}
+                                                    className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 active:scale-95 transition-all"
+                                                    title="Ingreso"
+                                                >
+                                                    <ArrowDownCircle size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════ */}
                 {/*  TAB: HISTORIAL                                        */}
                 {/* ══════════════════════════════════════════════════════ */}
                 {tab === 'historial' && (
                     <div className="space-y-3">
+                        {/* Date range filter */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Calendar size={16} className="text-slate-500" />
+                                <span className="text-sm font-bold text-slate-700">Filtrar por fecha</span>
+                                {(fechaDesde || fechaHasta) && (
+                                    <button
+                                        onClick={() => { setFechaDesde(''); setFechaHasta(''); }}
+                                        className="ml-auto text-xs text-brand-600 font-semibold hover:underline"
+                                    >
+                                        Limpiar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs text-slate-500 font-medium mb-1">Desde</label>
+                                    <input
+                                        type="date"
+                                        value={fechaDesde}
+                                        onChange={e => setFechaDesde(e.target.value)}
+                                        className="inp text-sm py-2.5 bg-white border-slate-200 text-slate-900 w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-500 font-medium mb-1">Hasta</label>
+                                    <input
+                                        type="date"
+                                        value={fechaHasta}
+                                        onChange={e => setFechaHasta(e.target.value)}
+                                        className="inp text-sm py-2.5 bg-white border-slate-200 text-slate-900 w-full"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {loading ? (
                             <div className="space-y-3">
                                 {Array.from({ length: 4 }).map((_, i) => (
@@ -707,13 +981,24 @@ export default function InventarioPage() {
                                 <EmptyState icon={History} title="No hay conteos registrados" />
                             </div>
                         ) : (
-                            historialConteos.map(c => (
-                                <ConteoHistoryCard key={c.id} conteo={c} onSelect={setDetailConteo} />
-                            ))
+                            historialConteos.map(c => {
+                                const ubicInfo = isGeneral ? UBICACIONES.find(u => u.id === c.ubicacion) : null;
+                                return (
+                                    <div key={c.id}>
+                                        {ubicInfo && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full mb-1">
+                                                {ubicInfo.icono} {ubicInfo.nombre}
+                                            </span>
+                                        )}
+                                        <ConteoHistoryCard conteo={c} onSelect={setDetailConteo} />
+                                    </div>
+                                );
+                            })
                         )}
                     </div>
                 )}
             </div>
+            </PullToRefresh>
 
             {/* ── Modals ── */}
             {showScanner && (
@@ -729,6 +1014,14 @@ export default function InventarioPage() {
                     onConfirm={handleTapConfirm}
                     onDiscard={() => setTapProduct(null)}
                     onClose={() => setTapProduct(null)}
+                />
+            )}
+            {quickStockProduct && (
+                <QuickStockModal
+                    producto={quickStockProduct}
+                    tipo={quickStockTipo}
+                    onConfirm={handleQuickStock}
+                    onClose={() => setQuickStockProduct(null)}
                 />
             )}
         </div>

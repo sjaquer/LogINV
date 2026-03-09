@@ -3,15 +3,16 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from '@/context/LocationContext';
+import { useLocation, UBICACIONES_FISICAS, UBICACIONES } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState, StockBar } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 import { formatDate } from '@/lib/utils';
 import {
     Search, X, Plus, Package, Trash2, Pencil,
     PlusCircle, Save, AlertTriangle, FolderPlus,
-    Settings2, ScanBarcode, ChevronRight, ArrowUpDown, Download,
+    Settings2, ScanBarcode, ChevronRight, ArrowUpDown, Download, Copy, MapPin,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -486,6 +487,122 @@ function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEl
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  SwipeableProductCard – Swipe left = delete, swipe right = edit
+// ═══════════════════════════════════════════════════════════════════════════
+function SwipeableProductCard({ producto, catIcon, canManage, isGeneral, onEdit, onDelete, onDuplicate }) {
+    const cardRef = useRef(null);
+    const startX = useRef(0);
+    const currentX = useRef(0);
+    const [offsetX, setOffsetX] = useState(0);
+    const [swiping, setSwiping] = useState(false);
+
+    const SWIPE_THRESHOLD = 80;
+
+    const handleTouchStart = useCallback((e) => {
+        if (!canManage || isGeneral) return;
+        startX.current = e.touches[0].clientX;
+        currentX.current = 0;
+        setSwiping(true);
+    }, [canManage, isGeneral]);
+
+    const handleTouchMove = useCallback((e) => {
+        if (!swiping) return;
+        const diff = e.touches[0].clientX - startX.current;
+        currentX.current = diff;
+        setOffsetX(Math.max(-120, Math.min(120, diff)));
+    }, [swiping]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (!swiping) return;
+        setSwiping(false);
+        if (currentX.current < -SWIPE_THRESHOLD) {
+            onDelete(producto);
+        } else if (currentX.current > SWIPE_THRESHOLD) {
+            onEdit(producto);
+        }
+        setOffsetX(0);
+    }, [swiping, producto, onDelete, onEdit]);
+
+    const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
+
+    return (
+        <div className="relative overflow-hidden rounded-xl">
+            {/* Background actions */}
+            {canManage && !isGeneral && (
+                <>
+                    <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center bg-brand-500 rounded-l-xl transition-opacity ${offsetX > 30 ? 'opacity-100' : 'opacity-0'}`}>
+                        <Pencil size={22} className="text-white" />
+                    </div>
+                    <div className={`absolute inset-y-0 right-0 w-24 flex items-center justify-center bg-red-500 rounded-r-xl transition-opacity ${offsetX < -30 ? 'opacity-100' : 'opacity-0'}`}>
+                        <Trash2 size={22} className="text-white" />
+                    </div>
+                </>
+            )}
+
+            {/* Card */}
+            <div
+                ref={cardRef}
+                className="bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all relative z-10"
+                style={{ transform: `translateX(${offsetX}px)`, transition: swiping ? 'none' : 'transform 0.3s ease' }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                <div className="p-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-900 text-base truncate">{producto.nombre}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-xs font-semibold text-brand-600 uppercase">{catIcon} {producto.categoria}</span>
+                            {producto.marca && <span className="text-xs text-slate-400">· {producto.marca}</span>}
+                            {producto.gramaje && <span className="text-xs text-slate-400">· {producto.gramaje}</span>}
+                        </div>
+                        {isGeneral && ubicInfo && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full mt-1.5">
+                                <MapPin size={10} /> {ubicInfo.icono} {ubicInfo.nombre}
+                            </span>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 text-sm">
+                            <span className="font-bold text-slate-800">{producto.stock_actual} <span className="text-slate-400 font-normal text-xs">{producto.unidad}</span></span>
+                            <StockBar actual={producto.stock_actual} minimo={producto.stock_minimo_rop} />
+                        </div>
+                    </div>
+
+                    {canManage && (
+                        <div className="flex flex-col gap-1.5 flex-shrink-0">
+                            {!isGeneral && (
+                                <>
+                                    <button
+                                        onClick={() => onEdit(producto)}
+                                        className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                                        aria-label="Editar"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => onDuplicate(producto)}
+                                        className="p-2.5 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                                        aria-label="Duplicar"
+                                    >
+                                        <Copy size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(producto)}
+                                        className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                        aria-label="Eliminar"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  PRODUCTOS PAGE – Product Registration & Management
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ProductosPage() {
@@ -495,7 +612,7 @@ export default function ProductosPage() {
     } = useProductos();
     const { categorias, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
     const { user } = useAuth();
-    const { ubicacion, ubicacionInfo } = useLocation();
+    const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
     const { setHideBottomNav } = useSidebar();
     const userName = user?.nombre || 'Usuario';
     const role = user?.rol || 'LOGISTICA';
@@ -522,10 +639,10 @@ export default function ProductosPage() {
         return m;
     }, [categorias]);
 
-    // filter products by current location
+    // filter products by current location (GENERAL = all)
     const productosUbicacion = useMemo(
-        () => productos.filter(p => p.ubicacion === ubicacion),
-        [productos, ubicacion]
+        () => isGeneral ? productos : productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion, isGeneral]
     );
 
     // category counts (for current location)
@@ -550,6 +667,7 @@ export default function ProductosPage() {
         list = [...list].sort((a, b) => {
             if (sortBy === 'stock') return a.stock_actual - b.stock_actual;
             if (sortBy === 'categoria') return (a.categoria || '').localeCompare(b.categoria || '');
+            if (sortBy === 'ubicacion') return (a.ubicacion || '').localeCompare(b.ubicacion || '');
             return (a.nombre || '').localeCompare(b.nombre || '');
         });
         return list;
@@ -564,12 +682,43 @@ export default function ProductosPage() {
         }
     }, [crearProducto, actualizarProducto, ubicacion]);
 
-    const canManage = role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA';
+    // ── Duplicate product ──
+    const handleDuplicate = useCallback((producto) => {
+        const duplicated = {
+            ...producto,
+            id: undefined,
+            nombre: `${producto.nombre} (copia)`,
+            lote: '',
+            fecha_vencimiento: '',
+        };
+        setEditingProduct(duplicated);
+        setShowProductForm(true);
+    }, []);
+
+    const handleEdit = useCallback((producto) => {
+        setEditingProduct(producto);
+        setShowProductForm(true);
+    }, []);
+
+    const handleRefresh = useCallback(() => {
+        return new Promise(resolve => setTimeout(resolve, 600));
+    }, []);
+
+    const canManage = (role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA') && !isGeneral;
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Productos" />
+            <PullToRefresh onRefresh={handleRefresh}>
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
+
+                {/* GENERAL location banner */}
+                {isGeneral && (
+                    <div className="flex items-center gap-3 p-3.5 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-700">
+                        <MapPin size={18} className="flex-shrink-0" />
+                        <span>Vista combinada — mostrando productos de todas las ubicaciones. Selecciona una ubicación específica para gestionar productos.</span>
+                    </div>
+                )}
 
                 {/* ── Action bar ── */}
                 {canManage && (
@@ -641,11 +790,12 @@ export default function ProductosPage() {
                             <option value="nombre">Producto</option>
                             <option value="stock">Stock</option>
                             <option value="categoria">Categoría</option>
+                            {isGeneral && <option value="ubicacion">Ubicación</option>}
                         </select>
                     </div>
                 </div>
 
-                {/* ── Product Cards (mobile-first) ── */}
+                {/* ── Product Cards (swipeable) ── */}
                 {loading ? (
                     <div className="space-y-3">
                         {Array.from({ length: 5 }).map((_, i) => (
@@ -657,50 +807,21 @@ export default function ProductosPage() {
                 ) : (
                     <div className="space-y-3">
                         {productosFiltrados.map(p => (
-                            <div
+                            <SwipeableProductCard
                                 key={p.id}
-                                className="bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden"
-                            >
-                                <div className="p-4 flex items-center gap-4">
-                                    {/* Product info */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
-                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            <span className="text-xs font-semibold text-brand-600 uppercase">{catIconMap[p.categoria] || '📦'} {p.categoria}</span>
-                                            {p.marca && <span className="text-xs text-slate-400">· {p.marca}</span>}
-                                            {p.gramaje && <span className="text-xs text-slate-400">· {p.gramaje}</span>}
-                                        </div>
-                                        <div className="flex items-center gap-3 mt-2 text-sm">
-                                            <span className="font-bold text-slate-800">{p.stock_actual} <span className="text-slate-400 font-normal text-xs">{p.unidad}</span></span>
-                                            <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />
-                                        </div>
-                                    </div>
-
-                                    {/* Actions */}
-                                    {canManage && (
-                                        <div className="flex flex-col gap-1.5 flex-shrink-0">
-                                            <button
-                                                onClick={() => { setEditingProduct(p); setShowProductForm(true); }}
-                                                className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                                                aria-label="Editar"
-                                            >
-                                                <Pencil size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteProduct(p)}
-                                                className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                aria-label="Eliminar"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                                producto={p}
+                                catIcon={catIconMap[p.categoria] || '📦'}
+                                canManage={role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA'}
+                                isGeneral={isGeneral}
+                                onEdit={handleEdit}
+                                onDelete={setDeleteProduct}
+                                onDuplicate={handleDuplicate}
+                            />
                         ))}
                     </div>
                 )}
             </div>
+            </PullToRefresh>
 
             {/* ── Modals ── */}
             {showProductForm && (

@@ -2,6 +2,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { SidebarProvider } from '@/context/SidebarContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import BottomNav from '@/components/layout/BottomNav';
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
             </head>
             <body className="font-sans antialiased overscroll-none">
                 <AuthProvider>
+                    <ThemeProvider>
                     <LocationProvider>
                         <SidebarProvider>
                             <ErrorBoundary>
@@ -46,6 +48,7 @@ export default function RootLayout({ children }) {
                             </ErrorBoundary>
                         </SidebarProvider>
                     </LocationProvider>
+                    </ThemeProvider>
                 </AuthProvider>
             </body>
         </html>

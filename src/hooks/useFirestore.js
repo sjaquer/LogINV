@@ -637,6 +637,31 @@ export function useMovimientos() {
     return { movimientos, loading, error };
 }
 
+// Helper: create a movimiento
+export function useCrearMovimiento() {
+    const crearMovimiento = useCallback(async (data) => {
+        if (USE_MOCK) {
+            const id = 'mov_' + Date.now();
+            const newMov = { id, ...data, fecha: mockTimestamp() };
+            mockMovimientos = [newMov, ...mockMovimientos];
+            notify('movimientos');
+            return id;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            const docRef = await fs.addDoc(fs.collection(db, 'movimientos'), {
+                ...data,
+                fecha: fs.serverTimestamp(),
+            });
+            return docRef.id;
+        } catch (err) {
+            firebaseError('crearMovimiento', err);
+        }
+    }, []);
+
+    return crearMovimiento;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  useConteos – Daily inventory counts
 // ═══════════════════════════════════════════════════════════════════════════

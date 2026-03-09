@@ -3,14 +3,14 @@ import { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useProductos, useConteos, useMovimientos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation, UBICACIONES } from '@/context/LocationContext';
+import { useLocation, UBICACIONES, UBICACIONES_FISICAS } from '@/context/LocationContext';
 import Header from '@/components/layout/Header';
 import { KPICard, SemaforoBadge, StockBar, EmptyState } from '@/components/ui/SharedComponents';
 import { daysUntil, formatDate, formatDateTime, semaforoRowBg } from '@/lib/utils';
 import {
     AlertTriangle, Package, ClipboardCheck, TrendingDown,
     FileText, Check, X as XIcon, Wine, ClipboardList,
-    ArrowRight, ScanBarcode, Download, MapPin,
+    ArrowRight, ScanBarcode, Download, MapPin, CalendarDays,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -151,12 +151,12 @@ export default function DashboardPage() {
     const { conteos, loading: cLoading } = useConteos();
     const { movimientos, loading: mLoading } = useMovimientos();
     const { user } = useAuth();
-    const { ubicacion, ubicacionInfo } = useLocation();
+    const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
 
-    // ── KPI: products below stock minimum (current location) ──
+    // ── KPI: products below stock minimum (current or all locations) ──
     const productosUbicacion = useMemo(
-        () => productos.filter(p => p.ubicacion === ubicacion),
-        [productos, ubicacion]
+        () => isGeneral ? productos : productos.filter(p => p.ubicacion === ubicacion),
+        [productos, ubicacion, isGeneral]
     );
 
     const alertasStock = useMemo(
@@ -164,19 +164,19 @@ export default function DashboardPage() {
         [productosUbicacion]
     );
 
-    // ── KPI: counts today (current location) ──
+    // ── KPI: counts today (current or all locations) ──
     const conteosHoy = useMemo(() => {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         return conteos.filter(c => {
             const f = c.fecha?.toDate ? c.fecha.toDate() : new Date(c.fecha);
-            return f >= hoy && c.ubicacion === ubicacion;
+            return f >= hoy && (isGeneral || c.ubicacion === ubicacion);
         }).length;
-    }, [conteos, ubicacion]);
+    }, [conteos, ubicacion, isGeneral]);
 
     // ── KPI: products with differences in latest count ──
     const diferenciasUltimoConteo = useMemo(() => {
-        const completados = conteos.filter(c => c.estado === 'COMPLETADO' && c.ubicacion === ubicacion);
+        const completados = conteos.filter(c => c.estado === 'COMPLETADO' && (isGeneral || c.ubicacion === ubicacion));
         if (completados.length === 0) return 0;
         const ultimo = completados.sort((a, b) => {
             const fA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             return fB - fA;
         })[0];
         return (ultimo.items || []).filter(i => i.diferencia !== 0).length;
-    }, [conteos, ubicacion]);
+    }, [conteos, ubicacion, isGeneral]);
 
     // ── Semáforo: products expiring soon (current location) ──
     const productosSemaforo = useMemo(() => {
@@ -201,21 +201,21 @@ export default function DashboardPage() {
         [productosUbicacion]
     );
 
-    // ── Recent completed counts (current location) ──
+    // ── Recent completed counts (current or all locations) ──
     const conteosRecientes = useMemo(() => {
         return conteos
-            .filter(c => c.estado === 'COMPLETADO' && c.ubicacion === ubicacion)
+            .filter(c => c.estado === 'COMPLETADO' && (isGeneral || c.ubicacion === ubicacion))
             .sort((a, b) => {
                 const fA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
                 const fB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
                 return fB - fA;
             })
             .slice(0, 5);
-    }, [conteos, ubicacion]);
+    }, [conteos, ubicacion, isGeneral]);
 
-    // ── Multi-location summary for dashboard ──
+    // ── Multi-location summary for dashboard (physical locations only) ──
     const locationSummary = useMemo(() => {
-        return UBICACIONES.map(loc => {
+        return UBICACIONES_FISICAS.map(loc => {
             const prods = productos.filter(p => p.ubicacion === loc.id);
             const alertas = prods.filter(p => p.stock_actual <= p.stock_minimo_rop).length;
             return { ...loc, totalProductos: prods.length, alertas };
@@ -229,6 +229,129 @@ export default function DashboardPage() {
     const handleExportCSV = useCallback(() => {
         exportInventoryCSV(productosUbicacion, ubicacionInfo.nombre);
     }, [productosUbicacion, ubicacionInfo.nombre]);
+
+    // ── Weekly Report Generator ──
+    const handleWeeklyReport = useCallback(() => {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Conteos of the week
+        const conteosSemanales = conteos.filter(c => {
+            const f = c.fecha?.toDate ? c.fecha.toDate() : new Date(c.fecha);
+            return c.estado === 'COMPLETADO' && f >= weekAgo && (isGeneral || c.ubicacion === ubicacion);
+        });
+
+        // Differences from weekly conteos
+        const diferencias = [];
+        conteosSemanales.forEach(c => {
+            (c.items || []).filter(i => i.diferencia !== 0).forEach(i => {
+                diferencias.push({ ...i, fecha: c.fecha, usuario: c.usuario, ubicacion: c.ubicacion });
+            });
+        });
+
+        // Stock bajo
+        const stockBajoReport = productosUbicacion.filter(p => p.stock_actual <= p.stock_minimo_rop);
+
+        // Productos próximos a vencer (< 14 días)
+        const proximosVencer = productosUbicacion
+            .map(p => ({ ...p, dias: daysUntil(p.fecha_vencimiento) }))
+            .filter(p => p.dias < 14 && p.dias >= 0)
+            .sort((a, b) => a.dias - b.dias);
+
+        // Weekly movements (salidas = mermas potenciales)
+        const movimientosSemana = movimientos.filter(m => {
+            const f = m.fecha?.toDate ? m.fecha.toDate() : new Date(m.fecha);
+            return f >= weekAgo && (isGeneral || m.ubicacion === ubicacion);
+        });
+
+        const fechaRango = `${weekAgo.toLocaleDateString('es-PE')} – ${now.toLocaleDateString('es-PE')}`;
+        const ubicNombre = isGeneral ? 'Todas las ubicaciones' : ubicacionInfo.nombre;
+
+        const diffRows = diferencias.map(d => `
+            <tr>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;">${d.producto_nombre}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;">${d.stock_sistema}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;font-weight:bold;">${d.conteo_fisico}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;font-weight:bold;color:${d.diferencia < 0 ? '#DC2626' : '#059669'};">
+                    ${d.diferencia > 0 ? '+' : ''}${d.diferencia}
+                </td>
+            </tr>
+        `).join('');
+
+        const stockBajoRows = stockBajoReport.map(p => `
+            <tr>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;">${p.nombre}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;color:#DC2626;font-weight:bold;">${p.stock_actual}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;">${p.stock_minimo_rop}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;font-weight:bold;color:#B45309;">+${p.stock_minimo_rop - p.stock_actual}</td>
+            </tr>
+        `).join('');
+
+        const vencRows = proximosVencer.map(p => `
+            <tr style="${p.dias < 3 ? 'background:#FEF2F2;' : p.dias < 7 ? 'background:#FFFBEB;' : ''}">
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;">${p.nombre}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;">${formatDate(p.fecha_vencimiento)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:12px;font-weight:bold;color:${p.dias < 3 ? '#DC2626' : p.dias < 7 ? '#B45309' : '#059669'};">${p.dias} días</td>
+            </tr>
+        `).join('');
+
+        const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Reporte Semanal - ${ubicNombre} - ${fechaRango}</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin:0; padding:40px; color:#1e293b; }
+    .header { margin-bottom:32px; border-bottom:3px solid #2563eb; padding-bottom:20px; }
+    .logo { font-size:28px; font-weight:900; } .logo span { color:#2563eb; }
+    .summary { display:flex; gap:16px; margin:24px 0; flex-wrap:wrap; }
+    .summary-card { flex:1; min-width:120px; padding:20px; border-radius:12px; text-align:center; border:1px solid #e2e8f0; }
+    .summary-card .val { font-size:28px; font-weight:900; }
+    .summary-card .lbl { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; margin-top:6px; font-weight:600; }
+    h2 { font-size:16px; margin:28px 0 12px; padding:10px 0; border-bottom:2px solid #e2e8f0; color:#1e293b; }
+    table { width:100%; border-collapse:collapse; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-bottom:20px; }
+    thead { background:#f1f5f9; }
+    th { padding:10px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; font-weight:700; }
+    .empty { padding:20px; text-align:center; color:#94a3b8; font-size:13px; }
+    .footer { margin-top:40px; padding-top:16px; border-top:1px solid #e2e8f0; font-size:10px; color:#94a3b8; text-align:center; }
+    @media print { body { padding:20px; } }
+</style>
+</head><body>
+<div class="header">
+    <div class="logo">Log<span>INV</span> · Reporte Semanal</div>
+    <div style="font-size:14px;color:#64748b;margin-top:4px;">📍 ${ubicNombre} · ${fechaRango}</div>
+</div>
+<div class="summary">
+    <div class="summary-card" style="background:#EFF6FF;color:#1D4ED8;"><div class="val">${conteosSemanales.length}</div><div class="lbl">Conteos realizados</div></div>
+    <div class="summary-card" style="background:#FFFBEB;color:#B45309;"><div class="val">${diferencias.length}</div><div class="lbl">Diferencias detectadas</div></div>
+    <div class="summary-card" style="background:#FEF2F2;color:#DC2626;"><div class="val">${stockBajoReport.length}</div><div class="lbl">Stock bajo mínimo</div></div>
+    <div class="summary-card" style="background:#F0FDF4;color:#15803D;"><div class="val">${proximosVencer.length}</div><div class="lbl">Próximos a vencer</div></div>
+    <div class="summary-card" style="background:#F5F3FF;color:#7C3AED;"><div class="val">${movimientosSemana.length}</div><div class="lbl">Movimientos</div></div>
+</div>
+${diferencias.length > 0 ? `
+<h2>⚠️ Diferencias en conteos</h2>
+<table><thead><tr><th>Producto</th><th style="text-align:center;">Stock sistema</th><th style="text-align:center;">Conteo físico</th><th style="text-align:center;">Diferencia</th></tr></thead>
+<tbody>${diffRows}</tbody></table>
+` : '<h2>✅ Sin diferencias en conteos esta semana</h2>'}
+${stockBajoReport.length > 0 ? `
+<h2>📦 Productos con stock bajo mínimo</h2>
+<table><thead><tr><th>Producto</th><th style="text-align:center;">Stock actual</th><th style="text-align:center;">Stock mínimo</th><th style="text-align:center;">A reponer</th></tr></thead>
+<tbody>${stockBajoRows}</tbody></table>
+` : ''}
+${proximosVencer.length > 0 ? `
+<h2>⏰ Productos próximos a vencer</h2>
+<table><thead><tr><th>Producto</th><th style="text-align:center;">Vencimiento</th><th style="text-align:center;">Días restantes</th></tr></thead>
+<tbody>${vencRows}</tbody></table>
+` : ''}
+<div class="footer">LogINV · Reporte generado el ${now.toLocaleString('es-PE')}</div>
+</body></html>`;
+
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => printWindow.print(), 500);
+        }
+    }, [conteos, movimientos, productosUbicacion, ubicacion, ubicacionInfo, isGeneral]);
 
     const loading = pLoading || cLoading || mLoading;
 
@@ -311,6 +434,22 @@ export default function DashboardPage() {
                         </div>
                     </button>
                 </div>
+
+                {/* ── Weekly Report Button ── */}
+                <button
+                    onClick={handleWeeklyReport}
+                    className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl shadow-sm hover:shadow-md transition-all group active:scale-[0.99]"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                    <div className="w-12 h-12 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-200 transition-colors">
+                        <CalendarDays size={24} className="text-indigo-600" />
+                    </div>
+                    <div className="flex-1 text-left">
+                        <p className="text-base font-bold text-slate-800">Reporte semanal</p>
+                        <p className="text-xs text-slate-500 font-medium">Genera un resumen de los últimos 7 días: diferencias, stock bajo, próximos a vencer</p>
+                    </div>
+                    <FileText size={20} className="text-indigo-400 flex-shrink-0" />
+                </button>
 
                 {/* ── KPI Cards ── */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">

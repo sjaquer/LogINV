@@ -1,22 +1,29 @@
 'use client';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, UBICACIONES } from '@/context/LocationContext';
-import { User, MapPin, LogOut, ChevronDown } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 const LOCATION_COLORS = {
+    GENERAL: 'text-violet-600 bg-violet-50 border-violet-200',
     BAR_1: 'text-brand-600 bg-brand-50 border-brand-200',
     BAR_2: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     ALMACEN: 'text-amber-600 bg-amber-50 border-amber-200',
 };
 
+const THEME_ICONS = { light: Sun, dark: Moon, auto: Monitor };
+const THEME_LABELS = { light: 'Claro', dark: 'Oscuro', auto: 'Auto' };
+
 export default function Header({ title }) {
     const { user, logout } = useAuth();
     const { ubicacion, setUbicacion, ubicacionInfo } = useLocation();
+    const { mode, toggleTheme, resolved } = useTheme();
     const [openLocMenu, setOpenLocMenu] = useState(false);
     const [openUserMenu, setOpenUserMenu] = useState(false);
     const locRef = useRef(null);
     const userRef = useRef(null);
+    const ThemeIcon = THEME_ICONS[mode];
 
     // Close menus on outside click
     useEffect(() => {
@@ -68,6 +75,15 @@ export default function Header({ title }) {
                         </div>
                     )}
                 </div>
+
+                {/* Theme toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-brand-400 transition-all text-slate-500 hover:text-brand-600"
+                    title={`Tema: ${THEME_LABELS[mode]}`}
+                >
+                    <ThemeIcon size={16} />
+                </button>
 
                 {/* User menu */}
                 <div className="relative" ref={userRef}>
