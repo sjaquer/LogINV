@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
+import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDateTime } from '@/lib/utils';
@@ -240,6 +241,7 @@ export default function InventarioPage() {
     const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
     const { user } = useAuth();
     const { ubicacion, ubicacionInfo } = useLocation();
+    const { setHideBottomNav } = useSidebar();
     const userName = user?.nombre || 'Usuario';
 
     // ── State ──
@@ -256,6 +258,13 @@ export default function InventarioPage() {
     const [tapProduct, setTapProduct] = useState(null); // product being counted via tap
 
     const loading = pLoading || cLoading;
+
+    // ── Ocultar BottomNav cuando hay un modal a pantalla completa ──
+    useEffect(() => {
+        const open = !!(tapProduct && conteoActivo) || !!showScanner || !!detailConteo;
+        setHideBottomNav(open);
+        return () => setHideBottomNav(false);
+    }, [tapProduct, conteoActivo, showScanner, detailConteo, setHideBottomNav]);
 
     // ── Reset active conteo when location changes ──
     useEffect(() => {

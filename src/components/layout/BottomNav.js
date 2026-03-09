@@ -3,9 +3,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSidebar } from '@/context/SidebarContext';
 
 export default function BottomNav() {
     const pathname = usePathname();
+    const { hideBottomNav } = useSidebar();
+
+    if (hideBottomNav) return null;
 
     const items = [
         { href: '/', label: 'Panel', icon: LayoutDashboard },

@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
+import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState, StockBar } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { formatDate } from '@/lib/utils';
@@ -495,6 +496,7 @@ export default function ProductosPage() {
     const { categorias, crearCategoria, actualizarCategoria, eliminarCategoria } = useCategorias();
     const { user } = useAuth();
     const { ubicacion, ubicacionInfo } = useLocation();
+    const { setHideBottomNav } = useSidebar();
     const userName = user?.nombre || 'Usuario';
     const role = user?.rol || 'LOGISTICA';
 
@@ -505,6 +507,13 @@ export default function ProductosPage() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [deleteProduct, setDeleteProduct] = useState(null);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+
+    // ── Ocultar BottomNav cuando hay un modal abierto ──
+    useEffect(() => {
+        const open = !!showProductForm || !!deleteProduct || !!showCategoryManager;
+        setHideBottomNav(open);
+        return () => setHideBottomNav(false);
+    }, [showProductForm, deleteProduct, showCategoryManager, setHideBottomNav]);
 
     // category map: nombre → icono
     const catIconMap = useMemo(() => {
