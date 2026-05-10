@@ -12,10 +12,10 @@ const ROLE_COLORS = {
 };
 
 const PASSWORDS = {
-    LOGISTICA: '1234',
-    PLANTA: '5678',
-    ADMIN: 'admin',
-    GERENCIA: 'master',
+    LOGISTICA: process.env.NEXT_PUBLIC_PASS_LOGISTICA || '1234',
+    PLANTA: process.env.NEXT_PUBLIC_PASS_PLANTA || '5678',
+    ADMIN: process.env.NEXT_PUBLIC_PASS_ADMIN || 'admin',
+    GERENCIA: process.env.NEXT_PUBLIC_PASS_GERENCIA || 'master',
 };
 
 const LANGUAGES = [

@@ -1,7 +1,10 @@
 {
-  "name": "loginv",
-  "version": "0.1.0",
-  "private": true,
+  "name": "loginv-agroindustrial",
+  "version": "1.0.0",
+  "description": "Sistema avanzado de gestión de inventarios y logística para plantas agroindustriales.",
+  "author": "Sebastián Jaque",
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
