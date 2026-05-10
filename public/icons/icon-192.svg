@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="40" fill="#2563eb"/>
+  <text x="96" y="78" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="38" fill="white">Log</text>
+  <text x="96" y="120" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="38" fill="#93c5fd">INV</text>
+  <text x="96" y="152" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="600" font-size="16" fill="#93c5fd">🍷 Bar</text>
+</svg>

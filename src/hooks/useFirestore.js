@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS,
-    MOCK_CATEGORIAS,
+    MOCK_CATEGORIAS, MOCK_CONTEOS,
 } from '@/lib/mockDataStore';
 
 // ─── Detect if Firebase is configured ────────────────────────────────────
@@ -11,7 +11,7 @@ const USE_MOCK = typeof window !== 'undefined'
     : true;
 
 if (typeof window !== 'undefined') {
-    console.log('[MolinoINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
+    console.log('[LogINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
 }
 
 // ─── Helpers for mock timestamps ──────────────────────────────────────────
@@ -25,12 +25,14 @@ let mockProductos = [...MOCK_PRODUCTOS];
 let mockRequerimientos = [...MOCK_REQUERIMIENTOS];
 let mockMovimientos = [...MOCK_MOVIMIENTOS];
 let mockCategorias = [...MOCK_CATEGORIAS];
+let mockConteos = [...MOCK_CONTEOS];
 
 const listeners = {
     productos: new Set(),
     requerimientos: new Set(),
     movimientos: new Set(),
     categorias: new Set(),
+    conteos: new Set(),
 };
 
 function notify(key) {
@@ -39,6 +41,7 @@ function notify(key) {
         requerimientos: mockRequerimientos,
         movimientos: mockMovimientos,
         categorias: mockCategorias,
+        conteos: mockConteos,
     };
     listeners[key].forEach(fn => fn([...dataMap[key]]));
 }
@@ -59,7 +62,7 @@ async function getFirestore() {
 function firebaseError(operation, err) {
     const code = err?.code || '';
     const msg = err?.message || String(err);
-    console.error(`[MolinoINV] Error en ${operation}:`, code, msg);
+    console.error(`[LogINV] Error en ${operation}:`, code, msg);
 
     if (code === 'permission-denied' || code === 'PERMISSION_DENIED' || msg.includes('Missing or insufficient permissions')) {
         throw new Error(
@@ -104,12 +107,12 @@ export function useCategorias() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener categorias:', err.code, err.message);
+                        console.error('[LogINV] Error listener categorias:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         // Fallback: try without orderBy if index is missing
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            console.warn('[MolinoINV] Intentando sin orderBy...');
+                            console.warn('[LogINV] Intentando sin orderBy...');
                             const qSimple = fs.collection(db, 'categorias');
                             unsub = fs.onSnapshot(qSimple,
                                 (snap) => {
@@ -118,7 +121,7 @@ export function useCategorias() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback categorias:', fallbackErr);
+                                    console.error('[LogINV] Error fallback categorias:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -126,7 +129,7 @@ export function useCategorias() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup categorias:', err);
+                console.error('[LogINV] Error setup categorias:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -218,7 +221,7 @@ export function useProductos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener productos:', err.code, err.message);
+                        console.error('[LogINV] Error listener productos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -230,7 +233,7 @@ export function useProductos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback productos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback productos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -238,7 +241,7 @@ export function useProductos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup productos:', err);
+                console.error('[LogINV] Error setup productos:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -270,6 +273,7 @@ export function useProductos() {
                     tipo: 'INGRESO',
                     cantidad: data.stock_actual,
                     usuario: data._usuario || 'Sistema',
+                    ubicacion: data.ubicacion || '',
                     fecha: mockTimestamp(),
                     motivo_merma: null,
                     notas: 'Stock inicial al crear producto',
@@ -299,6 +303,7 @@ export function useProductos() {
                     tipo: 'INGRESO',
                     cantidad: data.stock_actual,
                     usuario,
+                    ubicacion: docData.ubicacion || '',
                     fecha: fs.serverTimestamp(),
                     motivo_merma: null,
                     notas: 'Stock inicial al crear producto',
@@ -371,6 +376,7 @@ export function useProductos() {
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
                 usuario,
+                ubicacion: prod.ubicacion || '',
                 fecha: mockTimestamp(),
                 motivo_merma: null,
             };
@@ -392,6 +398,7 @@ export function useProductos() {
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
                 usuario,
+                ubicacion: prodSnap?.ubicacion || '',
                 fecha: fs.serverTimestamp(),
                 motivo_merma: null,
             });
@@ -416,6 +423,7 @@ export function useProductos() {
                 tipo: 'MERMA',
                 cantidad,
                 usuario,
+                ubicacion: prod.ubicacion || '',
                 fecha: mockTimestamp(),
                 motivo_merma: motivo,
             };
@@ -439,6 +447,7 @@ export function useProductos() {
                 tipo: 'MERMA',
                 cantidad,
                 usuario,
+                ubicacion: prodSnap.ubicacion || '',
                 fecha: fs.serverTimestamp(),
                 motivo_merma: motivo,
             });
@@ -480,7 +489,7 @@ export function useRequerimientos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener requerimientos:', err.code, err.message);
+                        console.error('[LogINV] Error listener requerimientos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -492,7 +501,7 @@ export function useRequerimientos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback requerimientos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback requerimientos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -500,7 +509,7 @@ export function useRequerimientos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup requerimientos:', err);
+                console.error('[LogINV] Error setup requerimientos:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -597,7 +606,7 @@ export function useMovimientos() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[MolinoINV] Error listener movimientos:', err.code, err.message);
+                        console.error('[LogINV] Error listener movimientos:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
@@ -609,7 +618,7 @@ export function useMovimientos() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[MolinoINV] Error fallback movimientos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback movimientos:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -617,7 +626,7 @@ export function useMovimientos() {
                     }
                 );
             } catch (err) {
-                console.error('[MolinoINV] Error setup movimientos:', err);
+                console.error('[LogINV] Error setup movimientos:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -626,4 +635,148 @@ export function useMovimientos() {
     }, []);
 
     return { movimientos, loading, error };
+}
+
+// Helper: create a movimiento
+export function useCrearMovimiento() {
+    const crearMovimiento = useCallback(async (data) => {
+        if (USE_MOCK) {
+            const id = 'mov_' + Date.now();
+            const newMov = { id, ...data, fecha: mockTimestamp() };
+            mockMovimientos = [newMov, ...mockMovimientos];
+            notify('movimientos');
+            return id;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            const docRef = await fs.addDoc(fs.collection(db, 'movimientos'), {
+                ...data,
+                fecha: fs.serverTimestamp(),
+            });
+            return docRef.id;
+        } catch (err) {
+            firebaseError('crearMovimiento', err);
+        }
+    }, []);
+
+    return crearMovimiento;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  useConteos – Daily inventory counts
+// ═══════════════════════════════════════════════════════════════════════════
+export function useConteos() {
+    const [conteos, setConteos] = useState(USE_MOCK ? mockConteos : []);
+    const [loading, setLoading] = useState(!USE_MOCK);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (USE_MOCK) {
+            setConteos([...mockConteos]);
+            listeners.conteos.add(setConteos);
+            return () => listeners.conteos.delete(setConteos);
+        }
+        let unsub;
+        (async () => {
+            try {
+                const { fs, db } = await getFirestore();
+                const q = fs.query(fs.collection(db, 'conteos'), fs.orderBy('fecha', 'desc'));
+                unsub = fs.onSnapshot(q,
+                    (snap) => {
+                        setConteos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                        setError(null);
+                    },
+                    (err) => {
+                        console.error('[LogINV] Error listener conteos:', err.code, err.message);
+                        setLoading(false);
+                        setError(err.message);
+                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+                            const qSimple = fs.collection(db, 'conteos');
+                            unsub = fs.onSnapshot(qSimple,
+                                (snap) => {
+                                    setConteos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                                    setLoading(false);
+                                    setError(null);
+                                },
+                                (fallbackErr) => {
+                                    console.error('[LogINV] Error fallback conteos:', fallbackErr);
+                                    setLoading(false);
+                                }
+                            );
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('[LogINV] Error setup conteos:', err);
+                setLoading(false);
+                setError(err.message);
+            }
+        })();
+        return () => unsub?.();
+    }, []);
+
+    const crearConteo = useCallback(async (data) => {
+        if (USE_MOCK) {
+            const newConteo = {
+                id: 'cnt_' + Date.now(),
+                ...data,
+                fecha: mockTimestamp(),
+                estado: 'EN_PROGRESO',
+                items: data.items || [],
+                fecha_cierre: null,
+            };
+            mockConteos = [newConteo, ...mockConteos];
+            notify('conteos');
+            return newConteo.id;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            const ref = await fs.addDoc(fs.collection(db, 'conteos'), {
+                ...data,
+                fecha: fs.serverTimestamp(),
+                estado: 'EN_PROGRESO',
+                items: data.items || [],
+                fecha_cierre: null,
+            });
+            return ref.id;
+        } catch (err) {
+            firebaseError('crearConteo', err);
+        }
+    }, []);
+
+    const actualizarConteo = useCallback(async (id, data) => {
+        if (USE_MOCK) {
+            mockConteos = mockConteos.map(c => c.id === id ? { ...c, ...data } : c);
+            notify('conteos');
+            return;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'conteos', id), data);
+        } catch (err) {
+            firebaseError('actualizarConteo', err);
+        }
+    }, []);
+
+    const finalizarConteo = useCallback(async (id) => {
+        if (USE_MOCK) {
+            mockConteos = mockConteos.map(c =>
+                c.id === id ? { ...c, estado: 'COMPLETADO', fecha_cierre: mockTimestamp() } : c
+            );
+            notify('conteos');
+            return;
+        }
+        try {
+            const { fs, db } = await getFirestore();
+            await fs.updateDoc(fs.doc(db, 'conteos', id), {
+                estado: 'COMPLETADO',
+                fecha_cierre: fs.serverTimestamp(),
+            });
+        } catch (err) {
+            firebaseError('finalizarConteo', err);
+        }
+    }, []);
+
+    return { conteos, loading, error, crearConteo, actualizarConteo, finalizarConteo };
 }
