@@ -1,11 +1,18 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 
+// Ubicaciones reales del inventario IACYM CNC (ver scripts/lib/excelMapping.js
+// - UBICACIONES_MAP - que debe mantenerse en sincronía con estos ids).
 export const UBICACIONES = [
     { id: 'GENERAL', nombre: 'General', icono: '🌐', color: 'violet' },
-    { id: 'BAR_1', nombre: 'Bar 1', icono: '🍸', color: 'brand' },
-    { id: 'BAR_2', nombre: 'Bar 2', icono: '🍹', color: 'emerald' },
-    { id: 'ALMACEN', nombre: 'Almacén', icono: '📦', color: 'amber' },
+    { id: 'TEMPLO', nombre: 'Templo Principal', icono: '⛪', color: 'brand' },
+    { id: 'ALMACEN_B1', nombre: 'Almacén B1', icono: '🧰', color: 'amber' },
+    { id: 'ALMACEN_B9', nombre: 'Almacén B9', icono: '📦', color: 'amber' },
+    { id: 'ALMACEN_B10', nombre: 'Almacén B10', icono: '📦', color: 'amber' },
+    { id: 'ALMACEN_B11', nombre: 'Almacén B11', icono: '📦', color: 'amber' },
+    { id: 'ALMACEN_B12', nombre: 'Almacén B12', icono: '📦', color: 'amber' },
+    { id: 'ALMACEN_B13', nombre: 'Almacén B13', icono: '📦', color: 'amber' },
+    { id: 'ALMACEN_B14', nombre: 'Almacén B14', icono: '📦', color: 'amber' },
 ];
 
 // Ubicaciones físicas (para operaciones que requieren ubicación real)

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useConteos, useCrearMovimiento } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
@@ -8,314 +8,15 @@ import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import PullToRefresh from '@/components/ui/PullToRefresh';
-import { formatDateTime } from '@/lib/utils';
+import { TapCountModal, ConteoHistoryCard, ConteoDetailModal, QuickStockModal } from './components';
 import {
-    Search, X, Plus, Minus, Package,
+    Search, X, Plus, Package,
     Save, AlertTriangle,
     Check, ClipboardList, History, ScanBarcode,
-    ChevronRight, RotateCcw, MapPin, Calendar,
+    ChevronRight, MapPin, Calendar,
     ArrowDownCircle, ArrowUpCircle, Zap,
 } from 'lucide-react';
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  TapCountModal – Full-screen counting modal (tap = +1)
-// ═══════════════════════════════════════════════════════════════════════════
-function TapCountModal({ producto, currentCount, onConfirm, onDiscard, onClose }) {
-    const [count, setCount] = useState(currentCount);
-    const [pulse, setPulse] = useState(false);
-
-    useEffect(() => {
-        function handleKey(e) { if (e.key === 'Escape') onClose(); }
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [onClose]);
-
-    const handleTap = useCallback(() => {
-        setCount(prev => prev + 1);
-        setPulse(true);
-        if (navigator.vibrate) navigator.vibrate(30);
-        setTimeout(() => setPulse(false), 150);
-    }, []);
-
-    const handleMinus = useCallback(() => {
-        setCount(prev => Math.max(0, prev - 1));
-        if (navigator.vibrate) navigator.vibrate(15);
-    }, []);
-
-    const handleReset = useCallback(() => {
-        setCount(0);
-    }, []);
-
-    const diff = count - producto.stock_actual;
-
-    return (
-        <div className="fixed inset-0 z-50 bg-slate-900/95 flex flex-col animate-fade-in select-none" style={{ WebkitTapHighlightColor: 'transparent' }}>
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 flex-shrink-0">
-                <button onClick={onClose} className="p-3 rounded-2xl bg-white/10 text-white/80 hover:bg-white/20 active:scale-95 transition-all">
-                    <X size={24} />
-                </button>
-                <div className="text-center flex-1 px-4 min-w-0">
-                    <p className="text-white font-bold text-lg sm:text-xl truncate">{producto.nombre}</p>
-                    <p className="text-white/50 text-sm">{producto.categoria} {producto.gramaje ? `· ${producto.gramaje}` : ''}</p>
-                </div>
-                <div className="w-12" /> {/* spacer */}
-            </div>
-
-            {/* Current count display */}
-            <div className="flex flex-col items-center justify-center px-6 py-4 flex-shrink-0">
-                <p className={`text-8xl sm:text-9xl font-black text-white tabular-nums transition-transform duration-150 ${pulse ? 'scale-110' : 'scale-100'}`}>
-                    {count}
-                </p>
-                <p className="text-white/40 text-sm sm:text-base font-medium mt-2 uppercase tracking-wider">Conteo físico</p>
-                <div className="flex items-center gap-4 mt-3">
-                    <span className="text-white/40 text-sm">Stock sistema: <strong className="text-white/70">{producto.stock_actual}</strong></span>
-                    {diff !== 0 && (
-                        <span className={`text-sm font-bold px-2.5 py-0.5 rounded-full ${diff < 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                            {diff > 0 ? '+' : ''}{diff}
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* TAP ZONE – big touch area */}
-            <div className="flex-1 flex items-center justify-center px-6 py-4">
-                <button
-                    onClick={handleTap}
-                    className={`w-full max-w-sm aspect-square rounded-[2rem] bg-brand-600 hover:bg-brand-700 active:scale-95 active:bg-brand-800 transition-all duration-100 flex flex-col items-center justify-center shadow-2xl shadow-brand-500/30 border-4 border-brand-400/20 ${pulse ? 'scale-95' : 'scale-100'}`}
-                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                >
-                    <Plus size={64} className="text-white/90" strokeWidth={3} />
-                    <p className="text-white/80 text-lg sm:text-xl font-bold mt-3">Toca para contar</p>
-                </button>
-            </div>
-
-            {/* Bottom controls */}
-            <div className="flex items-center gap-3 p-4 sm:p-6 flex-shrink-0 pb-safe">
-                <button
-                    onClick={handleReset}
-                    className="p-4 rounded-2xl bg-white/10 text-white/60 hover:bg-white/20 active:scale-95 transition-all"
-                    title="Reset"
-                >
-                    <RotateCcw size={24} />
-                </button>
-                <button
-                    onClick={handleMinus}
-                    className="p-4 rounded-2xl bg-white/10 text-white/60 hover:bg-white/20 active:scale-95 transition-all"
-                    title="-1"
-                >
-                    <Minus size={24} />
-                </button>
-                <button
-                    onClick={onDiscard}
-                    className="flex-1 py-4 rounded-2xl bg-white/10 text-white/80 font-bold text-base hover:bg-white/20 active:scale-95 transition-all"
-                >
-                    Descartar
-                </button>
-                <button
-                    onClick={() => onConfirm(count)}
-                    className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base hover:bg-emerald-600 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
-                >
-                    <Check size={22} /> Confirmar
-                </button>
-            </div>
-        </div>
-    );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  ConteoHistoryCard
-// ═══════════════════════════════════════════════════════════════════════════
-function ConteoHistoryCard({ conteo, onSelect }) {
-    const totalItems = conteo.items?.length || 0;
-    const conDiff = conteo.items?.filter(i => i.diferencia !== 0).length || 0;
-    const isCompleted = conteo.estado === 'COMPLETADO';
-
-    return (
-        <button
-            type="button"
-            onClick={() => onSelect(conteo)}
-            className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:shadow-md transition-all group"
-        >
-            <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                    <span className={`inline-block px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                        {isCompleted ? 'Completado' : 'En progreso'}
-                    </span>
-                    <p className="text-sm text-slate-500 mt-2 font-medium">{conteo.usuario}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{formatDateTime(conteo.fecha)}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                    <p className="text-3xl font-bold text-slate-900">{totalItems}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Ítems contados</p>
-                    {conDiff > 0 && (
-                        <p className="text-xs text-amber-600 font-bold mt-1">{conDiff} con diferencias</p>
-                    )}
-                </div>
-            </div>
-            {conteo.notas && (
-                <p className="text-xs text-slate-400 mt-2 line-clamp-1 italic">&quot;{conteo.notas}&quot;</p>
-            )}
-        </button>
-    );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  ConteoDetailModal – view completed count detail
-// ═══════════════════════════════════════════════════════════════════════════
-function ConteoDetailModal({ conteo, onClose }) {
-    const items = conteo.items || [];
-    const conDiff = items.filter(i => i.diferencia !== 0);
-    const sinDiff = items.filter(i => i.diferencia === 0);
-
-    useEffect(() => {
-        function handleKey(e) { if (e.key === 'Escape') onClose(); }
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [onClose]);
-
-    return (
-        <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
-                    <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg">Detalle del conteo</h3>
-                        <p className="text-sm text-slate-500 mt-0.5">{conteo.usuario} · {formatDateTime(conteo.fecha)}</p>
-                    </div>
-                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={22} />
-                    </button>
-                </div>
-                {conteo.notas && (
-                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 text-sm text-slate-600 italic">
-                        &quot;{conteo.notas}&quot;
-                    </div>
-                )}
-                <div className="flex-1 overflow-y-auto">
-                    {conDiff.length > 0 && (
-                        <div>
-                            <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
-                                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Con diferencias ({conDiff.length})</p>
-                            </div>
-                            {conDiff.map(item => (
-                                <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2 bg-amber-50/30">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-base font-semibold text-slate-800 truncate">{item.producto_nombre}</p>
-                                        <p className="text-sm text-slate-500 mt-0.5">
-                                            Stock sistema: {item.stock_sistema} → Conteo físico: {item.conteo_fisico}
-                                        </p>
-                                    </div>
-                                    <span className={`text-base font-bold ${item.diferencia < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                                        {item.diferencia > 0 ? '+' : ''}{item.diferencia}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {sinDiff.length > 0 && (
-                        <div>
-                            <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100">
-                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Sin diferencias ({sinDiff.length})</p>
-                            </div>
-                            {sinDiff.map(item => (
-                                <div key={item.producto_id} className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
-                                    <p className="text-base text-slate-700 truncate flex-1">{item.producto_nombre}</p>
-                                    <span className="text-base text-emerald-500 flex items-center gap-1"><Check size={16} /> {item.conteo_fisico}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {items.length === 0 && (
-                        <div className="p-8 text-center text-base text-slate-400">Sin datos</div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  QuickStockModal – Quick add/subtract stock for a product
-// ═══════════════════════════════════════════════════════════════════════════
-function QuickStockModal({ producto, tipo, onConfirm, onClose }) {
-    const [cantidad, setCantidad] = useState(1);
-    const [motivo, setMotivo] = useState('');
-
-    useEffect(() => {
-        function handleKey(e) { if (e.key === 'Escape') onClose(); }
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [onClose]);
-
-    const isIngreso = tipo === 'INGRESO';
-
-    return (
-        <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-white max-w-sm" onClick={e => e.stopPropagation()}>
-                <div className="flex flex-col items-center text-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${isIngreso ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
-                        {isIngreso ? <ArrowDownCircle size={28} className="text-emerald-600" /> : <ArrowUpCircle size={28} className="text-amber-600" />}
-                    </div>
-                    <h3 className="font-bold text-slate-900 text-lg">{isIngreso ? 'Ingreso rápido' : 'Salida rápida'}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{producto.nombre}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Stock actual: <strong>{producto.stock_actual}</strong> {producto.unidad}</p>
-                </div>
-
-                <div className="mt-5 space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Cantidad</label>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setCantidad(c => Math.max(1, c - 1))} className="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-                                <Minus size={18} />
-                            </button>
-                            <input
-                                type="number"
-                                min="1"
-                                value={cantidad}
-                                onChange={e => setCantidad(Math.max(1, Number(e.target.value) || 1))}
-                                className="inp text-center text-2xl font-bold py-3 flex-1 bg-white border-slate-200 text-slate-900"
-                            />
-                            <button onClick={() => setCantidad(c => c + 1)} className="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-                                <Plus size={18} />
-                            </button>
-                        </div>
-                        {!isIngreso && cantidad > producto.stock_actual && (
-                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertTriangle size={12} /> Excede el stock actual</p>
-                        )}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Motivo (opcional)</label>
-                        <input
-                            type="text"
-                            value={motivo}
-                            onChange={e => setMotivo(e.target.value)}
-                            placeholder={isIngreso ? 'Ej: Recepción de pedido' : 'Ej: Consumo diario'}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900 w-full"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                    <button onClick={onClose} className="btn btn-ghost flex-1 py-3 text-base font-semibold text-slate-600">
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={() => onConfirm(cantidad, motivo)}
-                        disabled={!isIngreso && cantidad > producto.stock_actual}
-                        className={`btn flex-1 py-3 text-base font-bold flex items-center justify-center gap-2 ${isIngreso ? 'btn-primary' : 'bg-amber-500 hover:bg-amber-600 text-white rounded-xl'} disabled:opacity-50`}
-                    >
-                        {isIngreso ? <ArrowDownCircle size={18} /> : <ArrowUpCircle size={18} />}
-                        Confirmar
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  INVENTORY PAGE – Tap-to-count daily counting tool
-// ═══════════════════════════════════════════════════════════════════════════
 export default function InventarioPage() {
     const { productos, loading: pLoading, updateStock } = useProductos();
     const { categorias } = useCategorias();
@@ -446,7 +147,7 @@ export default function InventarioPage() {
     // ── Category names ──
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
-    // ── Products filtered by location ──  ← debe declararse ANTES de handleBarcodeScan
+    // ── Products filtered by location ──
     const productosUbicacion = useMemo(
         () => isGeneral ? productos : productos.filter(p => p.ubicacion === ubicacion),
         [productos, ubicacion, isGeneral]
@@ -576,7 +277,6 @@ export default function InventarioPage() {
         return list;
     }, [conteos, ubicacion, isGeneral, fechaDesde, fechaHasta]);
 
-    // helper: is product already counted?
     const isProductCounted = useCallback((pid) => conteoItems.some(i => i.producto_id === pid), [conteoItems]);
     const getConteoForProduct = useCallback((pid) => conteoItems.find(i => i.producto_id === pid), [conteoItems]);
 
@@ -645,7 +345,7 @@ export default function InventarioPage() {
                                     <MapPin size={44} className="text-violet-500" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-slate-900">Vista General</h2>
-                                <p className="text-base text-slate-500 mt-2 max-w-sm">Para crear un conteo, selecciona una ubicación específica (Bar 1, Bar 2 o Almacén) desde el selector de ubicación.</p>
+                                <p className="text-base text-slate-500 mt-2 max-w-sm">Para crear un conteo, selecciona una ubicación específica (Templo o un Almacén) desde el selector de ubicación.</p>
                             </div>
                         )}
 

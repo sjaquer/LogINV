@@ -1,0 +1,268 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { X, Save, AlertTriangle, ScanBarcode } from 'lucide-react';
+import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
+
+const UNIDADES = ['unidades', 'botellas', 'latas', 'bolsas', 'cajas', 'litros', 'kg', 'gramos', 'packs'];
+
+export default function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
+    const isEdit = !!producto;
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+
+    useEscapeKey(onClose);
+
+    const [form, setForm] = useState({
+        nombre: producto?.nombre || '',
+        categoria: producto?.categoria || '',
+        stock_actual: producto?.stock_actual ?? 0,
+        stock_minimo_rop: producto?.stock_minimo_rop ?? 0,
+        unidad: producto?.unidad || 'unidades',
+        codigo_barras: producto?.codigo_barras || '',
+        gramaje: producto?.gramaje || '',
+        contenido: producto?.contenido || '',
+        marca: producto?.marca || '',
+        lote: producto?.lote || '',
+        fecha_vencimiento: producto?.fecha_vencimiento
+            ? (producto.fecha_vencimiento.toDate
+                ? producto.fecha_vencimiento.toDate().toISOString().split('T')[0]
+                : new Date(producto.fecha_vencimiento).toISOString().split('T')[0])
+            : '',
+        proveedor: producto?.proveedor || '',
+        descripcion: producto?.descripcion || '',
+    });
+
+    function handleChange(key, value) {
+        setForm(prev => ({ ...prev, [key]: key === 'stock_actual' || key === 'stock_minimo_rop' ? Number(value) || 0 : value }));
+    }
+
+    function handleBarcodeScan(code) {
+        setForm(prev => ({ ...prev, codigo_barras: code }));
+        setShowScanner(false);
+    }
+
+    async function handleSubmit() {
+        if (!form.nombre.trim()) { setError('El nombre del producto es obligatorio'); return; }
+        if (!form.categoria) { setError('Selecciona una categoría'); return; }
+        setSaving(true);
+        setError('');
+        try {
+            await onSave({ ...form, _usuario: userName }, isEdit ? producto.id : null);
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Error');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    return (
+        <div className="modal-overlay animate-fade-in" onClick={onClose}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
+                    <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-900 text-lg">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h3>
+                        <p className="text-sm text-slate-500 mt-0.5">{isEdit ? 'Modifica los datos del producto' : 'Registra un nuevo producto al inventario'}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <X size={22} />
+                    </button>
+                </div>
+
+                {/* Error */}
+                {error && (
+                    <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
+                        <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={e => { e.preventDefault(); handleSubmit(); }} className="flex-1 overflow-y-auto p-5 space-y-5">
+                    {/* Nombre */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Producto *</label>
+                        <input
+                            type="text"
+                            value={form.nombre}
+                            onChange={e => handleChange('nombre', e.target.value)}
+                            placeholder="Ej: Vodka Absolut 750ml"
+                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            required
+                        />
+                    </div>
+
+                    {/* Código de barras */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Código de barras</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={form.codigo_barras}
+                                onChange={e => handleChange('codigo_barras', e.target.value)}
+                                placeholder="Ej: 7750182000123"
+                                className="inp text-base py-3 flex-1 bg-white border-slate-200 text-slate-900 font-mono"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowScanner(true)}
+                                className="btn btn-ghost px-4 py-3 border border-slate-200 text-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all rounded-xl flex items-center gap-2"
+                            >
+                                <ScanBarcode size={20} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Categoría + Unidad */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Categoría *</label>
+                            <select
+                                value={form.categoria}
+                                onChange={e => handleChange('categoria', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                required
+                            >
+                                <option value="">— Selecciona una categoría —</option>
+                                {categorias.filter(c => c.activa !== false).map(c => (
+                                    <option key={c.id} value={c.nombre}>{c.icono} {c.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Unidad</label>
+                            <select
+                                value={form.unidad}
+                                onChange={e => handleChange('unidad', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            >
+                                {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Marca + Contenido/Gramaje */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Marca</label>
+                            <input
+                                type="text"
+                                value={form.marca}
+                                onChange={e => handleChange('marca', e.target.value)}
+                                placeholder="Ej: Absolut"
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Gramaje</label>
+                            <input
+                                type="text"
+                                value={form.gramaje}
+                                onChange={e => handleChange('gramaje', e.target.value)}
+                                placeholder="Ej: 750ml, 330ml, 200g"
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Stock actual + Mínimo */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock actual</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.stock_actual}
+                                onChange={e => handleChange('stock_actual', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock mínimo</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.stock_minimo_rop}
+                                onChange={e => handleChange('stock_minimo_rop', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Lote + Vencimiento */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Lote</label>
+                            <input
+                                type="text"
+                                value={form.lote}
+                                onChange={e => handleChange('lote', e.target.value)}
+                                placeholder="Ej: VOD-2026-01"
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Vencimiento</label>
+                            <input
+                                type="date"
+                                value={form.fecha_vencimiento}
+                                onChange={e => handleChange('fecha_vencimiento', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Proveedor */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Proveedor</label>
+                        <input
+                            type="text"
+                            value={form.proveedor}
+                            onChange={e => handleChange('proveedor', e.target.value)}
+                            placeholder="Ej: Distribuidora Nacional SAC"
+                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                        />
+                    </div>
+
+                    {/* Descripción */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Descripción</label>
+                        <textarea
+                            rows={2}
+                            value={form.descripcion}
+                            onChange={e => handleChange('descripcion', e.target.value)}
+                            placeholder="Notas adicionales del producto"
+                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                        />
+                    </div>
+                </form>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 p-5 border-t border-slate-100 bg-slate-50 flex-shrink-0">
+                    <button type="button" onClick={onClose} className="btn btn-ghost px-6 py-3 text-base font-semibold text-slate-600">
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={saving}
+                        className="btn btn-primary px-6 py-3 text-base font-bold flex items-center gap-2 shadow-sm"
+                    >
+                        {saving ? (
+                            <><span className="spinner border-white border-t-transparent w-5 h-5" /> Guardando...</>
+                        ) : (
+                            <><Save size={18} /> {isEdit ? 'Guardar cambios' : 'Crear producto'}</>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Inner barcode scanner */}
+            {showScanner && (
+                <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />
+            )}
+        </div>
+    );
+}

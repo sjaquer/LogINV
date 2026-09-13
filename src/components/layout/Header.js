@@ -7,9 +7,14 @@ import { useState, useRef, useEffect } from 'react';
 
 const LOCATION_COLORS = {
     GENERAL: 'text-violet-600 bg-violet-50 border-violet-200',
-    BAR_1: 'text-brand-600 bg-brand-50 border-brand-200',
-    BAR_2: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    ALMACEN: 'text-amber-600 bg-amber-50 border-amber-200',
+    TEMPLO: 'text-brand-600 bg-brand-50 border-brand-200',
+    ALMACEN_B1: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B9: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B10: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B11: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B12: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B13: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B14: 'text-amber-600 bg-amber-50 border-amber-200',
 };
 
 const PASSWORDS = {

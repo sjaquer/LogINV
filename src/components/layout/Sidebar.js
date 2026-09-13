@@ -9,6 +9,11 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    MapPin,
+    Handshake,
+    Wrench,
+    FileText,
+    Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +25,11 @@ export default function Sidebar() {
         { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
         { href: '/productos', label: 'Productos', icon: Package },
         { href: '/inventario', label: 'Inventario', icon: ClipboardList },
+        { href: '/locations', label: 'Ubicaciones', icon: MapPin },
+        { href: '/loans', label: 'Préstamos', icon: Handshake },
+        { href: '/maintenance', label: 'Mantenimiento', icon: Wrench },
+        { href: '/reports', label: 'Reportes', icon: FileText },
+        { href: '/admin/users', label: 'Usuarios', icon: Users },
     ];
 
     return (
