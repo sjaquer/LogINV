@@ -109,28 +109,3 @@ ${conteo.notas ? `<div class="notes"><strong>Observaciones:</strong> ${conteo.no
     }
 }
 
-/**
- * Exporta el inventario a CSV
- * @param {Array} productos - Lista de productos
- * @param {string} ubicacionNombre - Nombre de la ubicación
- */
-export function exportInventoryCSV(productos, ubicacionNombre) {
-    const headers = ['Producto', 'Categoría', 'Ubicación', 'Stock Actual', 'Stock Mínimo', 'Unidad', 'Estado', 'Responsable', 'Código de Barras'];
-    const rows = productos.map(p => {
-        const ubicName = UBICACIONES.find(u => u.id === p.ubicacion)?.nombre || p.ubicacion || '';
-        return [p.nombre, p.categoria, ubicName, p.stock_actual, p.stock_minimo, p.unidad || '', p.estado || '', p.responsabilidad || '', p.codigo_barras || ''];
-    });
-
-    const csvContent = [headers, ...rows]
-        .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-        .join('\n');
-
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `inventario_${ubicacionNombre || 'todos'}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-}

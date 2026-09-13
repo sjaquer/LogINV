@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { FileText, Download } from 'lucide-react';
+import { FileText, FileSpreadsheet } from 'lucide-react';
 
-export default function WeeklyReportButton({ onGenerate, onExportCSV }) {
+export default function WeeklyReportButton({ onGenerate, onExportExcel }) {
     const [generating, setGenerating] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     async function handleGenerate() {
         setGenerating(true);
@@ -11,6 +12,15 @@ export default function WeeklyReportButton({ onGenerate, onExportCSV }) {
             await onGenerate();
         } finally {
             setGenerating(false);
+        }
+    }
+
+    async function handleExportExcel() {
+        setExporting(true);
+        try {
+            await onExportExcel();
+        } finally {
+            setExporting(false);
         }
     }
 
@@ -28,10 +38,15 @@ export default function WeeklyReportButton({ onGenerate, onExportCSV }) {
                 )}
             </button>
             <button
-                onClick={onExportCSV}
-                className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center"
+                onClick={handleExportExcel}
+                disabled={exporting}
+                className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center disabled:opacity-60"
             >
-                <Download size={18} /> Exportar CSV
+                {exporting ? (
+                    <><span className="spinner border-slate-400 border-t-transparent w-4 h-4" /> Generando...</>
+                ) : (
+                    <><FileSpreadsheet size={18} /> Exportar a Excel</>
+                )}
             </button>
         </div>
     );

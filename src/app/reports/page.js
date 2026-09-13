@@ -1,40 +1,24 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useMovimientos } from '@/hooks/useFirestore';
 import { UBICACIONES } from '@/context/LocationContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
+import { exportInventoryExcel } from '@/lib/excelExport';
 import {
-    FileText, Download, Printer, Package, AlertTriangle, MapPin, Layers,
+    FileText, FileSpreadsheet, Printer, Package, AlertTriangle, MapPin, Layers,
 } from 'lucide-react';
-
-function toCsvValue(value) {
-    const str = String(value ?? '');
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-}
-
-function downloadCsv(filename, rows) {
-    const csv = rows.map(row => row.map(toCsvValue).join(',')).join('\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-}
 
 export default function ReportsPage() {
     const { productos, loading } = useProductos();
     const { categorias } = useCategorias();
     const { movimientos } = useMovimientos();
+    const [exporting, setExporting] = useState(false);
 
     const ubicNombre = (id) => UBICACIONES.find(u => u.id === id)?.nombre || id || '—';
 
     const stockBajo = useMemo(
-        () => productos.filter(p => p.stock_actual <= (p.stock_minimo ?? p.stock_minimo ?? 0)),
+        () => productos.filter(p => p.stock_actual <= (p.stock_minimo ?? 0)),
         [productos]
     );
 
@@ -54,15 +38,13 @@ export default function ReportsPage() {
 
     const totalStock = useMemo(() => productos.reduce((sum, p) => sum + (p.stock_actual || 0), 0), [productos]);
 
-    function exportarInventarioCsv() {
-        const rows = [
-            ['Nombre', 'Categoría', 'Ubicación', 'Stock actual', 'Stock mínimo', 'Unidad', 'Código de barras', 'Estado'],
-            ...productos.map(p => [
-                p.nombre, p.categoria, ubicNombre(p.ubicacion), p.stock_actual, p.stock_minimo ?? p.stock_minimo ?? '',
-                p.unidad, p.codigo_barras || '', p.estado || '',
-            ]),
-        ];
-        downloadCsv(`inventario_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    async function exportarInventarioExcel() {
+        setExporting(true);
+        try {
+            await exportInventoryExcel(productos, categorias, 'Todas las ubicaciones');
+        } finally {
+            setExporting(false);
+        }
     }
 
     return (
@@ -78,10 +60,18 @@ export default function ReportsPage() {
                         <p className="text-xs text-slate-500 mt-1">Resumen general del inventario de la iglesia, listo para exportar o imprimir.</p>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={exportarInventarioCsv} className="btn btn-ghost px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-600 rounded-xl flex items-center gap-2">
-                            <Download size={16} /> Exportar CSV
+                        <button
+                            onClick={exportarInventarioExcel}
+                            disabled={exporting}
+                            className="btn btn-primary px-4 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 disabled:opacity-60"
+                        >
+                            {exporting ? (
+                                <><span className="spinner border-white border-t-transparent w-4 h-4" /> Generando...</>
+                            ) : (
+                                <><FileSpreadsheet size={16} /> Exportar a Excel</>
+                            )}
                         </button>
-                        <button onClick={() => window.print()} className="btn btn-primary px-4 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2">
+                        <button onClick={() => window.print()} className="btn btn-ghost px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-600 rounded-xl flex items-center gap-2">
                             <Printer size={16} /> Imprimir
                         </button>
                     </div>
@@ -137,7 +127,7 @@ export default function ReportsPage() {
                                             <td className="py-2 pr-3 font-semibold text-slate-800">{p.nombre}</td>
                                             <td className="py-2 pr-3 text-slate-500">{ubicNombre(p.ubicacion)}</td>
                                             <td className="py-2 pr-3 text-right font-bold text-amber-600">{p.stock_actual}</td>
-                                            <td className="py-2 text-right text-slate-400">{p.stock_minimo ?? p.stock_minimo ?? '—'}</td>
+                                            <td className="py-2 text-right text-slate-400">{p.stock_minimo ?? '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

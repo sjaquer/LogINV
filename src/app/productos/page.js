@@ -8,7 +8,7 @@ import { useLocation } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
-import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, ProductCard } from './components';
+import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, ProductCard, ProductDetailModal } from './components';
 import {
     Search, X, Plus, Package,
     PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin,
@@ -42,6 +42,7 @@ function ProductosPageInner() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [deleteProduct, setDeleteProduct] = useState(null);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [viewProduct, setViewProduct] = useState(null);
 
     // ── Llegada desde /scan: precargar búsqueda y, si no existe, abrir el
     // formulario de creación con el código ya escaneado ──
@@ -62,10 +63,10 @@ function ProductosPageInner() {
 
     // ── Ocultar BottomNav cuando hay un modal abierto ──
     useEffect(() => {
-        const open = !!showProductForm || !!deleteProduct || !!showCategoryManager;
+        const open = !!showProductForm || !!deleteProduct || !!showCategoryManager || !!viewProduct;
         setHideBottomNav(open);
         return () => setHideBottomNav(false);
-    }, [showProductForm, deleteProduct, showCategoryManager, setHideBottomNav]);
+    }, [showProductForm, deleteProduct, showCategoryManager, viewProduct, setHideBottomNav]);
 
     // category map: nombre → icono
     const catIconMap = useMemo(() => {
@@ -123,13 +124,20 @@ function ProductosPageInner() {
             id: undefined,
             nombre: `${producto.nombre} (copia)`,
         };
+        setViewProduct(null);
         setEditingProduct(duplicated);
         setShowProductForm(true);
     }, []);
 
     const handleEdit = useCallback((producto) => {
+        setViewProduct(null);
         setEditingProduct(producto);
         setShowProductForm(true);
+    }, []);
+
+    const handleDeleteRequest = useCallback((producto) => {
+        setViewProduct(null);
+        setDeleteProduct(producto);
     }, []);
 
     const handleRefresh = useCallback(() => {
@@ -243,11 +251,8 @@ function ProductosPageInner() {
                                 key={p.id}
                                 producto={p}
                                 catIcon={catIconMap[p.categoria] || '📦'}
-                                canManage={role === 'admin' || role === 'encargado'}
                                 isGeneral={isGeneral}
-                                onEdit={handleEdit}
-                                onDelete={setDeleteProduct}
-                                onDuplicate={handleDuplicate}
+                                onView={setViewProduct}
                             />
                         ))}
                     </div>
@@ -256,6 +261,18 @@ function ProductosPageInner() {
             </PullToRefresh>
 
             {/* ── Modals ── */}
+            {viewProduct && (
+                <ProductDetailModal
+                    producto={viewProduct}
+                    catIcon={catIconMap[viewProduct.categoria] || '📦'}
+                    canManage={role === 'admin' || role === 'encargado'}
+                    isGeneral={isGeneral}
+                    onClose={() => setViewProduct(null)}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteRequest}
+                    onDuplicate={handleDuplicate}
+                />
+            )}
             {showProductForm && (
                 <ProductFormModal
                     producto={editingProduct}

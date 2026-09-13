@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useProductos, useConteos, useMovimientos } from '@/hooks/useFirestore';
+import { useProductos, useCategorias, useConteos, useMovimientos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import Header from '@/components/layout/Header';
@@ -13,12 +13,13 @@ import {
     WeeklyReportButton,
     QuickActions,
     generatePDFReport,
-    exportInventoryCSV
 } from './components/dashboard';
+import { exportInventoryExcel } from '@/lib/excelExport';
 import { History } from 'lucide-react';
 
 export default function DashboardPage() {
     const { productos, loading: pLoading } = useProductos();
+    const { categorias } = useCategorias();
     const { conteos, loading: cLoading } = useConteos();
     const { movimientos, loading: mLoading } = useMovimientos();
     const { user } = useAuth();
@@ -91,9 +92,9 @@ export default function DashboardPage() {
         }
     }, [conteos, ubicacion, isGeneral]);
 
-    const handleExportCSV = useCallback(() => {
-        exportInventoryCSV(productosUbicacion, ubicacionInfo.nombre);
-    }, [productosUbicacion, ubicacionInfo.nombre]);
+    const handleExportExcel = useCallback(() => {
+        return exportInventoryExcel(productosUbicacion, categorias, ubicacionInfo.nombre);
+    }, [productosUbicacion, categorias, ubicacionInfo.nombre]);
 
     const handleRefresh = useCallback(() => {
         return new Promise(resolve => setTimeout(resolve, 600));
@@ -128,7 +129,7 @@ export default function DashboardPage() {
                 {/* Report buttons */}
                 <WeeklyReportButton
                     onGenerate={handleWeeklyReport}
-                    onExportCSV={handleExportCSV}
+                    onExportExcel={handleExportExcel}
                 />
 
                 {/* Stock Alerts */}
