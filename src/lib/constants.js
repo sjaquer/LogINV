@@ -96,13 +96,11 @@ export const COLLECTIONS = {
   AUDITORIA: 'auditoria',
 };
 
-// ─── Configuración de Google Drive ───────────────────────────────────────
+// ─── Configuración de Google Drive (solo Client ID — flujo 100% client-side) ─
 export const GOOGLE_DRIVE = {
-  API_KEY: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_API_KEY,
   CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
-  DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
   SCOPE: 'https://www.googleapis.com/auth/drive.file',
-  FOLDER_NAME: 'LogINV_Imagenes',
+  FOLDER_NAME: 'LogINV_Fotos_Productos',
 };
 
 // ─── Configuración de la Aplicación ──────────────────────────────────────

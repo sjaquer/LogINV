@@ -93,6 +93,12 @@ service cloud.firestore {
                     && strLenOk('unidad', 50)
                     && strLenOk('codigo_barras', 50)
                     && strLenOk('descripcion', 500)
+                    && strLenOk('observaciones', 1000)
+                    && strLenOk('responsabilidad', 200)
+                    && strLenOk('piso', 100)
+                    && strLenOk('estado', 50)
+                    && strLenOk('imagen_url', 500)
+                    && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo')
                     && timestampOk('fecha_creacion')
                     && timestampOk('ultima_actualizacion');
@@ -105,6 +111,13 @@ service cloud.firestore {
                     && strLenOk('ubicacion', 100)
                     && strLenOk('unidad', 50)
                     && strLenOk('codigo_barras', 50)
+                    && strLenOk('descripcion', 500)
+                    && strLenOk('observaciones', 1000)
+                    && strLenOk('responsabilidad', 200)
+                    && strLenOk('piso', 100)
+                    && strLenOk('estado', 50)
+                    && strLenOk('imagen_url', 500)
+                    && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo');
 
       allow delete: if true;

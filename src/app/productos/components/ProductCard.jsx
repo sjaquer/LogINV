@@ -2,6 +2,7 @@
 import { MapPin, Layers } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
+import ProductThumb from '@/components/ui/ProductThumb';
 
 const ESTADO_BADGE = {
     OPTIMO: 'bg-emerald-100 text-emerald-700',
@@ -28,11 +29,9 @@ export default function ProductCard({ producto, catIcon, isGeneral, onView }) {
             onClick={() => onView(producto)}
             className={`group text-left bg-white border rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col h-full p-4 gap-2.5 ${bajoStock ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'}`}
         >
-            {/* Top: icon + estado */}
+            {/* Top: foto/icono + estado */}
             <div className="flex items-start justify-between gap-2">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg flex-shrink-0">
-                    {catIcon}
-                </div>
+                <ProductThumb url={producto.imagen_url} icon={catIcon} size="sm" />
                 {producto.estado && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${ESTADO_BADGE[producto.estado] || 'bg-slate-100 text-slate-500'}`}>
                         {ESTADO_LABEL[producto.estado] || producto.estado}

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { X, Save, AlertTriangle, ScanBarcode, Tag } from 'lucide-react';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
+import ProductImageUploader from './ProductImageUploader';
 import { UBICACIONES_FISICAS } from '@/context/LocationContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
@@ -36,10 +37,16 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
         piso: producto?.piso || '',
         observaciones: producto?.observaciones || '',
         descripcion: producto?.descripcion || '',
+        imagen_url: producto?.imagen_url || '',
+        imagen_drive_id: producto?.imagen_drive_id || '',
     });
 
     function handleChange(key, value) {
         setForm(prev => ({ ...prev, [key]: key === 'stock_actual' || key === 'stock_minimo' ? Number(value) || 0 : value }));
+    }
+
+    function handleImageChange({ imagen_url, imagen_drive_id }) {
+        setForm(prev => ({ ...prev, imagen_url, imagen_drive_id }));
     }
 
     function handleBarcodeScan(code) {
@@ -100,6 +107,16 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
 
                 {/* Form */}
                 <form onSubmit={e => { e.preventDefault(); handleSubmit(); }} className="flex-1 overflow-y-auto p-5 space-y-5">
+                    {/* Foto */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Foto</label>
+                        <ProductImageUploader
+                            imagenUrl={form.imagen_url}
+                            imagenId={form.imagen_drive_id}
+                            onChange={handleImageChange}
+                        />
+                    </div>
+
                     {/* Nombre */}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Producto *</label>

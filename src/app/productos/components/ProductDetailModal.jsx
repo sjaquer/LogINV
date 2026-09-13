@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import BarcodeLabelModal from '@/components/ui/BarcodeLabel';
 import { formatDateTime } from '@/lib/formatters';
@@ -69,6 +70,9 @@ export default function ProductDetailModal({ producto, catIcon, canManage, isGen
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
+                    {/* Foto */}
+                    <ProductThumb url={producto.imagen_url} icon={<span className="text-4xl">{catIcon}</span>} size="lg" />
+
                     {/* Estado + stock bajo */}
                     <div className="flex flex-wrap items-center gap-2">
                         {producto.estado && (

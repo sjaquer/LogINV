@@ -30,6 +30,32 @@ function ubicNombre(id) {
     return UBICACIONES.find(u => u.id === id)?.nombre || id || 'Sin ubicación';
 }
 
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+}
+
+// Trae los bytes de una foto de Drive vía el proxy interno (evita CORS) y
+// detecta la extensión soportada por exceljs a partir del content-type.
+async function fetchImageBuffer(driveId) {
+    try {
+        const res = await fetch(`/api/drive-image?id=${encodeURIComponent(driveId)}`);
+        if (!res.ok) return null;
+        const contentType = res.headers.get('content-type') || '';
+        const extension = contentType.includes('png') ? 'png' : contentType.includes('gif') ? 'gif' : 'jpeg';
+        const arrayBuffer = await res.arrayBuffer();
+        const base64 = `data:${contentType || `image/${extension}`};base64,${arrayBufferToBase64(arrayBuffer)}`;
+        return { base64, extension };
+    } catch (_) {
+        return null;
+    }
+}
+
 function styleHeaderRow(row, fillColor = BRAND) {
     row.eachCell(cell => {
         cell.font = { bold: true, color: { argb: HEADER_TEXT }, size: 11 };
@@ -128,6 +154,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     // ─── Hoja 2: Inventario completo ──────────────────────────────────────
     const inv = workbook.addWorksheet('Inventario completo', { properties: { tabColor: { argb: BRAND } } });
     inv.columns = [
+        { header: 'Foto', key: 'foto', width: 12 },
         { header: 'Código de barras', key: 'codigo', width: 18 },
         { header: 'Producto', key: 'nombre', width: 32 },
         { header: 'Descripción', key: 'descripcion', width: 28 },
@@ -143,11 +170,21 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     ];
     styleHeaderRow(inv.getRow(1));
     inv.views = [{ state: 'frozen', ySplit: 1 }];
-    inv.autoFilter = { from: 'A1', to: 'L1' };
+    inv.autoFilter = { from: 'A1', to: 'M1' };
+
+    // Traer todas las fotos en paralelo antes de armar las filas, para poder
+    // anclar cada imagen a la fila exacta de su producto.
+    const conFoto = productos.filter(p => p.imagen_drive_id);
+    const imagenesPorId = new Map();
+    await Promise.all(conFoto.map(async p => {
+        const img = await fetchImageBuffer(p.imagen_drive_id);
+        if (img) imagenesPorId.set(p.imagen_drive_id, img);
+    }));
 
     productos.forEach(p => {
         const bajoStock = p.stock_actual <= (p.stock_minimo ?? 0);
         const row = inv.addRow({
+            foto: '',
             codigo: p.codigo_barras || '',
             nombre: p.nombre,
             descripcion: p.descripcion || '',
@@ -162,6 +199,16 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
             observaciones: p.observaciones || '',
         });
         row.eachCell(cell => { cell.border = THIN_BORDERS; cell.alignment = { vertical: 'middle', wrapText: false }; });
+        row.height = 54;
+
+        const foto = p.imagen_drive_id && imagenesPorId.get(p.imagen_drive_id);
+        if (foto) {
+            const imageId = workbook.addImage({ base64: foto.base64, extension: foto.extension });
+            inv.addImage(imageId, {
+                tl: { col: 0.05, row: row.number - 1 + 0.05 },
+                ext: { width: 52, height: 52 },
+            });
+        }
 
         if (bajoStock) {
             row.getCell('stock_actual').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: RED } };

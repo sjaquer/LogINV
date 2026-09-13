@@ -1,7 +1,14 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Wine, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
+
+// Rutas públicas que deben ser accesibles sin iniciar sesión (requisito de
+// verificación de OAuth de Google: Política de Privacidad y Condiciones del
+// Servicio deben poder abrirse sin autenticarse).
+const PUBLIC_ROUTES = ['/legal/'];
 
 // Roles en minúsculas para calzar con src/lib/constants.js (ROLES) y con
 // los permisos usados en cada página (canManage). Contraseñas por defecto:
@@ -193,7 +200,16 @@ function LoginScreen({ onLogin }) {
                     </form>
                 </div>
 
-                <p className="text-center text-xs text-white/30 mt-6">LogINV v1.0 · Control de Inventario</p>
+                <p className="text-center text-xs text-white/50 mt-6 max-w-xs mx-auto leading-relaxed">
+                    Sistema interno de control de inventario para la Iglesia CNC: gestión de bienes, ubicaciones,
+                    préstamos y mantenimiento.
+                </p>
+                <p className="text-center text-xs text-white/30 mt-3 flex items-center justify-center gap-3">
+                    <Link href="/legal/privacy" className="hover:text-white/60 hover:underline">Privacidad</Link>
+                    <span>·</span>
+                    <Link href="/legal/terms" className="hover:text-white/60 hover:underline">Condiciones del servicio</Link>
+                </p>
+                <p className="text-center text-xs text-white/30 mt-3">LogINV v1.0 · Control de Inventario</p>
             </div>
         </div>
     );
@@ -202,6 +218,8 @@ function LoginScreen({ onLogin }) {
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loaded, setLoaded] = useState(false);
+    const pathname = usePathname();
+    const isPublicRoute = PUBLIC_ROUTES.some(p => pathname?.startsWith(p));
 
     useEffect(() => {
         try {
@@ -224,6 +242,15 @@ export function AuthProvider({ children }) {
     function logout() {
         setUser(null);
         try { localStorage.removeItem('loginv_user'); } catch (_) {}
+    }
+
+    // Páginas públicas (legales): accesibles sin sesión, sin chrome de la app.
+    if (isPublicRoute) {
+        return (
+            <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+                {children}
+            </AuthContext.Provider>
+        );
     }
 
     if (!loaded) {

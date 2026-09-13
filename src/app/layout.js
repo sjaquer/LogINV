@@ -9,8 +9,8 @@ import BottomNav from '@/components/layout/BottomNav';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export const metadata = {
-    title: 'LogINV – Control de Inventario Bar',
-    description: 'Sistema de gestión de inventario para bares y restaurantes. Control de stock, conteos diarios y alertas en tiempo real.',
+    title: 'LogINV – Control de Inventario Iglesia CNC',
+    description: 'Sistema interno de gestión de inventario para la Iglesia CNC. Control de stock, ubicaciones, préstamos, mantenimiento y reportes.',
     manifest: '/manifest.json',
     appleWebApp: {
         capable: true,
