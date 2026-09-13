@@ -16,6 +16,7 @@ const {
     where
 } = require('firebase/firestore');
 const {
+    UBICACIONES_MAP,
     normalizeCategory,
     normalizeLocation,
     normalizeStatus,
@@ -136,6 +137,17 @@ async function seedUbicaciones(items) {
     
     for (const item of items) {
         const ubi = normalizeLocation(item.ubicacion_raw);
+        if (!ubicacionesUsadas.has(ubi.id)) {
+            ubicacionesUsadas.add(ubi.id);
+            ubicacionesToCreate.push(ubi);
+        }
+    }
+
+    // Crear también los almacenes/ubicaciones oficiales del "PLANTEAMIENTO
+    // ESTRATEGICO" que aún no tienen ítems cargados en el Excel operativo
+    // (p.ej. Almacén B2, B3, B4, Discovery, Salón 204), para que existan
+    // desde ya y se les pueda asignar stock a futuro.
+    for (const ubi of Object.values(UBICACIONES_MAP)) {
         if (!ubicacionesUsadas.has(ubi.id)) {
             ubicacionesUsadas.add(ubi.id);
             ubicacionesToCreate.push(ubi);

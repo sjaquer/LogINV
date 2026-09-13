@@ -49,26 +49,65 @@ const CATEGORIAS_MAP = {
     'SEGURIDAD': { nombre: 'Seguridad', icono: '🔒', color: '#DC2626', orden: 13 },
 };
 
-// ─── Mapeo de Ubicaciones del Excel (según levantamiento real CNC) ───────
+// ─── Mapeo de Ubicaciones del Excel ───────────────────────────────────────
+// Basado en la hoja "PLANTEAMIENTO ESTRATEGICO (INVENTARIO)" de
+// INVENTARIO CNC.xlsx: la iglesia tiene 5 almacenes físicos reales
+// (Área Mantenimiento: B1-B4, más el Almacén Discovery = B5), cada uno en
+// un piso distinto del edificio. Los códigos "B9".."B14" que aparecen en
+// la hoja operativa CODIGOS CNC.xlsx NO son almacenes adicionales: son
+// herramientas individuales (taladros, atornilladores, kits) registradas
+// una por una, todas con piso=1, categoría HERRAMIENTAS y responsable
+// MANTENIMIENTO — es decir, físicamente viven en el Almacén B1 (Primer
+// Piso), y aquí se pliegan a ese mismo id.
+//
 // El `id` corto es el que usa la app (LocationContext, filtros, mock data).
 const UBICACIONES_MAP = {
-    // Templo (Sección A y variantes de escritura del levantamiento)
-    'SECCION A': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A (auditorio principal)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
-    'SECCION A1': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A1 (puerta izquierda)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
-    'SECCION A2': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A2 (puerta central)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
+    // Templo = Sección A (Primer Piso). A1/A2/A3 son las puertas de acceso
+    // (izquierda/central/derecha), no ubicaciones distintas.
+    'SECCION A': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A (Primer Piso)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
+    'SECCION A1': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A, puerta izquierda (A1)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
+    'SECCION A2': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A, puerta central (A2)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
     'SECCION': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección General', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
     'SECCCION': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección General', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
-    'SECCCION A1': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A1 (puerta izquierda)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
-    // Almacenes (numerados según levantamiento físico B1-B14)
-    'B1': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Herramientas y Limpieza (Primer Piso)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
-    'B2': { id: 'ALMACEN_B2', nombre: 'Almacén B2', descripcion: 'Almacén B2 - Accesorios y Albañilería', piso: 1, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B3': { id: 'ALMACEN_B3', nombre: 'Almacén B3', descripcion: 'Almacén B3 - Pintura (Segundo Piso)', piso: 2, tipo: 'almacen', icono: '🎨', color: 'amber' },
-    'B9': { id: 'ALMACEN_B9', nombre: 'Almacén B9', descripcion: 'Almacén B9 - General', piso: 2, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B10': { id: 'ALMACEN_B10', nombre: 'Almacén B10', descripcion: 'Almacén B10 - General', piso: 2, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B11': { id: 'ALMACEN_B11', nombre: 'Almacén B11', descripcion: 'Almacén B11 - General', piso: 3, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B12': { id: 'ALMACEN_B12', nombre: 'Almacén B12', descripcion: 'Almacén B12 - General', piso: 3, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B13': { id: 'ALMACEN_B13', nombre: 'Almacén B13', descripcion: 'Almacén B13 - General', piso: 3, tipo: 'almacen', icono: '📦', color: 'amber' },
-    'B14': { id: 'ALMACEN_B14', nombre: 'Almacén B14', descripcion: 'Almacén B14 - General', piso: 3, tipo: 'almacen', icono: '📦', color: 'amber' },
+    'SECCCION A1': { id: 'TEMPLO', nombre: 'Templo Principal', descripcion: 'Templo - Sección A, puerta izquierda (A1)', piso: 1, tipo: 'templo', icono: '⛪', color: 'violet' },
+
+    // Almacén B1 - Primer Piso: herramientas y limpieza. Los códigos B9-B14
+    // del levantamiento operativo son herramientas individuales guardadas
+    // aquí mismo (ver nota arriba), por eso comparten el mismo id.
+    'B1': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B9': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B10': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B11': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B12': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B13': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+    'B14': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
+
+    // Almacén B2 - Primer Piso: escaleras y material de albañilería.
+    'B2': { id: 'ALMACEN_B2', nombre: 'Almacén B2', descripcion: 'Almacén B2 - Escaleras y Albañilería (Primer Piso)', piso: 1, tipo: 'almacen', icono: '🪜', color: 'amber' },
+
+    // Almacén B3 - Segundo Piso.
+    'B3': { id: 'ALMACEN_B3', nombre: 'Almacén B3', descripcion: 'Almacén B3 - Segundo Piso', piso: 2, tipo: 'almacen', icono: '📦', color: 'amber' },
+
+    // Almacén B4 - Tercer Piso: materiales MD, EJ, DS. Pendiente de revisión
+    // (nota original: verificar si es servible para las redes).
+    'B4': { id: 'ALMACEN_B4', nombre: 'Almacén B4', descripcion: 'Almacén B4 - Tercer Piso (pendiente de revisión de material para redes)', piso: 3, tipo: 'almacen', icono: '📦', color: 'amber' },
+
+    // Almacén Discovery Land (B5) - material y mobiliario para clases de niños.
+    'B5': { id: 'ALMACEN_DISCOVERY', nombre: 'Almacén Discovery', descripcion: 'Almacén Discovery Land (B5) - Material para uso de clases y mobiliario', piso: 2, tipo: 'almacen', icono: '🧸', color: 'emerald' },
+
+    // Salón 204 - Administración (recursos tecnológicos: impresoras, etc).
+    'SALON 204': { id: 'SALON_204', nombre: 'Salón 204', descripcion: 'Salón 204 - Administración (Recursos Tecnológicos)', piso: 2, tipo: 'oficina', icono: '🖨️', color: 'blue' },
+
+    // Baños (Primer Piso).
+    'M1': { id: 'BANO_MUJERES', nombre: 'Baño de Mujeres', descripcion: 'Baño de Mujeres - Puerta 1 (M1)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },
+    'M2': { id: 'BANO_MUJERES', nombre: 'Baño de Mujeres', descripcion: 'Baño de Mujeres - Puerta 2 (M2)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },
+    'V1': { id: 'BANO_VARONES', nombre: 'Baño de Varones', descripcion: 'Baño de Varones - Puerta 1 (V1)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },
+    'V2': { id: 'BANO_VARONES', nombre: 'Baño de Varones', descripcion: 'Baño de Varones - Puerta 2 (V2)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },
+
+    // Filas de la hoja ALMACENES con celda de ubicación vacía (continuación
+    // visual de un bloque de celdas combinadas): mismo perfil que B1
+    // (piso 1, herramientas, responsable Mantenimiento) → Almacén B1.
+    '': { id: 'ALMACEN_B1', nombre: 'Almacén B1', descripcion: 'Almacén B1 - Primer Piso (Herramientas y Productos de Aseo)', piso: 1, tipo: 'almacen', icono: '🧰', color: 'amber' },
 };
 
 // ─── Mapeo de Estados del Excel ──────────────────────────────────────────

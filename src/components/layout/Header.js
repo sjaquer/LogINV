@@ -9,12 +9,11 @@ const LOCATION_COLORS = {
     GENERAL: 'text-violet-600 bg-violet-50 border-violet-200',
     TEMPLO: 'text-brand-600 bg-brand-50 border-brand-200',
     ALMACEN_B1: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B9: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B10: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B11: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B12: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B13: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B14: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B2: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B3: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_B4: 'text-amber-600 bg-amber-50 border-amber-200',
+    ALMACEN_DISCOVERY: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    SALON_204: 'text-blue-600 bg-blue-50 border-blue-200',
 };
 
 const PASSWORDS = {
