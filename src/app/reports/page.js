@@ -34,7 +34,7 @@ export default function ReportsPage() {
     const ubicNombre = (id) => UBICACIONES.find(u => u.id === id)?.nombre || id || '—';
 
     const stockBajo = useMemo(
-        () => productos.filter(p => p.stock_actual <= (p.stock_minimo_rop ?? p.stock_minimo ?? 0)),
+        () => productos.filter(p => p.stock_actual <= (p.stock_minimo ?? p.stock_minimo ?? 0)),
         [productos]
     );
 
@@ -58,7 +58,7 @@ export default function ReportsPage() {
         const rows = [
             ['Nombre', 'Categoría', 'Ubicación', 'Stock actual', 'Stock mínimo', 'Unidad', 'Código de barras', 'Estado'],
             ...productos.map(p => [
-                p.nombre, p.categoria, ubicNombre(p.ubicacion), p.stock_actual, p.stock_minimo_rop ?? p.stock_minimo ?? '',
+                p.nombre, p.categoria, ubicNombre(p.ubicacion), p.stock_actual, p.stock_minimo ?? p.stock_minimo ?? '',
                 p.unidad, p.codigo_barras || '', p.estado || '',
             ]),
         ];
@@ -137,7 +137,7 @@ export default function ReportsPage() {
                                             <td className="py-2 pr-3 font-semibold text-slate-800">{p.nombre}</td>
                                             <td className="py-2 pr-3 text-slate-500">{ubicNombre(p.ubicacion)}</td>
                                             <td className="py-2 pr-3 text-right font-bold text-amber-600">{p.stock_actual}</td>
-                                            <td className="py-2 text-right text-slate-400">{p.stock_minimo_rop ?? p.stock_minimo ?? '—'}</td>
+                                            <td className="py-2 text-right text-slate-400">{p.stock_minimo ?? p.stock_minimo ?? '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

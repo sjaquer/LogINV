@@ -11,8 +11,6 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seedExcel.js",
-    "seed:mock": "node scripts/seed.js",
-    "seed:legacy": "node scripts/mockData.js",
     "mock:generate": "node scripts/generateMockData.js",
     "excel:analyze": "node scripts/analyzeExcel.js"
   },

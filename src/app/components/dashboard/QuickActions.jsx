@@ -11,13 +11,13 @@ export default function QuickActions({ ubicacionInfo }) {
             color: 'bg-brand-50 text-brand-600 border-brand-200',
         },
         {
-            href: '/inventory',
+            href: '/inventario',
             icon: ClipboardList,
             label: 'Conteo',
             color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
         },
         {
-            href: '/inventory?tab=rapido',
+            href: '/inventario?tab=rapido',
             icon: Package,
             label: 'Stock',
             color: 'bg-amber-50 text-amber-600 border-amber-200',

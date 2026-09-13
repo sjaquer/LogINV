@@ -6,17 +6,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import Header from '@/components/layout/Header';
 import PullToRefresh from '@/components/ui/PullToRefresh';
-import { 
-    KPICards, 
-    RecentActivity, 
-    StockAlerts, 
-    ExpirationAlerts, 
-    WeeklyReportButton, 
+import {
+    KPICards,
+    RecentActivity,
+    StockAlerts,
+    WeeklyReportButton,
     QuickActions,
     generatePDFReport,
-    exportInventoryCSV 
+    exportInventoryCSV
 } from './components/dashboard';
-import { daysUntil } from '@/lib/utils';
 import { History } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -33,7 +31,7 @@ export default function DashboardPage() {
     );
 
     const alertasStock = useMemo(
-        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo_rop).length,
+        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo).length,
         [productosUbicacion]
     );
 
@@ -59,18 +57,9 @@ export default function DashboardPage() {
         return (ultimo.items || []).filter(i => i.diferencia !== 0).length;
     }, [conteos, ubicacion, isGeneral]);
 
-    // ── Semáforo: products expiring soon (current location) ──
-    const productosSemaforo = useMemo(() => {
-        return [...productosUbicacion]
-            .map((p) => ({ ...p, dias: daysUntil(p.fecha_vencimiento) }))
-            .filter((p) => p.dias < 30)
-            .sort((a, b) => a.dias - b.dias)
-            .slice(0, 12);
-    }, [productosUbicacion]);
-
     // ── Low stock alerts ──
     const stockBajo = useMemo(
-        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo_rop).slice(0, 8),
+        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo).slice(0, 8),
         [productosUbicacion]
     );
 
@@ -142,21 +131,15 @@ export default function DashboardPage() {
                     onExportCSV={handleExportCSV}
                 />
 
-                {/* Content grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {/* Stock Alerts */}
-                    <StockAlerts stockBajo={stockBajo} />
-
-                    {/* Expiration Alerts */}
-                    <ExpirationAlerts productos={productosSemaforo} />
-                </div>
+                {/* Stock Alerts */}
+                <StockAlerts stockBajo={stockBajo} />
 
                 {/* Recent Activity */}
                 <RecentActivity movimientos={movimientosRecientes} />
 
                 {/* History link */}
-                <Link 
-                    href="/inventory?tab=historial"
+                <Link
+                    href="/inventario?tab=historial"
                     className="flex items-center justify-center gap-2 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all text-slate-600 hover:text-brand-600"
                 >
                     <History size={20} />

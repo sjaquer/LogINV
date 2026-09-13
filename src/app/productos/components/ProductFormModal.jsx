@@ -1,11 +1,18 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Save, AlertTriangle, ScanBarcode, Tag } from 'lucide-react';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
+import { UBICACIONES_FISICAS } from '@/context/LocationContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
-const UNIDADES = ['unidades', 'botellas', 'latas', 'bolsas', 'cajas', 'litros', 'kg', 'gramos', 'packs'];
+const UNIDADES = ['pieza', 'unidades', 'cajas', 'bolsas', 'pares', 'metros', 'kg', 'litros', 'packs'];
+
+const ESTADOS = [
+    { value: 'OPTIMO', label: 'Óptimo' },
+    { value: 'DESGASTADO', label: 'Desgastado' },
+    { value: 'NECESITA_MANTENIMIENTO', label: 'Necesita mantenimiento' },
+];
 
 export default function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
     const isEdit = !!producto?.id;
@@ -19,25 +26,20 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
     const [form, setForm] = useState({
         nombre: producto?.nombre || '',
         categoria: producto?.categoria || '',
+        ubicacion: producto?.ubicacion || UBICACIONES_FISICAS[0]?.id || '',
         stock_actual: producto?.stock_actual ?? 0,
-        stock_minimo_rop: producto?.stock_minimo_rop ?? 0,
-        unidad: producto?.unidad || 'unidades',
+        stock_minimo: producto?.stock_minimo ?? 0,
+        unidad: producto?.unidad || 'pieza',
         codigo_barras: producto?.codigo_barras || '',
-        gramaje: producto?.gramaje || '',
-        contenido: producto?.contenido || '',
-        marca: producto?.marca || '',
-        lote: producto?.lote || '',
-        fecha_vencimiento: producto?.fecha_vencimiento
-            ? (producto.fecha_vencimiento.toDate
-                ? producto.fecha_vencimiento.toDate().toISOString().split('T')[0]
-                : new Date(producto.fecha_vencimiento).toISOString().split('T')[0])
-            : '',
-        proveedor: producto?.proveedor || '',
+        estado: producto?.estado || 'OPTIMO',
+        responsabilidad: producto?.responsabilidad || '',
+        piso: producto?.piso || '',
+        observaciones: producto?.observaciones || '',
         descripcion: producto?.descripcion || '',
     });
 
     function handleChange(key, value) {
-        setForm(prev => ({ ...prev, [key]: key === 'stock_actual' || key === 'stock_minimo_rop' ? Number(value) || 0 : value }));
+        setForm(prev => ({ ...prev, [key]: key === 'stock_actual' || key === 'stock_minimo' ? Number(value) || 0 : value }));
     }
 
     function handleBarcodeScan(code) {
@@ -61,6 +63,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
     async function handleSubmit() {
         if (!form.nombre.trim()) { setError('El nombre del producto es obligatorio'); return; }
         if (!form.categoria) { setError('Selecciona una categoría'); return; }
+        if (!form.ubicacion) { setError('Selecciona una ubicación'); return; }
         setSaving(true);
         setError('');
         try {
@@ -104,7 +107,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             type="text"
                             value={form.nombre}
                             onChange={e => handleChange('nombre', e.target.value)}
-                            placeholder="Ej: Vodka Absolut 750ml"
+                            placeholder="Ej: Micrófono inalámbrico"
                             className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                             required
                         />
@@ -152,7 +155,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                         )}
                     </div>
 
-                    {/* Categoría + Unidad */}
+                    {/* Categoría + Ubicación */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Categoría *</label>
@@ -162,11 +165,48 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                                 required
                             >
-                                <option value="">— Selecciona una categoría —</option>
+                                <option value="">— Selecciona —</option>
                                 {categorias.filter(c => c.activa !== false).map(c => (
                                     <option key={c.id} value={c.nombre}>{c.icono} {c.nombre}</option>
                                 ))}
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Ubicación *</label>
+                            <select
+                                value={form.ubicacion}
+                                onChange={e => handleChange('ubicacion', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                required
+                            >
+                                {UBICACIONES_FISICAS.map(u => (
+                                    <option key={u.id} value={u.id}>{u.icono} {u.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Stock actual + Mínimo + Unidad */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.stock_actual}
+                                onChange={e => handleChange('stock_actual', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Mínimo</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.stock_minimo}
+                                onChange={e => handleChange('stock_minimo', e.target.value)}
+                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Unidad</label>
@@ -180,85 +220,38 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                         </div>
                     </div>
 
-                    {/* Marca + Contenido/Gramaje */}
+                    {/* Estado + Responsabilidad */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Marca</label>
-                            <input
-                                type="text"
-                                value={form.marca}
-                                onChange={e => handleChange('marca', e.target.value)}
-                                placeholder="Ej: Absolut"
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Estado</label>
+                            <select
+                                value={form.estado}
+                                onChange={e => handleChange('estado', e.target.value)}
                                 className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
-                            />
+                            >
+                                {ESTADOS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                            </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Gramaje</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Responsable / Ministerio</label>
                             <input
                                 type="text"
-                                value={form.gramaje}
-                                onChange={e => handleChange('gramaje', e.target.value)}
-                                placeholder="Ej: 750ml, 330ml, 200g"
+                                value={form.responsabilidad}
+                                onChange={e => handleChange('responsabilidad', e.target.value)}
+                                placeholder="Ej: Ministerio de Adoración"
                                 className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                             />
                         </div>
                     </div>
 
-                    {/* Stock actual + Mínimo */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock actual</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={form.stock_actual}
-                                onChange={e => handleChange('stock_actual', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Stock mínimo</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={form.stock_minimo_rop}
-                                onChange={e => handleChange('stock_minimo_rop', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Lote + Vencimiento */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Lote</label>
-                            <input
-                                type="text"
-                                value={form.lote}
-                                onChange={e => handleChange('lote', e.target.value)}
-                                placeholder="Ej: VOD-2026-01"
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Vencimiento</label>
-                            <input
-                                type="date"
-                                value={form.fecha_vencimiento}
-                                onChange={e => handleChange('fecha_vencimiento', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Proveedor */}
+                    {/* Piso */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Proveedor</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Piso / referencia exacta</label>
                         <input
                             type="text"
-                            value={form.proveedor}
-                            onChange={e => handleChange('proveedor', e.target.value)}
-                            placeholder="Ej: Distribuidora Nacional SAC"
+                            value={form.piso}
+                            onChange={e => handleChange('piso', e.target.value)}
+                            placeholder="Ej: Primer piso, puerta izquierda"
                             className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                         />
                     </div>
@@ -270,7 +263,19 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             rows={2}
                             value={form.descripcion}
                             onChange={e => handleChange('descripcion', e.target.value)}
-                            placeholder="Notas adicionales del producto"
+                            placeholder="Marca, modelo, color, características..."
+                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                        />
+                    </div>
+
+                    {/* Observaciones */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Observaciones</label>
+                        <textarea
+                            rows={2}
+                            value={form.observaciones}
+                            onChange={e => handleChange('observaciones', e.target.value)}
+                            placeholder="Notas de mantenimiento, etiquetado, etc."
                             className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
                         />
                     </div>

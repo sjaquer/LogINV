@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import {
-    MOCK_PRODUCTOS, MOCK_REQUERIMIENTOS, MOCK_MOVIMIENTOS,
+    MOCK_PRODUCTOS, MOCK_MOVIMIENTOS,
     MOCK_CATEGORIAS, MOCK_CONTEOS,
 } from '@/lib/mockDataStore';
 
@@ -22,14 +22,12 @@ export function mockTimestamp() {
 
 // ─── Shared mock state (client-side) ──────────────────────────────────────
 export let mockProductos = [...MOCK_PRODUCTOS];
-export let mockRequerimientos = [...MOCK_REQUERIMIENTOS];
 export let mockMovimientos = [...MOCK_MOVIMIENTOS];
 export let mockCategorias = [...MOCK_CATEGORIAS];
 export let mockConteos = [...MOCK_CONTEOS];
 
 export const listeners = {
     productos: new Set(),
-    requerimientos: new Set(),
     movimientos: new Set(),
     categorias: new Set(),
     conteos: new Set(),
@@ -38,7 +36,6 @@ export const listeners = {
 export function notify(key) {
     const dataMap = {
         productos: mockProductos,
-        requerimientos: mockRequerimientos,
         movimientos: mockMovimientos,
         categorias: mockCategorias,
         conteos: mockConteos,
@@ -48,7 +45,6 @@ export function notify(key) {
 
 // ─── Setter functions for mock data ──────────────────────────────────────
 export function setMockProductos(data) { mockProductos = data; }
-export function setMockRequerimientos(data) { mockRequerimientos = data; }
 export function setMockMovimientos(data) { mockMovimientos = data; }
 export function setMockCategorias(data) { mockCategorias = data; }
 export function setMockConteos(data) { mockConteos = data; }

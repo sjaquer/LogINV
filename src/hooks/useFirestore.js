@@ -8,7 +8,6 @@
 // Re-exportar todos los hooks de Firestore
 export { useCategorias } from './useCategorias';
 export { useProductos } from './useProductos';
-export { useRequerimientos } from './useRequerimientos';
 export { useMovimientos, useCrearMovimiento } from './useMovimientos';
 export { useConteos } from './useConteos';
 

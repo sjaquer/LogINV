@@ -57,7 +57,7 @@ const productos = items.map((item, i) => {
         ubicacion: ubi.id,
         ubicacion_nombre: ubi.nombre,
         stock_actual: item.stock_inicial,
-        stock_minimo_rop: Math.max(1, Math.floor(item.stock_inicial * 0.2)),
+        stock_minimo: Math.max(1, Math.floor(item.stock_inicial * 0.2)),
         unidad: 'pieza',
         estado,
         responsabilidad,
@@ -65,8 +65,6 @@ const productos = items.map((item, i) => {
         piso: typeof item.piso === 'string' ? item.piso : `Piso ${item.piso}`,
         fuente: item.fuente,
         codigo_barras: item.codigo_barras,
-        fecha_vencimiento: null,
-        lote: null,
     };
 });
 
@@ -123,9 +121,6 @@ export const MOCK_MOVIMIENTOS = MOCK_PRODUCTOS.filter(p => p.stock_actual > 0).m
     fecha: daysAgo(90),
     motivo_merma: null,
 }));
-
-// Mantener compatibilidad con imports existentes
-export const MOCK_REQUERIMIENTOS = [];
 `;
 
 fs.writeFileSync(outPath, header, 'utf-8');

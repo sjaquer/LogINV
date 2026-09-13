@@ -4,11 +4,11 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation, UBICACIONES_FISICAS } from '@/context/LocationContext';
+import { useLocation } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
-import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, SwipeableProductCard } from './components';
+import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, ProductCard } from './components';
 import {
     Search, X, Plus, Package,
     PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin,
@@ -95,8 +95,7 @@ function ProductosPageInner() {
             .filter(p => {
                 const q = busqueda.toLowerCase();
                 return p.nombre.toLowerCase().includes(q)
-                    || (p.codigo_barras && p.codigo_barras.includes(q))
-                    || (p.lote && p.lote.toLowerCase().includes(q));
+                    || (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q));
             });
         // Sort
         list = [...list].sort((a, b) => {
@@ -109,13 +108,13 @@ function ProductosPageInner() {
     }, [productosUbicacion, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
+        const { _usuario, ...rest } = data;
         if (id) {
-            const { _usuario, ...rest } = data;
             await actualizarProducto(id, rest);
         } else {
-            await crearProducto({ ...data, ubicacion });
+            await crearProducto(rest);
         }
-    }, [crearProducto, actualizarProducto, ubicacion]);
+    }, [crearProducto, actualizarProducto]);
 
     // ── Duplicate product ──
     const handleDuplicate = useCallback((producto) => {
@@ -123,8 +122,6 @@ function ProductosPageInner() {
             ...producto,
             id: undefined,
             nombre: `${producto.nombre} (copia)`,
-            lote: '',
-            fecha_vencimiento: '',
         };
         setEditingProduct(duplicated);
         setShowProductForm(true);
@@ -145,7 +142,7 @@ function ProductosPageInner() {
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Productos" />
             <PullToRefresh onRefresh={handleRefresh}>
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-7xl mx-auto w-full pb-4">
 
                 {/* GENERAL location banner */}
                 {isGeneral && (
@@ -159,7 +156,7 @@ function ProductosPageInner() {
                 {canManage && (
                     <div className="flex flex-wrap items-center gap-3">
                         <button
-                            onClick={() => { setEditingProduct(null); setShowProductForm(true); }}
+                            onClick={() => { setEditingProduct(isGeneral ? null : { ubicacion }); setShowProductForm(true); }}
                             className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
                         >
                             <PlusCircle size={20} /> Nuevo producto
@@ -230,19 +227,19 @@ function ProductosPageInner() {
                     </div>
                 </div>
 
-                {/* ── Product Cards (swipeable) ── */}
+                {/* ── Bento grid de productos ── */}
                 {loading ? (
-                    <div className="space-y-3">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 rounded-xl h-24 animate-pulse shadow-sm" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                        {Array.from({ length: 10 }).map((_, i) => (
+                            <div key={i} className="bg-white border border-slate-200 rounded-2xl h-48 animate-pulse shadow-sm" />
                         ))}
                     </div>
                 ) : productosFiltrados.length === 0 ? (
                     <EmptyState icon={Package} title="Sin resultados" subtitle="Ajusta tus filtros de búsqueda" />
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 items-stretch">
                         {productosFiltrados.map(p => (
-                            <SwipeableProductCard
+                            <ProductCard
                                 key={p.id}
                                 producto={p}
                                 catIcon={catIconMap[p.categoria] || '📦'}

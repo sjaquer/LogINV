@@ -157,27 +157,17 @@ export const STATUS_COLORS = {
   },
 };
 
-// ─── Rutas de Navegación ─────────────────────────────────────────────────
+// ─── Rutas de Navegación (deben existir realmente en src/app) ────────────
 export const ROUTES = {
   HOME: '/',
-  AUTH: '/auth',
-  INVENTORY: '/inventory',
-  INVENTORY_CREATE: '/inventory/create',
-  INVENTORY_DETAIL: (id) => `/inventory/${id}`,
-  INVENTORY_EDIT: (id) => `/inventory/edit/${id}`,
-  CATEGORIES: '/categories',
+  PRODUCTOS: '/productos',
+  INVENTARIO: '/inventario',
+  SCAN: '/scan',
   LOCATIONS: '/locations',
-  LOCATION_DETAIL: (id) => `/locations/${id}`,
   LOANS: '/loans',
-  LOANS_CREATE: '/loans/create',
-  LOANS_HISTORY: '/loans/history',
   MAINTENANCE: '/maintenance',
-  MAINTENANCE_HISTORY: '/maintenance/history',
-  MAINTENANCE_SCHEDULE: '/maintenance/schedule',
   REPORTS: '/reports',
   ADMIN_USERS: '/admin/users',
-  ADMIN_SETTINGS: '/admin/settings',
-  SCAN: '/scan',
 };
 
 // ─── Mensajes de Error ───────────────────────────────────────────────────

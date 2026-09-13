@@ -63,9 +63,6 @@ export function useProductos() {
                 id: 'p_' + Date.now(),
                 ...data,
                 stock_actual: data.stock_actual || 0,
-                fecha_vencimiento: data.fecha_vencimiento
-                    ? { toDate: () => new Date(data.fecha_vencimiento), seconds: new Date(data.fecha_vencimiento).getTime() / 1000 }
-                    : null,
                 ultima_actualizacion: mockTimestamp(),
                 fecha_creacion: mockTimestamp(),
                 activo: true,
@@ -95,7 +92,6 @@ export function useProductos() {
             const docData = {
                 ...data,
                 stock_actual: data.stock_actual || 0,
-                fecha_vencimiento: data.fecha_vencimiento ? fs.Timestamp.fromDate(new Date(data.fecha_vencimiento)) : null,
                 ultima_actualizacion: fs.serverTimestamp(),
                 fecha_creacion: fs.serverTimestamp(),
                 activo: true,
@@ -124,28 +120,16 @@ export function useProductos() {
 
     const actualizarProducto = useCallback(async (id, data) => {
         if (USE_MOCK) {
-            const updated = mockProductos.map(p => {
-                if (p.id !== id) return p;
-                const updatedProd = { ...p, ...data, ultima_actualizacion: mockTimestamp() };
-                if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
-                    updatedProd.fecha_vencimiento = {
-                        toDate: () => new Date(data.fecha_vencimiento),
-                        seconds: new Date(data.fecha_vencimiento).getTime() / 1000,
-                    };
-                }
-                return updatedProd;
-            });
+            const updated = mockProductos.map(p =>
+                p.id === id ? { ...p, ...data, ultima_actualizacion: mockTimestamp() } : p
+            );
             setMockProductos(updated);
             notify('productos');
             return;
         }
         try {
             const { fs, db } = await getFirestore();
-            const updateData = { ...data, ultima_actualizacion: fs.serverTimestamp() };
-            if (data.fecha_vencimiento && typeof data.fecha_vencimiento === 'string') {
-                updateData.fecha_vencimiento = fs.Timestamp.fromDate(new Date(data.fecha_vencimiento));
-            }
-            await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
+            await fs.updateDoc(fs.doc(db, 'productos', id), { ...data, ultima_actualizacion: fs.serverTimestamp() });
         } catch (err) {
             firebaseError('actualizarProducto', err);
         }
@@ -212,57 +196,9 @@ export function useProductos() {
         }
     }, [productos]);
 
-    const registrarMerma = useCallback(async (id, cantidad, usuario, motivo) => {
-        if (USE_MOCK) {
-            const prod = mockProductos.find(p => p.id === id);
-            if (!prod) return;
-            const nuevoStock = Math.max(0, prod.stock_actual - cantidad);
-            setMockProductos(mockProductos.map(p =>
-                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: mockTimestamp() } : p
-            ));
-            const mov = {
-                id: 'mv_' + Date.now(),
-                producto_id: id,
-                nombre_producto: prod.nombre,
-                tipo: 'MERMA',
-                cantidad,
-                usuario,
-                ubicacion: prod.ubicacion || '',
-                fecha: mockTimestamp(),
-                motivo_merma: motivo,
-            };
-            setMockMovimientos([mov, ...mockMovimientos]);
-            notify('productos');
-            notify('movimientos');
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            const prodSnap = productos.find(p => p.id === id);
-            if (!prodSnap) return;
-            const nuevoStock = Math.max(0, prodSnap.stock_actual - cantidad);
-            await fs.updateDoc(fs.doc(db, 'productos', id), {
-                stock_actual: nuevoStock,
-                ultima_actualizacion: fs.serverTimestamp(),
-            });
-            await fs.addDoc(fs.collection(db, 'movimientos'), {
-                producto_id: id,
-                nombre_producto: prodSnap.nombre,
-                tipo: 'MERMA',
-                cantidad,
-                usuario,
-                ubicacion: prodSnap.ubicacion || '',
-                fecha: fs.serverTimestamp(),
-                motivo_merma: motivo,
-            });
-        } catch (err) {
-            firebaseError('registrarMerma', err);
-        }
-    }, [productos]);
-
     return {
         productos, loading, error,
         crearProducto, actualizarProducto, eliminarProducto,
-        updateStock, registrarMerma,
+        updateStock,
     };
 }

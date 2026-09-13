@@ -13,7 +13,6 @@ const LOCATION_COLORS = {
     ALMACEN_B3: 'text-amber-600 bg-amber-50 border-amber-200',
     ALMACEN_B4: 'text-amber-600 bg-amber-50 border-amber-200',
     ALMACEN_DISCOVERY: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    SALON_204: 'text-blue-600 bg-blue-50 border-blue-200',
 };
 
 const PASSWORDS = {

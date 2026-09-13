@@ -76,7 +76,7 @@ export default function ScanPage() {
                                 )}
                                 <div className="flex items-center gap-3 pt-1">
                                     <span className="font-bold text-slate-800 text-sm">{result.stock_actual} <span className="text-slate-400 font-normal text-xs">{result.unidad}</span></span>
-                                    <StockBar actual={result.stock_actual} minimo={result.stock_minimo_rop} />
+                                    <StockBar actual={result.stock_actual} minimo={result.stock_minimo} />
                                 </div>
                                 <button
                                     onClick={goToProduct}

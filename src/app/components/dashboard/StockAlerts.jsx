@@ -13,7 +13,7 @@ export default function StockAlerts({ stockBajo }) {
                     <AlertTriangle size={18} className="text-amber-500" />
                     <h3 className="font-bold text-slate-800">Stock bajo</h3>
                 </div>
-                <Link href="/inventory?tab=rapido" className="text-xs font-semibold text-brand-600 hover:underline flex items-center gap-1">
+                <Link href="/inventario?tab=rapido" className="text-xs font-semibold text-brand-600 hover:underline flex items-center gap-1">
                     Ver todos <ArrowRight size={12} />
                 </Link>
             </div>
@@ -27,9 +27,9 @@ export default function StockAlerts({ stockBajo }) {
                         <div className="flex items-center gap-3">
                             <div className="text-right">
                                 <p className="text-sm font-bold text-amber-600">{p.stock_actual}</p>
-                                <p className="text-[10px] text-slate-400">mín: {p.stock_minimo_rop}</p>
+                                <p className="text-[10px] text-slate-400">mín: {p.stock_minimo}</p>
                             </div>
-                            <StockBar actual={p.stock_actual} minimo={p.stock_minimo_rop} />
+                            <StockBar actual={p.stock_actual} minimo={p.stock_minimo} />
                         </div>
                     </div>
                 ))}

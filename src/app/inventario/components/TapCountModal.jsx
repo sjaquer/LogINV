@@ -36,7 +36,7 @@ export default function TapCountModal({ producto, currentCount, onConfirm, onDis
                 </button>
                 <div className="text-center flex-1 px-4 min-w-0">
                     <p className="text-white font-bold text-lg sm:text-xl truncate">{producto.nombre}</p>
-                    <p className="text-white/50 text-sm">{producto.categoria} {producto.gramaje ? `· ${producto.gramaje}` : ''}</p>
+                    <p className="text-white/50 text-sm">{producto.categoria} {producto.piso ? `· ${producto.piso}` : ''}</p>
                 </div>
                 <div className="w-12" /> {/* spacer */}
             </div>

@@ -139,16 +139,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Ministerio de Adoración",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "INSTB1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "INSTB1"
     },
     {
         id: "p2",
@@ -158,16 +156,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Ministerio de Adoración",
         observaciones: "ES PRESTADO",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "INSTG1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "INSTG1"
     },
     {
         id: "p3",
@@ -177,16 +173,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Ministerio de Adoración",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "INSTP1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "INSTP1"
     },
     {
         id: "p4",
@@ -196,16 +190,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOBIL1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBIL1"
     },
     {
         id: "p5",
@@ -215,16 +207,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "TECNPG1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "TECNPG1"
     },
     {
         id: "p6",
@@ -234,16 +224,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOBMV1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBMV1"
     },
     {
         id: "p7",
@@ -253,16 +241,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "EPCON1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "EPCON1"
     },
     {
         id: "p8",
@@ -272,16 +258,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 4,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUFRE1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUFRE1"
     },
     {
         id: "p9",
@@ -291,16 +275,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 6,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUCOB2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUCOB2"
     },
     {
         id: "p10",
@@ -310,16 +292,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUBEA3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUBEA3"
     },
     {
         id: "p11",
@@ -329,16 +309,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUSPO4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUSPO4"
     },
     {
         id: "p12",
@@ -348,16 +326,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUBRU5",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUBRU5"
     },
     {
         id: "p13",
@@ -367,16 +343,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 6,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUPAR6",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUPAR6"
     },
     {
         id: "p14",
@@ -386,16 +360,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 6,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUMIN7",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUMIN7"
     },
     {
         id: "p15",
@@ -405,16 +377,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUWAS8",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUWAS8"
     },
     {
         id: "p16",
@@ -424,16 +394,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LUMAQ9",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUMAQ9"
     },
     {
         id: "p17",
@@ -443,16 +411,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "EQBAT2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "EQBAT2"
     },
     {
         id: "p18",
@@ -462,16 +428,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "INSTPI2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "INSTPI2"
     },
     {
         id: "p19",
@@ -481,16 +445,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "TECOM1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "TECOM1"
     },
     {
         id: "p20",
@@ -500,16 +462,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 5,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPA1"
     },
     {
         id: "p21",
@@ -519,16 +479,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 35,
-        stock_minimo_rop: 7,
+        stock_minimo: 7,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SU BUSQUEDA SERA POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COCAB1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COCAB1"
     },
     {
         id: "p22",
@@ -538,16 +496,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 30,
-        stock_minimo_rop: 6,
+        stock_minimo: 6,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SU BUSQUEDA SERA POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COCAB2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COCAB2"
     },
     {
         id: "p23",
@@ -557,16 +513,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SU BUSQUEDA SERA POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COCAB3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COCAB3"
     },
     {
         id: "p24",
@@ -576,16 +530,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COCAB4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COCAB4"
     },
     {
         id: "p25",
@@ -595,16 +547,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPA3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPA3"
     },
     {
         id: "p26",
@@ -614,16 +564,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 4,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "EQMIC6",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "EQMIC6"
     },
     {
         id: "p27",
@@ -633,16 +581,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "EQSWI7",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "EQSWI7"
     },
     {
         id: "p28",
@@ -652,16 +598,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "EQSNA8",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "EQSNA8"
     },
     {
         id: "p29",
@@ -671,16 +615,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COEST4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COEST4"
     },
     {
         id: "p30",
@@ -690,16 +632,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 5,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "COEST5",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "COEST5"
     },
     {
         id: "p31",
@@ -709,16 +649,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "DEADOR1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "DEADOR1"
     },
     {
         id: "p32",
@@ -728,16 +666,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 246,
-        stock_minimo_rop: 49,
+        stock_minimo: 49,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "BUSQUEDA POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOSILL2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOSILL2"
     },
     {
         id: "p33",
@@ -747,16 +683,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOMES1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOMES1"
     },
     {
         id: "p34",
@@ -766,16 +700,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPI3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPI3"
     },
     {
         id: "p35",
@@ -785,16 +717,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 10,
-        stock_minimo_rop: 2,
+        stock_minimo: 2,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "DEADOR2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "DEADOR2"
     },
     {
         id: "p36",
@@ -804,16 +734,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LIASP1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LIASP1"
     },
     {
         id: "p37",
@@ -823,16 +751,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "LIASP2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LIASP2"
     },
     {
         id: "p38",
@@ -842,16 +768,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 14,
-        stock_minimo_rop: 2,
+        stock_minimo: 2,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOIMEG1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOIMEG1"
     },
     {
         id: "p39",
@@ -861,16 +785,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 14,
-        stock_minimo_rop: 2,
+        stock_minimo: 2,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOMEG2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOMEG2"
     },
     {
         id: "p40",
@@ -880,16 +802,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 4,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE BUSCARÁ POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "DEALF4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "DEALF4"
     },
     {
         id: "p41",
@@ -899,16 +819,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 14,
-        stock_minimo_rop: 2,
+        stock_minimo: 2,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE BUSCARÁ POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACPI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACPI1"
     },
     {
         id: "p42",
@@ -918,16 +836,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE BUSCARÁ POR ITEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACPI2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACPI2"
     },
     {
         id: "p43",
@@ -937,16 +853,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPI1"
     },
     {
         id: "p44",
@@ -956,16 +870,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA COLOCAR STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPI2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPI2"
     },
     {
         id: "p45",
@@ -975,16 +887,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE BUSCARÁ POR ÍTEM",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACPI3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACPI3"
     },
     {
         id: "p46",
@@ -994,16 +904,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOBES2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBES2"
     },
     {
         id: "p47",
@@ -1013,16 +921,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 7,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOBBI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBBI1"
     },
     {
         id: "p48",
@@ -1032,16 +938,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "SEG1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "SEG1"
     },
     {
         id: "p49",
@@ -1051,16 +955,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "DESGASTADO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "ACCPA2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPA2"
     },
     {
         id: "p50",
@@ -1070,16 +972,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "SE COLOCO STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "MOBMP1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBMP1"
     },
     {
         id: "p51",
@@ -1089,16 +989,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "TEMPLO",
         ubicacion_nombre: "Templo Principal",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Imagen y Producción",
         observaciones: "FALTA COLOCAR STIKER",
         piso: "PRIMER PISO",
         fuente: "TEMPLO",
-        codigo_barras: "TECNPM2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "TECNPM2"
     },
     {
         id: "p52",
@@ -1108,16 +1006,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 13,
-        stock_minimo_rop: 2,
+        stock_minimo: 2,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "MOBBI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MOBBI1"
     },
     {
         id: "p53",
@@ -1127,16 +1023,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "PIBAD1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "PIBAD1"
     },
     {
         id: "p54",
@@ -1146,16 +1040,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HECOM1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HECOM1"
     },
     {
         id: "p55",
@@ -1165,16 +1057,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HEWIN1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HEWIN1"
     },
     {
         id: "p56",
@@ -1184,16 +1074,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HEMAR1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HEMAR1"
     },
     {
         id: "p57",
@@ -1203,16 +1091,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERMAR2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERMAR2"
     },
     {
         id: "p58",
@@ -1222,16 +1108,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LIMJAL1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LIMJAL1"
     },
     {
         id: "p59",
@@ -1241,16 +1125,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LIMLUN1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LIMLUN1"
     },
     {
         id: "p60",
@@ -1260,16 +1142,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCLLA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCLLA1"
     },
     {
         id: "p61",
@@ -1279,16 +1159,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERARC1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERARC1"
     },
     {
         id: "p62",
@@ -1298,16 +1176,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 6,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "CONEXT1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "CONEXT1"
     },
     {
         id: "p63",
@@ -1317,16 +1193,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLLA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLLA1"
     },
     {
         id: "p64",
@@ -1336,16 +1210,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERCUC1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERCUC1"
     },
     {
         id: "p65",
@@ -1355,16 +1227,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERTI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERTI1"
     },
     {
         id: "p66",
@@ -1374,16 +1244,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERTI2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERTI2"
     },
     {
         id: "p67",
@@ -1393,16 +1261,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERPI11",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERPI11"
     },
     {
         id: "p68",
@@ -1412,16 +1278,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "SEGRO1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "SEGRO1"
     },
     {
         id: "p69",
@@ -1431,16 +1295,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERRAS1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERRAS1"
     },
     {
         id: "p70",
@@ -1450,16 +1312,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LULINT1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LULINT1"
     },
     {
         id: "p71",
@@ -1469,16 +1329,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERKIT1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERKIT1"
     },
     {
         id: "p72",
@@ -1488,16 +1346,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLLA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLLA1"
     },
     {
         id: "p73",
@@ -1507,16 +1363,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERCIE1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERCIE1"
     },
     {
         id: "p74",
@@ -1526,16 +1380,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCDES1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCDES1"
     },
     {
         id: "p75",
@@ -1545,16 +1397,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERNI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERNI1"
     },
     {
         id: "p76",
@@ -1564,16 +1414,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERTI3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERTI3"
     },
     {
         id: "p77",
@@ -1583,16 +1431,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERPIN1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERPIN1"
     },
     {
         id: "p78",
@@ -1602,16 +1448,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERAL1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERAL1"
     },
     {
         id: "p79",
@@ -1621,16 +1465,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERAL2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERAL2"
     },
     {
         id: "p80",
@@ -1640,16 +1482,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERAL 3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERAL 3"
     },
     {
         id: "p81",
@@ -1659,16 +1499,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERAL 4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERAL 4"
     },
     {
         id: "p82",
@@ -1678,16 +1516,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERRE1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERRE1"
     },
     {
         id: "p83",
@@ -1697,16 +1533,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HEPREN1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HEPREN1"
     },
     {
         id: "p84",
@@ -1716,16 +1550,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERCE1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERCE1"
     },
     {
         id: "p85",
@@ -1735,16 +1567,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLLA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLLA1"
     },
     {
         id: "p86",
@@ -1754,16 +1584,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERRAS2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERRAS2"
     },
     {
         id: "p87",
@@ -1773,16 +1601,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERSET1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERSET1"
     },
     {
         id: "p88",
@@ -1792,16 +1618,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERDE1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERDE1"
     },
     {
         id: "p89",
@@ -1811,16 +1635,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERDD2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERDD2"
     },
     {
         id: "p90",
@@ -1830,16 +1652,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERDE2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERDE2"
     },
     {
         id: "p91",
@@ -1849,16 +1669,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLLA3",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLLA3"
     },
     {
         id: "p92",
@@ -1868,16 +1686,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLLA4",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLLA4"
     },
     {
         id: "p93",
@@ -1887,16 +1703,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERBR1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERBR1"
     },
     {
         id: "p94",
@@ -1906,16 +1720,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 6,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERDES1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERDES1"
     },
     {
         id: "p95",
@@ -1925,16 +1737,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LUZA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUZA1"
     },
     {
         id: "p96",
@@ -1944,16 +1754,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LUEME1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUEME1"
     },
     {
         id: "p97",
@@ -1963,16 +1771,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 7,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LUHIB1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUHIB1"
     },
     {
         id: "p98",
@@ -1982,16 +1788,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 7,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LUSPO1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUSPO1"
     },
     {
         id: "p99",
@@ -2001,16 +1805,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 5,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "LO QUE HAY EN EL TEMPLO",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "LUFOC1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "LUFOC1"
     },
     {
         id: "p100",
@@ -2020,16 +1822,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "REWI1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "REWI1"
     },
     {
         id: "p101",
@@ -2039,16 +1839,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 3,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCCO1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCCO1"
     },
     {
         id: "p102",
@@ -2058,16 +1856,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERLIG",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERLIG"
     },
     {
         id: "p103",
@@ -2077,16 +1873,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCAR1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCAR1"
     },
     {
         id: "p104",
@@ -2096,16 +1890,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCAR2",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCAR2"
     },
     {
         id: "p105",
@@ -2115,16 +1907,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCBA1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCBA1"
     },
     {
         id: "p106",
@@ -2134,16 +1924,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCBA5",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCBA5"
     },
     {
         id: "p107",
@@ -2153,16 +1941,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERSO1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERSO1"
     },
     {
         id: "p108",
@@ -2172,16 +1958,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ACCPIN1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ACCPIN1"
     },
     {
         id: "p109",
@@ -2191,16 +1975,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "HERBO1",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "HERBO1"
     },
     {
         id: "p110",
@@ -2210,16 +1992,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "MUH",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "MUH"
     },
     {
         id: "p111",
@@ -2229,16 +2009,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ATDRAW",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ATDRAW"
     },
     {
         id: "p112",
@@ -2248,16 +2026,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "AMINALAMBRI",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "AMINALAMBRI"
     },
     {
         id: "p113",
@@ -2267,16 +2043,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "TAPERCUT",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "TAPERCUT"
     },
     {
         id: "p114",
@@ -2286,16 +2060,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "TA",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "TA"
     },
     {
         id: "p115",
@@ -2305,16 +2077,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "ATIMPAC",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "ATIMPAC"
     },
     {
         id: "p116",
@@ -2324,16 +2094,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "KIHERRAMIENT",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "KIHERRAMIENT"
     },
     {
         id: "p117",
@@ -2343,16 +2111,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "KI",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "KI"
     },
     {
         id: "p118",
@@ -2362,16 +2128,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 2,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "2 HERRMAINET",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "2 HERRMAINET"
     },
     {
         id: "p119",
@@ -2381,16 +2145,14 @@ export const MOCK_PRODUCTOS = [
         ubicacion: "ALMACEN_B1",
         ubicacion_nombre: "Almacén B1",
         stock_actual: 1,
-        stock_minimo_rop: 1,
+        stock_minimo: 1,
         unidad: "pieza",
         estado: "OPTIMO",
         responsabilidad: "Mantenimiento",
         observaciones: "FALTA STIKER",
         piso: "Piso 1",
         fuente: "ALMACENES",
-        codigo_barras: "SOBEI",
-        fecha_vencimiento: null,
-        lote: null
+        codigo_barras: "SOBEI"
     }
 ].map((p, i) => ({ ...p, ultima_actualizacion: daysAgo(i % 30) }));
 
@@ -2409,6 +2171,3 @@ export const MOCK_MOVIMIENTOS = MOCK_PRODUCTOS.filter(p => p.stock_actual > 0).m
     fecha: daysAgo(90),
     motivo_merma: null,
 }));
-
-// Mantener compatibilidad con imports existentes
-export const MOCK_REQUERIMIENTOS = [];

@@ -115,13 +115,10 @@ ${conteo.notas ? `<div class="notes"><strong>Observaciones:</strong> ${conteo.no
  * @param {string} ubicacionNombre - Nombre de la ubicación
  */
 export function exportInventoryCSV(productos, ubicacionNombre) {
-    const headers = ['Producto', 'Categoría', 'Ubicación', 'Stock Actual', 'Stock Mínimo', 'Unidad', 'Lote', 'Código de Barras', 'Vencimiento'];
+    const headers = ['Producto', 'Categoría', 'Ubicación', 'Stock Actual', 'Stock Mínimo', 'Unidad', 'Estado', 'Responsable', 'Código de Barras'];
     const rows = productos.map(p => {
         const ubicName = UBICACIONES.find(u => u.id === p.ubicacion)?.nombre || p.ubicacion || '';
-        const venc = p.fecha_vencimiento?.toDate
-            ? p.fecha_vencimiento.toDate().toLocaleDateString('es-PE')
-            : p.fecha_vencimiento ? new Date(p.fecha_vencimiento).toLocaleDateString('es-PE') : '';
-        return [p.nombre, p.categoria, ubicName, p.stock_actual, p.stock_minimo_rop, p.unidad || '', p.lote || '', p.codigo_barras || '', venc];
+        return [p.nombre, p.categoria, ubicName, p.stock_actual, p.stock_minimo, p.unidad || '', p.estado || '', p.responsabilidad || '', p.codigo_barras || ''];
     });
 
     const csvContent = [headers, ...rows]

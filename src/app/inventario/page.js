@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useConteos, useCrearMovimiento } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
@@ -18,6 +19,14 @@ import {
 } from 'lucide-react';
 
 export default function InventarioPage() {
+    return (
+        <Suspense fallback={null}>
+            <InventarioPageInner />
+        </Suspense>
+    );
+}
+
+function InventarioPageInner() {
     const { productos, loading: pLoading, updateStock } = useProductos();
     const { categorias } = useCategorias();
     const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
@@ -25,14 +34,17 @@ export default function InventarioPage() {
     const { user } = useAuth();
     const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
     const { setHideBottomNav } = useSidebar();
+    const searchParams = useSearchParams();
     const userName = user?.nombre || 'Usuario';
 
     // ── State ──
-    const [tab, setTab] = useState('conteo');
+    const tabInicial = ['conteo', 'rapido', 'historial'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'conteo';
+    const [tab, setTab] = useState(tabInicial);
     const [conteoItems, setConteoItems] = useState([]);
     const [conteoActivo, setConteoActivo] = useState(null);
     const [notas, setNotas] = useState('');
     const [showScanner, setShowScanner] = useState(false);
+    const [scanMode, setScanMode] = useState('conteo'); // 'conteo' | 'INGRESO' | 'SALIDA'
     const [busqueda, setBusqueda] = useState('');
     const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
     const [scannedFeedback, setScannedFeedback] = useState(null);
@@ -153,20 +165,34 @@ export default function InventarioPage() {
         [productos, ubicacion, isGeneral]
     );
 
-    // ── Handle barcode scan ──
+    // ── Handle barcode scan (conteo, o entrada/salida rápida) ──
     const handleBarcodeScan = useCallback((code) => {
+        setShowScanner(false);
+        if (scanMode === 'INGRESO' || scanMode === 'SALIDA') {
+            // Entrada/salida rápida: buscar en TODO el inventario, sin
+            // restringir a la ubicación actual del selector.
+            const matched = productos.find(p => p.codigo_barras === code);
+            if (matched) {
+                setQuickStockProduct(matched);
+                setQuickStockTipo(scanMode);
+            } else {
+                setScannedFeedback({ type: 'error', code });
+                setTimeout(() => setScannedFeedback(null), 3000);
+            }
+            return;
+        }
+        // Modo conteo: solo productos de la ubicación activa
         const matched = productosUbicacion.find(p => p.codigo_barras === code);
         if (matched) {
             if (conteoActivo) {
                 openTapCount(matched);
             }
             setScannedFeedback({ type: 'success', name: matched.nombre });
-            setShowScanner(false);
         } else {
             setScannedFeedback({ type: 'error', code });
         }
         setTimeout(() => setScannedFeedback(null), 3000);
-    }, [productosUbicacion, conteoActivo, openTapCount]);
+    }, [productos, productosUbicacion, conteoActivo, openTapCount, scanMode]);
 
     // ── Save current count ──
     const handleSaveConteo = useCallback(async () => {
@@ -372,7 +398,7 @@ export default function InventarioPage() {
                                 {/* Action bar */}
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                     <button
-                                        onClick={() => setShowScanner(true)}
+                                        onClick={() => { setScanMode('conteo'); setShowScanner(true); }}
                                         className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
                                     >
                                         <ScanBarcode size={20} /> Escanear código
@@ -504,7 +530,7 @@ export default function InventarioPage() {
                                                         <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <span className="text-xs font-semibold text-brand-600 uppercase">{p.categoria}</span>
-                                                            {p.gramaje && <span className="text-xs text-slate-400">· {p.gramaje}</span>}
+                                                            {p.piso && <span className="text-xs text-slate-400">· {p.piso}</span>}
                                                         </div>
                                                         <p className="text-sm text-slate-500 mt-1">
                                                             Stock sistema: <strong className="text-slate-700">{p.stock_actual}</strong> {p.unidad}
@@ -574,6 +600,33 @@ export default function InventarioPage() {
                                 <Zap size={18} className="text-emerald-500" /> Movimientos rápidos
                             </h3>
                             <p className="text-xs text-slate-500">Registra ingresos o salidas rápidas sin crear un conteo completo.</p>
+                        </div>
+
+                        {/* Scanned feedback toast */}
+                        {scannedFeedback && (
+                            <div className={`p-3.5 rounded-xl text-base font-medium flex items-center gap-2 animate-fade-in ${scannedFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                {scannedFeedback.type === 'success' ? (
+                                    <><Check size={18} /> Producto identificado: <strong>{scannedFeedback.name}</strong></>
+                                ) : (
+                                    <><AlertTriangle size={18} /> No se encontró producto con ese código ({scannedFeedback.code})</>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Escanear entrada / salida */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => { setScanMode('INGRESO'); setShowScanner(true); }}
+                                className="flex items-center justify-center gap-2 py-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm hover:bg-emerald-100 active:scale-[0.98] transition-all"
+                            >
+                                <ScanBarcode size={18} /> Escanear entrada
+                            </button>
+                            <button
+                                onClick={() => { setScanMode('SALIDA'); setShowScanner(true); }}
+                                className="flex items-center justify-center gap-2 py-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 font-bold text-sm hover:bg-amber-100 active:scale-[0.98] transition-all"
+                            >
+                                <ScanBarcode size={18} /> Escanear salida
+                            </button>
                         </div>
 
                         {/* Search */}

@@ -95,9 +95,6 @@ const UBICACIONES_MAP = {
     // Almacén Discovery Land (B5) - material y mobiliario para clases de niños.
     'B5': { id: 'ALMACEN_DISCOVERY', nombre: 'Almacén Discovery', descripcion: 'Almacén Discovery Land (B5) - Material para uso de clases y mobiliario', piso: 2, tipo: 'almacen', icono: '🧸', color: 'emerald' },
 
-    // Salón 204 - Administración (recursos tecnológicos: impresoras, etc).
-    'SALON 204': { id: 'SALON_204', nombre: 'Salón 204', descripcion: 'Salón 204 - Administración (Recursos Tecnológicos)', piso: 2, tipo: 'oficina', icono: '🖨️', color: 'blue' },
-
     // Baños (Primer Piso).
     'M1': { id: 'BANO_MUJERES', nombre: 'Baño de Mujeres', descripcion: 'Baño de Mujeres - Puerta 1 (M1)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },
     'M2': { id: 'BANO_MUJERES', nombre: 'Baño de Mujeres', descripcion: 'Baño de Mujeres - Puerta 2 (M2)', piso: 1, tipo: 'otro', icono: '🚻', color: 'slate' },

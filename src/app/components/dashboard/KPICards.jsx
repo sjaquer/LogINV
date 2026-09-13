@@ -19,7 +19,7 @@ export default function KPICards({
                 color="brand"
                 subtitle={`${ubicacionInfo.icono} ${ubicacionInfo.nombre}`}
             />
-            <Link href="/inventory?tab=rapido">
+            <Link href="/inventario?tab=rapido">
                 <KPICard
                     icon={AlertTriangle}
                     label="Stock bajo"
@@ -28,7 +28,7 @@ export default function KPICards({
                     subtitle="Requieren reposición"
                 />
             </Link>
-            <Link href="/inventory">
+            <Link href="/inventario">
                 <KPICard
                     icon={ClipboardCheck}
                     label="Conteos hoy"
@@ -37,7 +37,7 @@ export default function KPICards({
                     subtitle="Inventario físico"
                 />
             </Link>
-            <Link href="/inventory?tab=historial">
+            <Link href="/inventario?tab=historial">
                 <KPICard
                     icon={TrendingDown}
                     label="Diferencias"
