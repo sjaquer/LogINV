@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +15,14 @@ import {
 } from 'lucide-react';
 
 export default function ProductosPage() {
+    return (
+        <Suspense fallback={null}>
+            <ProductosPageInner />
+        </Suspense>
+    );
+}
+
+function ProductosPageInner() {
     const {
         productos, loading,
         crearProducto, actualizarProducto, eliminarProducto,
@@ -22,8 +31,9 @@ export default function ProductosPage() {
     const { user } = useAuth();
     const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
     const { setHideBottomNav } = useSidebar();
+    const searchParams = useSearchParams();
     const userName = user?.nombre || 'Usuario';
-    const role = user?.rol || 'LOGISTICA';
+    const role = user?.rol || 'voluntario';
 
     const [busqueda, setBusqueda] = useState('');
     const [categoria, setCategoria] = useState('Todas');
@@ -32,6 +42,23 @@ export default function ProductosPage() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [deleteProduct, setDeleteProduct] = useState(null);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+
+    // ── Llegada desde /scan: precargar búsqueda y, si no existe, abrir el
+    // formulario de creación con el código ya escaneado ──
+    useEffect(() => {
+        const buscar = searchParams.get('buscar');
+        const crear = searchParams.get('crear');
+        if (!buscar) return;
+        setBusqueda(buscar);
+        if (crear === '1') {
+            const yaExiste = productos.some(p => p.codigo_barras === buscar);
+            if (!yaExiste) {
+                setEditingProduct({ codigo_barras: buscar });
+                setShowProductForm(true);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     // ── Ocultar BottomNav cuando hay un modal abierto ──
     useEffect(() => {
@@ -112,7 +139,7 @@ export default function ProductosPage() {
         return new Promise(resolve => setTimeout(resolve, 600));
     }, []);
 
-    const canManage = (role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA') && !isGeneral;
+    const canManage = (role === 'admin' || role === 'encargado') && !isGeneral;
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">
@@ -219,7 +246,7 @@ export default function ProductosPage() {
                                 key={p.id}
                                 producto={p}
                                 catIcon={catIconMap[p.categoria] || '📦'}
-                                canManage={role === 'ADMIN' || role === 'GERENCIA' || role === 'LOGISTICA'}
+                                canManage={role === 'admin' || role === 'encargado'}
                                 isGeneral={isGeneral}
                                 onEdit={handleEdit}
                                 onDelete={setDeleteProduct}

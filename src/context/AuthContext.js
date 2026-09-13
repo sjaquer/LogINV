@@ -3,9 +3,12 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Wine, Lock, User, AlertCircle, ChevronDown } from 'lucide-react';
 
+// Roles en minúsculas para calzar con src/lib/constants.js (ROLES) y con
+// los permisos usados en cada página (canManage). Contraseñas por defecto:
+// admin → "cnc2026", encargado → "inv2026" — cámbialas antes de producción.
 const USUARIOS = [
-    { id: 'user1', nombre: 'Maria Zambrano', rol: 'LOGISTICA', hash: '0d866ba9f9fd0f2cbb2134daf52356d2021a3686352d5c19d967305bf9e4bbdc' },
-    { id: 'user2', nombre: 'Sebastian Jaque', rol: 'ADMIN', hash: 'a537a9c80b4ad75197c4e3e11faaf1963b2c0c033270a42c6a25655e752f4fc1' },
+    { id: 'user1', nombre: 'Juan Carlos Cárdenas', rol: 'admin', hash: 'af26881f93599213b354164ec4feeaa148e82c6ae47f2393ee333967ef62ad7f' },
+    { id: 'user2', nombre: 'Ruth Pando', rol: 'encargado', hash: 'b2d55395b4e27448061ac2e298a44bff8337367af9eaba61f1df1c359f9c34de' },
 ];
 
 async function hashPassword(password) {

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Package, ClipboardList, ScanBarcode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/context/SidebarContext';
 
@@ -14,6 +14,7 @@ export default function BottomNav() {
     const items = [
         { href: '/', label: 'Panel', icon: LayoutDashboard },
         { href: '/productos', label: 'Productos', icon: Package },
+        { href: '/scan', label: 'Escanear', icon: ScanBarcode },
         { href: '/inventario', label: 'Inventario', icon: ClipboardList },
     ];
 

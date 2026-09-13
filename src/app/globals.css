@@ -466,3 +466,24 @@ html.dark select {
     background-color: #0f172a;
     color: #e2e8f0;
 }
+
+/* Impresión de etiquetas de código de barras: cuando el modal de etiqueta
+   está abierto (ver BarcodeLabel.jsx), oculta todo excepto su contenido.
+   Se restringe con :has() para no afectar la impresión normal de otras
+   páginas (ej. /reports) cuando el modal no está presente. */
+@media print {
+    body:has(#barcode-print-area) * {
+        visibility: hidden;
+    }
+    body:has(#barcode-print-area) #barcode-print-area,
+    body:has(#barcode-print-area) #barcode-print-area * {
+        visibility: visible;
+    }
+    body:has(#barcode-print-area) #barcode-print-area {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: fit-content;
+        height: fit-content;
+    }
+}

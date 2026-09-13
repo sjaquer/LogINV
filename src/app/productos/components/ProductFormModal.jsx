@@ -1,16 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { X, Save, AlertTriangle, ScanBarcode } from 'lucide-react';
+import { X, Save, AlertTriangle, ScanBarcode, Tag } from 'lucide-react';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 const UNIDADES = ['unidades', 'botellas', 'latas', 'bolsas', 'cajas', 'litros', 'kg', 'gramos', 'packs'];
 
 export default function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
-    const isEdit = !!producto;
+    const isEdit = !!producto?.id;
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [showScanner, setShowScanner] = useState(false);
+    const [showLabel, setShowLabel] = useState(false);
 
     useEscapeKey(onClose);
 
@@ -41,6 +43,19 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
     function handleBarcodeScan(code) {
         setForm(prev => ({ ...prev, codigo_barras: code }));
         setShowScanner(false);
+    }
+
+    // Genera un código único a partir de la categoría (prefijo) + un sufijo
+    // corto, siguiendo la misma idea de los códigos ya usados en el
+    // inventario físico (ej: INSTB1, MOBIL1, HECOM1).
+    function handleGenerateCode() {
+        const prefix = (form.categoria || form.nombre || 'ITEM')
+            .normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .replace(/[^A-Za-z]/g, '')
+            .toUpperCase()
+            .slice(0, 4) || 'ITEM';
+        const suffix = Date.now().toString(36).toUpperCase().slice(-5);
+        setForm(prev => ({ ...prev, codigo_barras: `${prefix}${suffix}` }));
     }
 
     async function handleSubmit() {
@@ -103,17 +118,38 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 type="text"
                                 value={form.codigo_barras}
                                 onChange={e => handleChange('codigo_barras', e.target.value)}
-                                placeholder="Ej: 7750182000123"
+                                placeholder="Ej: INSTB1 o 7750182000123"
                                 className="inp text-base py-3 flex-1 bg-white border-slate-200 text-slate-900 font-mono"
                             />
                             <button
                                 type="button"
+                                onClick={handleGenerateCode}
+                                title="Generar código nuevo"
+                                className="btn btn-ghost px-4 py-3 border border-slate-200 text-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all rounded-xl flex items-center gap-2"
+                            >
+                                <Tag size={20} />
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => setShowScanner(true)}
+                                title="Escanear código"
                                 className="btn btn-ghost px-4 py-3 border border-slate-200 text-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all rounded-xl flex items-center gap-2"
                             >
                                 <ScanBarcode size={20} />
                             </button>
                         </div>
+                        {form.codigo_barras && (
+                            <div className="mt-3">
+                                <BarcodeLabelPreview value={form.codigo_barras} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLabel(true)}
+                                    className="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 mx-auto"
+                                >
+                                    <Tag size={14} /> Ver / imprimir etiqueta
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Categoría + Unidad */}
@@ -262,6 +298,14 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
             {/* Inner barcode scanner */}
             {showScanner && (
                 <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />
+            )}
+
+            {/* Etiqueta imprimible */}
+            {showLabel && (
+                <BarcodeLabelModal
+                    producto={{ nombre: form.nombre || 'Producto', codigo_barras: form.codigo_barras }}
+                    onClose={() => setShowLabel(false)}
+                />
             )}
         </div>
     );

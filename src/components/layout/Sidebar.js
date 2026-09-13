@@ -14,6 +14,7 @@ import {
     Wrench,
     FileText,
     Users,
+    ScanBarcode,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ export default function Sidebar() {
         { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
         { href: '/productos', label: 'Productos', icon: Package },
         { href: '/inventario', label: 'Inventario', icon: ClipboardList },
+        { href: '/scan', label: 'Escanear', icon: ScanBarcode },
         { href: '/locations', label: 'Ubicaciones', icon: MapPin },
         { href: '/loans', label: 'Préstamos', icon: Handshake },
         { href: '/maintenance', label: 'Mantenimiento', icon: Wrench },

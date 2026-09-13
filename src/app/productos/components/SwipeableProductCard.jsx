@@ -1,8 +1,9 @@
 'use client';
 import { useState, useCallback, useRef } from 'react';
-import { Pencil, Trash2, Copy, MapPin } from 'lucide-react';
+import { Pencil, Trash2, Copy, MapPin, Tag } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
+import BarcodeLabelModal from '@/components/ui/BarcodeLabel';
 
 export default function SwipeableProductCard({ producto, catIcon, canManage, isGeneral, onEdit, onDelete, onDuplicate }) {
     const cardRef = useRef(null);
@@ -10,6 +11,7 @@ export default function SwipeableProductCard({ producto, catIcon, canManage, isG
     const currentX = useRef(0);
     const [offsetX, setOffsetX] = useState(0);
     const [swiping, setSwiping] = useState(false);
+    const [showLabel, setShowLabel] = useState(false);
 
     const SWIPE_THRESHOLD = 80;
 
@@ -94,6 +96,13 @@ export default function SwipeableProductCard({ producto, catIcon, canManage, isG
                                         <Pencil size={18} />
                                     </button>
                                     <button
+                                        onClick={() => setShowLabel(true)}
+                                        className="p-2.5 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                        aria-label="Etiqueta"
+                                    >
+                                        <Tag size={18} />
+                                    </button>
+                                    <button
                                         onClick={() => onDuplicate(producto)}
                                         className="p-2.5 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
                                         aria-label="Duplicar"
@@ -113,6 +122,13 @@ export default function SwipeableProductCard({ producto, catIcon, canManage, isG
                     )}
                 </div>
             </div>
+
+            {showLabel && (
+                <BarcodeLabelModal
+                    producto={{ ...producto, ubicacion_nombre: ubicInfo?.nombre }}
+                    onClose={() => setShowLabel(false)}
+                />
+            )}
         </div>
     );
 }

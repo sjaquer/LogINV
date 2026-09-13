@@ -17,7 +17,7 @@ export default function LocationsPage() {
     const { user } = useAuth();
     const { setHideBottomNav } = useSidebar();
     const userName = user?.nombre || 'Usuario';
-    const role = user?.rol || 'VOLUNTARIO';
+    const role = user?.rol || 'voluntario';
 
     const [showForm, setShowForm] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
