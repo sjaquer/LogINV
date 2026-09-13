@@ -12,10 +12,23 @@ export const metadata = {
     title: 'LogINV – Control de Inventario Iglesia CNC',
     description: 'Sistema interno de gestión de inventario para la Iglesia CNC. Control de stock, ubicaciones, préstamos, mantenimiento y reportes.',
     manifest: '/manifest.json',
+    icons: {
+        icon: [
+            { url: '/favicon.ico' },
+            { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+        ],
+        apple: '/icons/apple-touch-icon.png',
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
         title: 'LogINV',
+    },
+    verification: {
+        // Google Search Console → verificación de propiedad (mismo código que
+        // el registro TXT de DNS; este <meta> cubre el método "Etiqueta HTML").
+        google: 'vTcokSxFlEKzzVQF5MdtUUhZ1tLAUa2qH2xr2ggmLJs',
     },
 };
 
@@ -31,9 +44,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
     return (
         <html lang="es">
-            <head>
-                <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
-            </head>
+            <head />
             <body className="font-sans antialiased overscroll-none">
                 <AuthProvider>
                     <ThemeProvider>
