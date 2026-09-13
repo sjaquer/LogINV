@@ -26,9 +26,13 @@ export const metadata = {
         title: 'LogINV',
     },
     verification: {
-        // Google Search Console → verificación de propiedad (mismo código que
-        // el registro TXT de DNS; este <meta> cubre el método "Etiqueta HTML").
-        google: 'vTcokSxFlEKzzVQF5MdtUUhZ1tLAUa2qH2xr2ggmLJs',
+        // Google Search Console → verificación de propiedad (mismos códigos
+        // que los registros TXT de DNS; estos <meta> cubren el método
+        // "Etiqueta HTML" para las distintas propiedades/dominios verificados.
+        google: [
+            'vTcokSxFlEKzzVQF5MdtUUhZ1tLAUa2qH2xr2ggmLJs',
+            'XXXcSKs9hnuQpt4nxbfKDzlXRvZMPRmHXZMO2zgQmEc',
+        ],
     },
 };
 
@@ -44,7 +48,6 @@ export const viewport = {
 export default function RootLayout({ children }) {
     return (
         <html lang="es">
-            <head />
             <body className="font-sans antialiased overscroll-none">
                 <AuthProvider>
                     <ThemeProvider>
