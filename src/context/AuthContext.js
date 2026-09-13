@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Wine, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, Mail, AlertCircle } from 'lucide-react';
 import { authService } from '@/services/auth';
 import { signOut as driveSignOut } from '@/services/googleDrive';
 import { USE_MOCK, getFirestore } from '@/hooks/useFirestoreQuery';
@@ -83,8 +83,9 @@ function LoginScreen({ onLogin }) {
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-20 h-20 bg-brand-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-500/30 mb-4">
-                        <Wine size={40} className="text-white" />
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-brand-500/30 mb-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" className="w-full h-full object-cover" />
                     </div>
                     <h1 className="text-3xl font-black text-white tracking-tight">LOG-INV</h1>
                     <p className="text-sm text-white/50 font-medium mt-1">Control de Inventario</p>

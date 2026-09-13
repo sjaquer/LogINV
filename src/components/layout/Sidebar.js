@@ -5,7 +5,6 @@ import { useSidebar } from '@/context/SidebarContext';
 import {
     LayoutDashboard,
     Package,
-    Wine,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
@@ -46,8 +45,9 @@ export default function Sidebar() {
             >
                 {/* Logo */}
                 <div className={cn('flex items-center gap-3 px-6 py-6 border-b border-slate-100', collapsed && 'justify-center px-2')}>
-                    <div className="flex-shrink-0 w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-md shadow-brand-500/20">
-                        <Wine size={20} className="text-white" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" className="w-full h-full object-cover" />
                     </div>
                     {!collapsed && (
                         <div>
