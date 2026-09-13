@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seedExcel.js",
+    "create-admin": "node scripts/createAdminUser.js",
     "mock:generate": "node scripts/generateMockData.js",
     "excel:analyze": "node scripts/analyzeExcel.js"
   },
@@ -23,6 +24,7 @@
     "date-fns": "^3.6.0",
     "exceljs": "^4.4.0",
     "firebase": "^10.12.2",
+    "firebase-admin": "^14.4.0",
     "html5-qrcode": "^2.3.8",
     "jsbarcode": "^3.12.3",
     "lucide-react": "^0.400.0",

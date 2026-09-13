@@ -1,18 +1,22 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  Firebase Auth Service - LogINV v2.0
-//  Servicio de autenticación con Firebase
+//  Firebase Auth Service - LogINV
+//  Login de la app: correo y contraseña (Firebase Auth). El inicio de sesión
+//  con Google es un flujo SEPARADO (ver src/services/googleDrive.js) que solo
+//  se usa para autorizar la subida de fotos de productos a Google Drive — no
+//  reemplaza ni se mezcla con el login de la app.
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-    getAuth, 
+import {
+    getAuth,
+    GoogleAuthProvider,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
+    signInWithPopup,
+    sendPasswordResetEmail,
     signOut as firebaseSignOut,
     onAuthStateChanged,
-    updateProfile
 } from 'firebase/auth';
-import { ROLES } from '@/lib/constants';
+import { ROLES, GOOGLE_DRIVE } from '@/lib/constants';
 
 // ─── Firebase Config ─────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -30,51 +34,70 @@ let auth = null;
 
 function getFirebaseAuth() {
     if (typeof window === 'undefined') return null;
-    
+
     if (!app) {
         app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     }
-    
     if (!auth) {
         auth = getAuth(app);
     }
-    
     return auth;
 }
 
-// ─── Auth Service ────────────────────────────────────────────────────────
+// ─── Auth Service (login de la app) ──────────────────────────────────────
 export const authService = {
     /**
-     * Iniciar sesión con email y contraseña
-     * @param {string} email 
-     * @param {string} password 
-     * @returns {Promise<User>}
+     * Iniciar sesión con correo y contraseña
+     * @param {string} email
+     * @param {string} password
+     * @returns {Promise<import('firebase/auth').User>}
      */
     async signIn(email, password) {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase not initialized');
-        
+        if (!auth) throw new Error('Firebase no está inicializado');
+
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
     },
 
     /**
-     * Registrar nuevo usuario
-     * @param {string} email 
-     * @param {string} password 
-     * @param {string} displayName 
-     * @returns {Promise<User>}
+     * Enviar correo para restablecer la contraseña
+     * @param {string} email
      */
-    async signUp(email, password, displayName) {
+    async resetPassword(email) {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase not initialized');
-        
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Update profile with display name
-        await updateProfile(userCredential.user, { displayName });
-        
-        return userCredential.user;
+        if (!auth) throw new Error('Firebase no está inicializado');
+        await sendPasswordResetEmail(auth, email);
+    },
+
+    /**
+     * Inicio de sesión con Google — SOLO para autorizar Google Drive (fotos
+     * de productos). No se usa para el login de la app.
+     * @returns {Promise<{ user: import('firebase/auth').User, accessToken: string|null }>}
+     */
+    async signInWithGoogleForDrive() {
+        const auth = getFirebaseAuth();
+        if (!auth) throw new Error('Firebase no está inicializado');
+
+        const provider = new GoogleAuthProvider();
+        provider.addScope(GOOGLE_DRIVE.SCOPE);
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        const result = await signInWithPopup(auth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        return { user: result.user, accessToken: credential?.accessToken || null };
+    },
+
+    /**
+     * Obtener el ID token de Firebase del usuario actual (para llamar a las
+     * rutas de administración protegidas, ej. crear usuarios).
+     * @returns {Promise<string|null>}
+     */
+    async getIdToken() {
+        const auth = getFirebaseAuth();
+        const user = auth?.currentUser;
+        if (!user) return null;
+        return user.getIdToken();
     },
 
     /**
@@ -82,14 +105,13 @@ export const authService = {
      */
     async signOut() {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase not initialized');
-        
+        if (!auth) return;
         await firebaseSignOut(auth);
     },
 
     /**
      * Obtener usuario actual
-     * @returns {User|null}
+     * @returns {import('firebase/auth').User|null}
      */
     getCurrentUser() {
         const auth = getFirebaseAuth();
@@ -98,7 +120,7 @@ export const authService = {
 
     /**
      * Escuchar cambios en el estado de autenticación
-     * @param {Function} callback 
+     * @param {Function} callback
      * @returns {Function} Unsubscribe function
      */
     onAuthStateChanged(callback) {
@@ -107,42 +129,15 @@ export const authService = {
             callback(null);
             return () => {};
         }
-        
         return onAuthStateChanged(auth, callback);
     },
-
-    /**
-     * Actualizar perfil del usuario
-     * @param {Object} profile - { displayName, photoURL }
-     */
-    async updateProfile(profile) {
-        const auth = getFirebaseAuth();
-        const user = auth?.currentUser;
-        
-        if (!user) throw new Error('No user logged in');
-        
-        await updateProfile(user, profile);
-    },
-
-    /**
-     * Restablecer contraseña
-     * @param {string} email 
-     */
-    async resetPassword(email) {
-        const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase not initialized');
-        
-        // Note: This requires Firebase Auth to be configured
-        // await sendPasswordResetEmail(auth, email);
-        throw new Error('Not implemented - Configure Firebase Auth');
-    }
 };
 
 // ─── User Roles Management ───────────────────────────────────────────────
 export const roleService = {
     /**
      * Obtener permisos de un rol
-     * @param {string} role 
+     * @param {string} role
      * @returns {Array}
      */
     getPermissions(role) {
@@ -152,8 +147,8 @@ export const roleService = {
 
     /**
      * Verificar si un usuario tiene un permiso específico
-     * @param {string} userRole 
-     * @param {string} permission 
+     * @param {string} userRole
+     * @param {string} permission
      * @returns {boolean}
      */
     hasPermission(userRole, permission) {
@@ -163,8 +158,8 @@ export const roleService = {
 
     /**
      * Verificar si un usuario puede acceder a un módulo
-     * @param {string} userRole 
-     * @param {string} module 
+     * @param {string} userRole
+     * @param {string} module
      * @returns {boolean}
      */
     canAccessModule(userRole, module) {
@@ -173,7 +168,7 @@ export const roleService = {
 
     /**
      * Obtener label de un rol
-     * @param {string} role 
+     * @param {string} role
      * @returns {string}
      */
     getRoleLabel(role) {
@@ -187,46 +182,5 @@ export const roleService = {
      */
     getAllRoles() {
         return Object.values(ROLES);
-    }
-};
-
-// ─── Mock Auth for Development ───────────────────────────────────────────
-export const mockAuthService = {
-    currentUser: null,
-    listeners: new Set(),
-
-    async signIn(email, password) {
-        // Simulate login
-        const mockUsers = [
-            { uid: 'user1', email: 'admin@iglesia.com', displayName: 'Administrador', role: 'admin' },
-            { uid: 'user2', email: 'encargado@iglesia.com', displayName: 'Encargado', role: 'encargado' },
-            { uid: 'user3', email: 'voluntario@iglesia.com', displayName: 'Voluntario', role: 'voluntario' },
-        ];
-        
-        const user = mockUsers.find(u => u.email === email);
-        if (!user) throw new Error('User not found');
-        
-        this.currentUser = user;
-        this.notifyListeners();
-        return user;
-    },
-
-    async signOut() {
-        this.currentUser = null;
-        this.notifyListeners();
-    },
-
-    getCurrentUser() {
-        return this.currentUser;
-    },
-
-    onAuthStateChanged(callback) {
-        this.listeners.add(callback);
-        callback(this.currentUser);
-        return () => this.listeners.delete(callback);
-    },
-
-    notifyListeners() {
-        this.listeners.forEach(fn => fn(this.currentUser));
     }
 };

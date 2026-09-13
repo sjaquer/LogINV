@@ -96,11 +96,19 @@ export const COLLECTIONS = {
   AUDITORIA: 'auditoria',
 };
 
-// ─── Configuración de Google Drive (solo Client ID — flujo 100% client-side) ─
+// ─── Configuración de Google Drive ────────────────────────────────────────
+// El acceso a Drive reutiliza el mismo login de Google (Firebase Auth,
+// src/services/auth.js): al iniciar sesión se pide este scope además del
+// perfil básico, así no hace falta un Client ID ni una autorización aparte.
 export const GOOGLE_DRIVE = {
-  CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID,
   SCOPE: 'https://www.googleapis.com/auth/drive.file',
   FOLDER_NAME: 'LogINV_Fotos_Productos',
+};
+
+// ─── Compresión de imágenes de productos (antes de subir a Drive) ────────
+export const IMAGE_COMPRESSION = {
+  MAX_DIMENSION: 1600, // px, lado más largo
+  QUALITY: 0.8,        // 0–1 (JPEG/WebP)
 };
 
 // ─── Configuración de la Aplicación ──────────────────────────────────────

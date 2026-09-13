@@ -250,7 +250,6 @@ function ProductosPageInner() {
                             <ProductCard
                                 key={p.id}
                                 producto={p}
-                                catIcon={catIconMap[p.categoria] || '📦'}
                                 isGeneral={isGeneral}
                                 onView={setViewProduct}
                             />
@@ -264,7 +263,6 @@ function ProductosPageInner() {
             {viewProduct && (
                 <ProductDetailModal
                     producto={viewProduct}
-                    catIcon={catIconMap[viewProduct.categoria] || '📦'}
                     canManage={role === 'admin' || role === 'encargado'}
                     isGeneral={isGeneral}
                     onClose={() => setViewProduct(null)}

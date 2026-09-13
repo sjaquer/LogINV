@@ -29,6 +29,10 @@ service cloud.firestore {
 
     // ── Funciones auxiliares ─────────────────────────────────────────────
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function docSizeOk() {
       return request.resource.data.keys().size() < 40;
     }
@@ -59,7 +63,8 @@ service cloud.firestore {
     match /categorias/{categoriaId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre'])
                     && request.resource.data.nombre is string
                     && request.resource.data.nombre.size() > 0
@@ -69,18 +74,20 @@ service cloud.firestore {
                     && strLenOk('color', 20)
                     && numRangeOk('orden', 0, 100);
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Productos ───────────────────────────────────────────────────────
     match /productos/{productoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'categoria', 'stock_actual', 'ubicacion'])
                     && request.resource.data.nombre is string
                     && request.resource.data.nombre.size() > 0
@@ -103,7 +110,8 @@ service cloud.firestore {
                     && timestampOk('fecha_creacion')
                     && timestampOk('ultima_actualizacion');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('nombre', 200)
                     && strLenOk('categoria', 100)
                     && numRangeOk('stock_actual', 0, 999999)
@@ -120,14 +128,15 @@ service cloud.firestore {
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo');
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Movimientos de stock ────────────────────────────────────────────
     match /movimientos/{movimientoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'tipo', 'cantidad'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.tipo is string
@@ -151,7 +160,8 @@ service cloud.firestore {
     match /conteos/{conteoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['usuario', 'estado', 'ubicacion'])
                     && request.resource.data.usuario is string
                     && request.resource.data.estado is string
@@ -160,7 +170,8 @@ service cloud.firestore {
                     && strLenOk('notas', 1000)
                     && timestampOk('fecha');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('usuario', 100)
                     && strLenOk('notas', 1000);
 
@@ -171,24 +182,27 @@ service cloud.firestore {
     match /requerimientos/{requerimientoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['solicitante', 'estado'])
                     && request.resource.data.solicitante is string
                     && request.resource.data.estado is string
                     && request.resource.data.estado in ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPRADO']
                     && timestampOk('fecha_creacion');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('solicitante', 100);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Ubicaciones ─────────────────────────────────────────────────────
     match /ubicaciones/{ubicacionId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'activa'])
                     && request.resource.data.nombre is string
                     && request.resource.data.nombre.size() > 0
@@ -199,20 +213,22 @@ service cloud.firestore {
                     && strLenOk('responsable', 100)
                     && timestampOk('fecha_creacion');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300)
                     && strLenOk('direccion', 300)
                     && strLenOk('responsable', 100);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Préstamos ───────────────────────────────────────────────────────
     match /prestamos/{prestamoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'producto_nombre', 'prestado_a', 'estado'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.producto_nombre is string
@@ -227,17 +243,19 @@ service cloud.firestore {
                     && timestampOk('fecha_devolucion')
                     && timestampOk('fecha_limite');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('notas', 500);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Mantenimiento ───────────────────────────────────────────────────
     match /mantenimiento/{mantenimientoId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'producto_nombre', 'tipo', 'estado'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.producto_nombre is string
@@ -252,18 +270,20 @@ service cloud.firestore {
                     && timestampOk('fecha_programada')
                     && timestampOk('fecha_completado');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('tecnico', 100)
                     && strLenOk('notas', 500);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Usuarios ────────────────────────────────────────────────────────
     match /usuarios/{usuarioId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'email', 'rol', 'activo'])
                     && request.resource.data.nombre is string
                     && request.resource.data.email is string
@@ -273,18 +293,20 @@ service cloud.firestore {
                     && strLenOk('telefono', 20)
                     && timestampOk('fecha_creacion');
 
-      allow update: if docSizeOk()
+      allow update: if isSignedIn()
+                    && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('telefono', 20);
 
-      allow delete: if true;
+      allow delete: if isSignedIn();
     }
 
     // ── Auditoría ───────────────────────────────────────────────────────
     match /auditoria/{auditoriaId} {
       allow read: if true;
 
-      allow create: if docSizeOk()
+      allow create: if isSignedIn()
+                    && docSizeOk()
                     && request.resource.data.keys().hasAll(['usuario_id', 'accion', 'entidad'])
                     && request.resource.data.usuario_id is string
                     && request.resource.data.accion is string

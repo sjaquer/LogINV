@@ -42,7 +42,7 @@ function Field({ icon: Icon, label, children }) {
 // Visualizador de detalle completo de un producto: toda la información
 // nativa del inventario (ubicación, piso, estado, responsable, código de
 // barras, observaciones) en una sola vista, sin necesidad de editar.
-export default function ProductDetailModal({ producto, catIcon, canManage, isGeneral, onClose, onEdit, onDelete, onDuplicate }) {
+export default function ProductDetailModal({ producto, canManage, isGeneral, onClose, onEdit, onDelete, onDuplicate }) {
     const [showLabel, setShowLabel] = useState(false);
     useEscapeKey(onClose);
 
@@ -55,9 +55,7 @@ export default function ProductDetailModal({ producto, catIcon, canManage, isGen
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 bg-white flex-shrink-0">
                     <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
-                            {catIcon}
-                        </div>
+                        <ProductThumb url={producto.imagen_url} size="sm" />
                         <div className="min-w-0">
                             <h3 className="font-bold text-slate-900 text-lg leading-snug break-words">{producto.nombre}</h3>
                             <p className="text-xs font-semibold text-brand-600 uppercase mt-0.5">{producto.categoria}</p>
@@ -71,7 +69,7 @@ export default function ProductDetailModal({ producto, catIcon, canManage, isGen
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
                     {/* Foto */}
-                    <ProductThumb url={producto.imagen_url} icon={<span className="text-4xl">{catIcon}</span>} size="lg" />
+                    <ProductThumb url={producto.imagen_url} size="lg" />
 
                     {/* Estado + stock bajo */}
                     <div className="flex flex-wrap items-center gap-2">

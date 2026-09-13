@@ -20,7 +20,7 @@ const ESTADO_LABEL = {
 // (ubicación completa, piso, responsable, estado). Un solo tap abre el
 // visualizador de detalle completo (ProductDetailModal) con todas las
 // acciones — mantiene la grilla densa y la observación rápida.
-export default function ProductCard({ producto, catIcon, isGeneral, onView }) {
+export default function ProductCard({ producto, isGeneral, onView }) {
     const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
 
@@ -31,7 +31,7 @@ export default function ProductCard({ producto, catIcon, isGeneral, onView }) {
         >
             {/* Top: foto/icono + estado */}
             <div className="flex items-start justify-between gap-2">
-                <ProductThumb url={producto.imagen_url} icon={catIcon} size="sm" />
+                <ProductThumb url={producto.imagen_url} size="sm" />
                 {producto.estado && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${ESTADO_BADGE[producto.estado] || 'bg-slate-100 text-slate-500'}`}>
                         {ESTADO_LABEL[producto.estado] || producto.estado}

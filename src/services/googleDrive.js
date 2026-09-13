@@ -1,81 +1,29 @@
 'use client';
 // ═══════════════════════════════════════════════════════════════════════════
-//  Google Drive Service - LogINV Iglesia CNC
-//  Fotos de productos guardadas en UNA sola cuenta de Google Drive (la de
-//  quien autoriza, ej. el/la encargado/a de inventario). Cada archivo se
-//  publica como "cualquiera con el enlace puede ver" al subirlo, por lo que
-//  TODOS los usuarios de la app ven la foto sin importar su rol y sin
-//  necesitar su propia cuenta de Google — solo quien sube/cambia la foto
-//  necesita autorizar una vez por sesión.
+//  Google Drive Service - LogINV
+//  Fotos de productos guardadas en UNA sola carpeta compartida de Google
+//  Drive, dentro de la cuenta de Google de quien inicia sesión en la app
+//  (src/services/auth.js). Cada archivo se publica como "cualquiera con el
+//  enlace puede ver" al subirlo, por lo que TODOS los usuarios de la app ven
+//  la foto sin importar su rol y sin necesitar su propia cuenta de Drive.
 //
-//  Usa exclusivamente Google Identity Services (GIS) con flujo implícito de
-//  token en el navegador: no requiere API Key ni client_secret, solo el
-//  Client ID (NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID).
+//  El access token con scope `drive.file` se obtiene junto con el login de
+//  Google (OAuth 2.0 vía Firebase Auth) — no hay un flujo de autorización
+//  aparte. Cuando el token expira (~1h), se pide reautenticación con Google.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { GOOGLE_DRIVE, APP_CONFIG } from '@/lib/constants';
+import { compressImage } from '@/lib/imageCompression';
+import { authService } from './auth';
 
 // ─── State ───────────────────────────────────────────────────────────────
-let gis = null;
-let tokenClient = null;
 let accessToken = null;
-let initPromise = null;
+let folderIdCache = null;
 
-// ─── Cargar Google Identity Services ──────────────────────────────────────
-export async function initGoogleDrive() {
-    if (typeof window === 'undefined') return false;
-    if (tokenClient) return true;
-    if (initPromise) return initPromise;
-
-    initPromise = (async () => {
-        try {
-            if (!window.google?.accounts) {
-                await loadScript('https://accounts.google.com/gsi/client');
-            }
-            gis = window.google;
-
-            tokenClient = gis.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_DRIVE.CLIENT_ID,
-                scope: GOOGLE_DRIVE.SCOPE,
-                callback: () => {}, // se sobreescribe por petición en requestAccessToken()
-            });
-
-            return true;
-        } catch (error) {
-            console.error('[LogINV] Error initializing Google Drive:', error);
-            return false;
-        }
-    })();
-
-    return initPromise;
-}
-
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-// ─── Solicitar autorización (devuelve una Promise) ───────────────────────
-export function requestAccessToken() {
-    if (!tokenClient) {
-        return Promise.reject(new Error('Google Drive no está inicializado'));
-    }
-    return new Promise((resolve, reject) => {
-        tokenClient.callback = (tokenResponse) => {
-            if (tokenResponse.error) { reject(new Error(tokenResponse.error)); return; }
-            accessToken = tokenResponse.access_token;
-            resolve(accessToken);
-        };
-        tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
-    });
+// ─── Token (obtenido junto al login de Google, ver AuthContext) ──────────
+export function setDriveAccessToken(token) {
+    accessToken = token || null;
 }
 
 export function isAuthorized() {
@@ -83,17 +31,18 @@ export function isAuthorized() {
 }
 
 export function signOut() {
-    if (accessToken && gis) {
-        gis.accounts.oauth2.revoke(accessToken);
-        accessToken = null;
-    }
+    accessToken = null;
+    folderIdCache = null;
 }
 
-// ─── Asegurar autorización antes de una operación ────────────────────────
+// Vuelve a pedir consentimiento de Google (incluye el scope drive.file) para
+// renovar el token cuando expiró o nunca se obtuvo (ej. sesión restaurada).
 async function ensureAuthorized() {
     if (accessToken) return accessToken;
-    await initGoogleDrive();
-    return requestAccessToken();
+    const { accessToken: token } = await authService.signInWithGoogleForDrive();
+    if (!token) throw new Error('No se pudo autorizar el acceso a Google Drive');
+    setDriveAccessToken(token);
+    return token;
 }
 
 // ─── Hacer público un archivo ("cualquiera con el enlace puede ver") ─────
@@ -110,13 +59,18 @@ export function getPublicImageUrl(fileId) {
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
 }
 
-// ─── Subir imagen de producto (crea/reusa carpeta, sube, publica) ────────
+// ─── Subir imagen de producto (comprime, crea/reusa carpeta, sube, publica) ─
 export async function uploadImage(file) {
+    if (!APP_CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        throw new Error('Tipo de archivo no permitido. Usa JPEG, PNG, WebP o GIF');
+    }
     if (file.size > APP_CONFIG.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
         throw new Error(`El archivo excede ${APP_CONFIG.MAX_UPLOAD_SIZE_MB}MB`);
     }
-    if (!APP_CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        throw new Error('Tipo de archivo no permitido. Usa JPEG, PNG, WebP o GIF');
+
+    const optimized = await compressImage(file);
+    if (optimized.size > APP_CONFIG.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+        throw new Error(`El archivo excede ${APP_CONFIG.MAX_UPLOAD_SIZE_MB}MB, incluso comprimido`);
     }
 
     await ensureAuthorized();
@@ -124,10 +78,10 @@ export async function uploadImage(file) {
     try {
         const folderId = await getOrCreateFolder(GOOGLE_DRIVE.FOLDER_NAME);
 
-        const metadata = { name: `${Date.now()}_${file.name}`, parents: [folderId] };
+        const metadata = { name: `${Date.now()}_${optimized.name}`, parents: [folderId] };
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', file);
+        form.append('file', optimized);
 
         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
@@ -161,15 +115,20 @@ export async function deleteImage(fileId) {
     }
 }
 
-// ─── Obtener o crear la carpeta compartida de fotos ──────────────────────
+// ─── Obtener o crear la carpeta compartida de fotos (auto-asignación) ────
 async function getOrCreateFolder(folderName) {
+    if (folderIdCache) return folderIdCache;
+
     const query = `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
     const response = await fetch(
         `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
     );
     const result = await response.json();
-    if (result.files?.length > 0) return result.files[0].id;
+    if (result.files?.length > 0) {
+        folderIdCache = result.files[0].id;
+        return folderIdCache;
+    }
 
     const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
@@ -178,25 +137,19 @@ async function getOrCreateFolder(folderName) {
     });
     const folder = await createResponse.json();
     await makeFilePublic(folder.id);
-    return folder.id;
+    folderIdCache = folder.id;
+    return folderIdCache;
 }
 
 // ─── Hook de React ─────────────────────────────────────────────────────────
 export function useGoogleDrive() {
-    const [authorized, setAuthorized] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    useEffect(() => {
-        initGoogleDrive();
-    }, []);
 
     const authorize = useCallback(async () => {
         setError(null);
         try {
-            await initGoogleDrive();
-            await requestAccessToken();
-            setAuthorized(true);
+            await ensureAuthorized();
             return true;
         } catch (err) {
             setError(err.message);
@@ -208,9 +161,7 @@ export function useGoogleDrive() {
         setLoading(true);
         setError(null);
         try {
-            const result = await uploadImage(file);
-            setAuthorized(true);
-            return result;
+            return await uploadImage(file);
         } catch (err) {
             setError(err.message);
             throw err;
@@ -231,5 +182,5 @@ export function useGoogleDrive() {
         }
     }, []);
 
-    return { authorized: authorized || isAuthorized(), loading, error, authorize, upload, remove };
+    return { authorized: isAuthorized(), loading, error, authorize, upload, remove };
 }

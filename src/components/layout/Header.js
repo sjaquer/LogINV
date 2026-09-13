@@ -15,13 +15,6 @@ const LOCATION_COLORS = {
     ALMACEN_DISCOVERY: 'text-emerald-600 bg-emerald-50 border-emerald-200',
 };
 
-const PASSWORDS = {
-    LOGISTICA: process.env.NEXT_PUBLIC_PASS_LOGISTICA || '1234',
-    PLANTA: process.env.NEXT_PUBLIC_PASS_PLANTA || '5678',
-    ADMIN: process.env.NEXT_PUBLIC_PASS_ADMIN || 'admin',
-    GERENCIA: process.env.NEXT_PUBLIC_PASS_GERENCIA || 'master',
-};
-
 const LANGUAGES = [
     { code: 'es', label: 'Español' },
     { code: 'en', label: 'English' },
