@@ -74,7 +74,7 @@ export function useConteos() {
             const { fs, db } = await getFirestore();
             const ref = await fs.addDoc(fs.collection(db, 'conteos'), {
                 ...data,
-                fecha: fs.serverTimestamp(),
+                fecha: new Date().toISOString(),
                 estado: 'EN_PROGRESO',
                 items: data.items || [],
                 fecha_cierre: null,
@@ -111,7 +111,7 @@ export function useConteos() {
             const { fs, db } = await getFirestore();
             await fs.updateDoc(fs.doc(db, 'conteos', id), {
                 estado: 'COMPLETADO',
-                fecha_cierre: fs.serverTimestamp(),
+                fecha_cierre: new Date().toISOString(),
             });
         } catch (err) {
             firebaseError('finalizarConteo', err);

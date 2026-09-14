@@ -84,10 +84,12 @@ export function useLocations() {
         }
         try {
             const { fs, db } = await getFirestore();
+            const nowIso = new Date().toISOString();
             const ref = await fs.addDoc(fs.collection(db, 'ubicaciones'), {
                 ...data,
                 activa: true,
-                created_at: fs.serverTimestamp(),
+                created_at: nowIso,
+                fecha_creacion: nowIso,
             });
             return ref.id;
         } catch (err) {

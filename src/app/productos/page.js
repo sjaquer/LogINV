@@ -113,13 +113,13 @@ function ProductosPageInner() {
     }, [productosUbicacion, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
-        const { _usuario, ...rest } = data;
+        const productData = { ...data, _usuario: data._usuario || userName };
         if (id) {
-            await actualizarProducto(id, rest);
+            await actualizarProducto(id, productData);
         } else {
-            await crearProducto(rest);
+            await crearProducto(productData);
         }
-    }, [crearProducto, actualizarProducto]);
+    }, [actualizarProducto, crearProducto, userName]);
 
     // ── Duplicate product ──
     const handleDuplicate = useCallback((producto) => {
@@ -175,7 +175,7 @@ function ProductosPageInner() {
         setShowBulkPrint(true);
     }, [selectedProductos]);
 
-    const canManage = (role === 'admin' || role === 'encargado') && !isGeneral;
+    const canManage = role === 'admin' || role === 'encargado';
 
     return (
         <div className="flex flex-col flex-1 bg-slate-50/50">

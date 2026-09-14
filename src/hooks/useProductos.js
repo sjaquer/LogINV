@@ -58,29 +58,38 @@ export function useProductos() {
     }, []);
 
     const crearProducto = useCallback(async (data) => {
+        const stockActual = Number(data.stock_actual) || 0;
+        const stockMinimo = Number(data.stock_minimo) || 0;
+        const usuario = data._usuario || 'Sistema';
+
         if (USE_MOCK) {
             const newProd = {
                 id: 'p_' + Date.now(),
                 ...data,
-                stock_actual: data.stock_actual || 0,
+                stock_actual: stockActual,
+                stock_minimo: stockMinimo,
                 ultima_actualizacion: mockTimestamp(),
                 fecha_creacion: mockTimestamp(),
                 activo: true,
             };
+            delete newProd._usuario;
             setMockProductos([...mockProductos, newProd]);
             notify('productos');
-            if (data.stock_actual > 0) {
+            if (stockActual > 0) {
                 const mov = {
                     id: 'mv_' + Date.now(),
                     producto_id: newProd.id,
                     nombre_producto: data.nombre,
+                    producto_nombre: data.nombre,
                     tipo: 'INGRESO',
-                    cantidad: data.stock_actual,
-                    usuario: data._usuario || 'Sistema',
+                    cantidad: stockActual,
+                    usuario,
                     ubicacion: data.ubicacion || '',
                     fecha: mockTimestamp(),
-                    motivo_merma: null,
+                    motivo: 'Stock inicial al crear producto',
                     notas: 'Stock inicial al crear producto',
+                    stock_anterior: 0,
+                    stock_nuevo: stockActual,
                 };
                 setMockMovimientos([mov, ...mockMovimientos]);
                 notify('movimientos');
@@ -89,27 +98,31 @@ export function useProductos() {
         }
         try {
             const { fs, db } = await getFirestore();
+            const nowIso = new Date().toISOString();
             const docData = {
                 ...data,
-                stock_actual: data.stock_actual || 0,
-                ultima_actualizacion: fs.serverTimestamp(),
-                fecha_creacion: fs.serverTimestamp(),
+                stock_actual: stockActual,
+                stock_minimo: stockMinimo,
+                ultima_actualizacion: nowIso,
+                fecha_creacion: nowIso,
                 activo: true,
             };
-            const usuario = docData._usuario || 'Sistema';
             delete docData._usuario;
             const ref = await fs.addDoc(fs.collection(db, 'productos'), docData);
-            if (data.stock_actual > 0) {
+            if (stockActual > 0) {
                 await fs.addDoc(fs.collection(db, 'movimientos'), {
                     producto_id: ref.id,
                     nombre_producto: data.nombre,
+                    producto_nombre: data.nombre,
                     tipo: 'INGRESO',
-                    cantidad: data.stock_actual,
+                    cantidad: stockActual,
                     usuario,
                     ubicacion: docData.ubicacion || '',
-                    fecha: fs.serverTimestamp(),
-                    motivo_merma: null,
+                    fecha: nowIso,
+                    motivo: 'Stock inicial al crear producto',
                     notas: 'Stock inicial al crear producto',
+                    stock_anterior: 0,
+                    stock_nuevo: stockActual,
                 });
             }
             return ref.id;
@@ -119,9 +132,14 @@ export function useProductos() {
     }, []);
 
     const actualizarProducto = useCallback(async (id, data) => {
+        const updateData = { ...data, ultima_actualizacion: new Date().toISOString() };
+        if (updateData.stock_actual !== undefined) updateData.stock_actual = Number(updateData.stock_actual) || 0;
+        if (updateData.stock_minimo !== undefined) updateData.stock_minimo = Number(updateData.stock_minimo) || 0;
+        delete updateData._usuario;
+
         if (USE_MOCK) {
             const updated = mockProductos.map(p =>
-                p.id === id ? { ...p, ...data, ultima_actualizacion: mockTimestamp() } : p
+                p.id === id ? { ...p, ...updateData, ultima_actualizacion: mockTimestamp() } : p
             );
             setMockProductos(updated);
             notify('productos');
@@ -129,7 +147,7 @@ export function useProductos() {
         }
         try {
             const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'productos', id), { ...data, ultima_actualizacion: fs.serverTimestamp() });
+            await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
         } catch (err) {
             firebaseError('actualizarProducto', err);
         }
@@ -150,24 +168,29 @@ export function useProductos() {
     }, []);
 
     const updateStock = useCallback(async (id, nuevoStock, usuario) => {
+        const stockNum = Number(nuevoStock) || 0;
         if (USE_MOCK) {
             const prod = mockProductos.find(p => p.id === id);
             if (!prod) return;
-            const diff = nuevoStock - prod.stock_actual;
+            const diff = stockNum - prod.stock_actual;
             setMockProductos(mockProductos.map(p =>
-                p.id === id ? { ...p, stock_actual: nuevoStock, ultima_actualizacion: mockTimestamp() } : p
+                p.id === id ? { ...p, stock_actual: stockNum, ultima_actualizacion: mockTimestamp() } : p
             ));
             notify('productos');
             const mov = {
                 id: 'mv_' + Date.now(),
                 producto_id: id,
                 nombre_producto: prod.nombre,
+                producto_nombre: prod.nombre,
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
-                usuario,
+                usuario: usuario || 'Sistema',
                 ubicacion: prod.ubicacion || '',
                 fecha: mockTimestamp(),
-                motivo_merma: null,
+                motivo: 'Ajuste de stock',
+                notas: 'Ajuste manual de stock',
+                stock_anterior: prod.stock_actual,
+                stock_nuevo: stockNum,
             };
             setMockMovimientos([mov, ...mockMovimientos]);
             notify('movimientos');
@@ -176,20 +199,26 @@ export function useProductos() {
         try {
             const { fs, db } = await getFirestore();
             const prodSnap = productos.find(p => p.id === id);
-            const diff = nuevoStock - (prodSnap?.stock_actual || 0);
+            const anterior = prodSnap?.stock_actual || 0;
+            const diff = stockNum - anterior;
+            const nowIso = new Date().toISOString();
             await fs.updateDoc(fs.doc(db, 'productos', id), {
-                stock_actual: nuevoStock,
-                ultima_actualizacion: fs.serverTimestamp(),
+                stock_actual: stockNum,
+                ultima_actualizacion: nowIso,
             });
             await fs.addDoc(fs.collection(db, 'movimientos'), {
                 producto_id: id,
                 nombre_producto: prodSnap?.nombre || '',
+                producto_nombre: prodSnap?.nombre || '',
                 tipo: diff >= 0 ? 'INGRESO' : 'SALIDA',
                 cantidad: Math.abs(diff),
-                usuario,
+                usuario: usuario || 'Sistema',
                 ubicacion: prodSnap?.ubicacion || '',
-                fecha: fs.serverTimestamp(),
-                motivo_merma: null,
+                fecha: nowIso,
+                motivo: 'Ajuste de stock',
+                notas: 'Ajuste manual de stock',
+                stock_anterior: anterior,
+                stock_nuevo: stockNum,
             });
         } catch (err) {
             firebaseError('updateStock', err);

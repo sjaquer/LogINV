@@ -111,11 +111,13 @@ export function useLoans() {
         }
         try {
             const { fs, db } = await getFirestore();
+            const nowIso = new Date().toISOString();
             const ref = await fs.addDoc(fs.collection(db, 'prestamos'), {
                 ...data,
                 estado: 'activo',
+                fecha_prestamo: data.fecha_prestamo || nowIso,
                 fecha_devolucion_real: null,
-                created_at: fs.serverTimestamp(),
+                created_at: nowIso,
             });
             return ref.id;
         } catch (err) {
@@ -140,7 +142,7 @@ export function useLoans() {
             const { fs, db } = await getFirestore();
             await fs.updateDoc(fs.doc(db, 'prestamos', id), {
                 estado: 'devuelto',
-                fecha_devolucion_real: fs.serverTimestamp(),
+                fecha_devolucion_real: new Date().toISOString(),
                 notas: notas || undefined,
             });
         } catch (err) {

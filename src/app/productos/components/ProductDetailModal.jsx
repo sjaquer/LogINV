@@ -130,7 +130,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                             <Tag size={16} /> Etiqueta
                         </button>
                     )}
-                    {canManage && !isGeneral && (
+                    {canManage && (
                         <div className="flex items-center gap-2 ml-auto">
                             <button onClick={() => onDuplicate(producto)} className="p-2.5 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-100 transition-colors" aria-label="Duplicar">
                                 <Copy size={18} />

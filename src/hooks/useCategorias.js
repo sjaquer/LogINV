@@ -76,7 +76,7 @@ export function useCategorias() {
                 ...data,
                 orden: categorias.length + 1,
                 activa: true,
-                fecha_creacion: fs.serverTimestamp(),
+                fecha_creacion: new Date().toISOString(),
             });
             return ref.id;
         } catch (err) {

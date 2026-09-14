@@ -39,28 +39,28 @@ let mockMantenimientos = [
     },
 ];
 
-const mantenimientosListeners = new Set();
+const mantenimientoListeners = new Set();
 
 function notifyMantenimientos() {
-    mantenimientosListeners.forEach(fn => fn([...mockMantenimientos]));
+    mantenimientoListeners.forEach(fn => fn([...mockMantenimientos]));
 }
 
 export function useMaintenance() {
-    const [mantenimientos, setMantenimientos] = useState(USE_MOCK ? mockMantenimientos : []);
+    const [mantenimiento, setMantenimientos] = useState(USE_MOCK ? mockMantenimientos : []);
     const [loading, setLoading] = useState(!USE_MOCK);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         if (USE_MOCK) {
             setMantenimientos([...mockMantenimientos]);
-            mantenimientosListeners.add(setMantenimientos);
-            return () => mantenimientosListeners.delete(setMantenimientos);
+            mantenimientoListeners.add(setMantenimientos);
+            return () => mantenimientoListeners.delete(setMantenimientos);
         }
         let unsub;
         (async () => {
             try {
                 const { fs, db } = await getFirestore();
-                const q = fs.query(fs.collection(db, 'mantenimientos'), fs.orderBy('created_at', 'desc'));
+                const q = fs.query(fs.collection(db, 'mantenimiento'), fs.orderBy('created_at', 'desc'));
                 unsub = fs.onSnapshot(q,
                     (snap) => {
                         setMantenimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -68,11 +68,11 @@ export function useMaintenance() {
                         setError(null);
                     },
                     (err) => {
-                        console.error('[LogINV] Error listener mantenimientos:', err.code, err.message);
+                        console.error('[LogINV] Error listener mantenimiento:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
                         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            const qSimple = fs.collection(db, 'mantenimientos');
+                            const qSimple = fs.collection(db, 'mantenimiento');
                             unsub = fs.onSnapshot(qSimple,
                                 (snap) => {
                                     setMantenimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -80,7 +80,7 @@ export function useMaintenance() {
                                     setError(null);
                                 },
                                 (fallbackErr) => {
-                                    console.error('[LogINV] Error fallback mantenimientos:', fallbackErr);
+                                    console.error('[LogINV] Error fallback mantenimiento:', fallbackErr);
                                     setLoading(false);
                                 }
                             );
@@ -88,7 +88,7 @@ export function useMaintenance() {
                     }
                 );
             } catch (err) {
-                console.error('[LogINV] Error setup mantenimientos:', err);
+                console.error('[LogINV] Error setup mantenimiento:', err);
                 setLoading(false);
                 setError(err.message);
             }
@@ -112,12 +112,13 @@ export function useMaintenance() {
         }
         try {
             const { fs, db } = await getFirestore();
-            const ref = await fs.addDoc(fs.collection(db, 'mantenimientos'), {
+            const nowIso = new Date().toISOString();
+            const ref = await fs.addDoc(fs.collection(db, 'mantenimiento'), {
                 ...data,
-                estado: 'programado',
+                estado: data.estado || 'programado',
                 fecha_inicio: null,
                 fecha_fin: null,
-                created_at: fs.serverTimestamp(),
+                created_at: nowIso,
             });
             return ref.id;
         } catch (err) {
@@ -133,23 +134,25 @@ export function useMaintenance() {
         }
         try {
             const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'mantenimientos', id), data);
+            await fs.updateDoc(fs.doc(db, 'mantenimiento', id), data);
         } catch (err) {
             firebaseError('actualizarMantenimiento', err);
         }
     }, []);
 
     const iniciarMantenimiento = useCallback(async (id) => {
+        const dateVal = USE_MOCK ? mockTimestamp() : new Date().toISOString();
         return actualizarMantenimiento(id, {
             estado: 'en_progreso',
-            fecha_inicio: mockTimestamp(),
+            fecha_inicio: dateVal,
         });
     }, [actualizarMantenimiento]);
 
     const completarMantenimiento = useCallback(async (id, costo = 0, notas = '') => {
+        const dateVal = USE_MOCK ? mockTimestamp() : new Date().toISOString();
         return actualizarMantenimiento(id, {
             estado: 'completado',
-            fecha_fin: mockTimestamp(),
+            fecha_fin: dateVal,
             costo,
             notas: notas || undefined,
         });
@@ -163,7 +166,7 @@ export function useMaintenance() {
         }
         try {
             const { fs, db } = await getFirestore();
-            await fs.deleteDoc(fs.doc(db, 'mantenimientos', id));
+            await fs.deleteDoc(fs.doc(db, 'mantenimiento', id));
         } catch (err) {
             firebaseError('eliminarMantenimiento', err);
         }

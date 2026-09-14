@@ -39,11 +39,13 @@ service cloud.firestore {
 
     function strLenOk(field, maxLen) {
       return !request.resource.data.keys().hasAny([field])
+             || request.resource.data[field] == null
              || (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
     }
 
     function numRangeOk(field, minVal, maxVal) {
       return !request.resource.data.keys().hasAny([field])
+             || request.resource.data[field] == null
              || (request.resource.data[field] is number
                  && request.resource.data[field] >= minVal
                  && request.resource.data[field] <= maxVal);
@@ -51,11 +53,14 @@ service cloud.firestore {
 
     function boolOk(field) {
       return !request.resource.data.keys().hasAny([field])
+             || request.resource.data[field] == null
              || request.resource.data[field] is bool;
     }
 
     function timestampOk(field) {
       return !request.resource.data.keys().hasAny([field])
+             || request.resource.data[field] == null
+             || request.resource.data[field] is timestamp
              || request.resource.data[field] is string;
     }
 
@@ -104,7 +109,7 @@ service cloud.firestore {
                     && strLenOk('responsabilidad', 200)
                     && strLenOk('piso', 100)
                     && strLenOk('estado', 50)
-                    && strLenOk('imagen_url', 500)
+                    && strLenOk('imagen_url', 250000)
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo')
                     && timestampOk('fecha_creacion')
@@ -124,7 +129,7 @@ service cloud.firestore {
                     && strLenOk('responsabilidad', 200)
                     && strLenOk('piso', 100)
                     && strLenOk('estado', 50)
-                    && strLenOk('imagen_url', 500)
+                    && strLenOk('imagen_url', 250000)
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo');
 
@@ -140,10 +145,11 @@ service cloud.firestore {
                     && request.resource.data.keys().hasAll(['producto_id', 'tipo', 'cantidad'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.tipo is string
-                    && request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE', 'CONTEO']
+                    && (request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE', 'CONTEO', 'ingreso', 'salida', 'merma', 'ajuste', 'conteo'])
                     && request.resource.data.cantidad is number
                     && request.resource.data.cantidad >= 0
                     && strLenOk('producto_nombre', 200)
+                    && strLenOk('nombre_producto', 200)
                     && strLenOk('usuario', 100)
                     && strLenOk('ubicacion', 100)
                     && strLenOk('motivo', 500)
@@ -165,7 +171,7 @@ service cloud.firestore {
                     && request.resource.data.keys().hasAll(['usuario', 'estado', 'ubicacion'])
                     && request.resource.data.usuario is string
                     && request.resource.data.estado is string
-                    && request.resource.data.estado in ['EN_PROGRESO', 'COMPLETADO']
+                    && request.resource.data.estado in ['EN_PROGRESO', 'COMPLETADO', 'en_progreso', 'completado']
                     && request.resource.data.ubicacion is string
                     && strLenOk('notas', 1000)
                     && timestampOk('fecha');
@@ -187,7 +193,7 @@ service cloud.firestore {
                     && request.resource.data.keys().hasAll(['solicitante', 'estado'])
                     && request.resource.data.solicitante is string
                     && request.resource.data.estado is string
-                    && request.resource.data.estado in ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPRADO']
+                    && request.resource.data.estado in ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPRADO', 'pendiente', 'aprobado', 'rechazado', 'comprado']
                     && timestampOk('fecha_creacion');
 
       allow update: if isSignedIn()
@@ -211,14 +217,19 @@ service cloud.firestore {
                     && strLenOk('descripcion', 300)
                     && strLenOk('direccion', 300)
                     && strLenOk('responsable', 100)
-                    && timestampOk('fecha_creacion');
+                    && strLenOk('icono', 50)
+                    && strLenOk('color', 50)
+                    && timestampOk('fecha_creacion')
+                    && timestampOk('created_at');
 
       allow update: if isSignedIn()
                     && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300)
                     && strLenOk('direccion', 300)
-                    && strLenOk('responsable', 100);
+                    && strLenOk('responsable', 100)
+                    && strLenOk('icono', 50)
+                    && strLenOk('color', 50);
 
       allow delete: if isSignedIn();
     }
@@ -234,48 +245,69 @@ service cloud.firestore {
                     && request.resource.data.producto_nombre is string
                     && request.resource.data.prestado_a is string
                     && request.resource.data.estado is string
-                    && request.resource.data.estado in ['ACTIVO', 'DEVUELTO', 'VENCIDO']
+                    && request.resource.data.estado in ['ACTIVO', 'DEVUELTO', 'VENCIDO', 'activo', 'devuelto', 'vencido']
                     && numRangeOk('cantidad', 1, 999999)
-                    && strLenOk('telefono', 20)
+                    && strLenOk('telefono', 50)
+                    && strLenOk('contacto', 100)
                     && strLenOk('notas', 500)
                     && strLenOk('motivo', 200)
+                    && strLenOk('ubicacion_origen', 100)
+                    && strLenOk('created_by', 100)
                     && timestampOk('fecha_prestamo')
                     && timestampOk('fecha_devolucion')
-                    && timestampOk('fecha_limite');
+                    && timestampOk('fecha_devolucion_esperada')
+                    && timestampOk('fecha_limite')
+                    && timestampOk('created_at');
 
       allow update: if isSignedIn()
                     && docSizeOk()
-                    && strLenOk('notas', 500);
+                    && strLenOk('estado', 50)
+                    && strLenOk('notas', 500)
+                    && timestampOk('fecha_devolucion_real');
 
       allow delete: if isSignedIn();
     }
 
-    // ── Mantenimiento ───────────────────────────────────────────────────
-    match /mantenimiento/{mantenimientoId} {
-      allow read: if true;
+    // ── Mantenimiento (soporta mantenimiento y mantenimientos) ─────────
+    match /{mantenimientoCol}/{mantenimientoId} {
+      allow read: if mantenimientoCol in ['mantenimiento', 'mantenimientos'];
 
-      allow create: if isSignedIn()
+      allow create: if (mantenimientoCol in ['mantenimiento', 'mantenimientos'])
+                    && isSignedIn()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'producto_nombre', 'tipo', 'estado'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.producto_nombre is string
                     && request.resource.data.tipo is string
-                    && request.resource.data.tipo in ['PREVENTIVO', 'CORRECTIVO', 'EMERGENCIA']
+                    && (request.resource.data.tipo in ['PREVENTIVO', 'CORRECTIVO', 'EMERGENCIA', 'preventivo', 'correctivo', 'emergencia'])
                     && request.resource.data.estado is string
-                    && request.resource.data.estado in ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADO', 'CANCELADO']
+                    && (request.resource.data.estado in ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADO', 'CANCELADO', 'programado', 'pendiente', 'en_progreso', 'completado', 'cancelado'])
                     && strLenOk('tecnico', 100)
+                    && strLenOk('responsable', 100)
                     && strLenOk('descripcion', 500)
                     && strLenOk('notas', 500)
+                    && strLenOk('ubicacion', 100)
+                    && strLenOk('created_by', 100)
                     && numRangeOk('costo', 0, 999999)
                     && timestampOk('fecha_programada')
+                    && timestampOk('fecha_completado')
+                    && timestampOk('fecha_inicio')
+                    && timestampOk('fecha_fin')
+                    && timestampOk('created_at');
+
+      allow update: if (mantenimientoCol in ['mantenimiento', 'mantenimientos'])
+                    && isSignedIn()
+                    && docSizeOk()
+                    && strLenOk('estado', 50)
+                    && strLenOk('tecnico', 100)
+                    && strLenOk('responsable', 100)
+                    && strLenOk('notas', 500)
+                    && numRangeOk('costo', 0, 999999)
+                    && timestampOk('fecha_inicio')
+                    && timestampOk('fecha_fin')
                     && timestampOk('fecha_completado');
 
-      allow update: if isSignedIn()
-                    && docSizeOk()
-                    && strLenOk('tecnico', 100)
-                    && strLenOk('notas', 500);
-
-      allow delete: if isSignedIn();
+      allow delete: if (mantenimientoCol in ['mantenimiento', 'mantenimientos']) && isSignedIn();
     }
 
     // ── Usuarios ────────────────────────────────────────────────────────
