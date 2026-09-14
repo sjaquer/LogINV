@@ -4,14 +4,15 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from '@/context/LocationContext';
+import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, ProductCard, ProductDetailModal } from './components';
+import { BulkBarcodeLabelsModal } from '@/components/ui/BarcodeLabel';
 import {
     Search, X, Plus, Package,
-    PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin,
+    PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin, ListChecks, Printer,
 } from 'lucide-react';
 
 export default function ProductosPage() {
@@ -43,6 +44,9 @@ function ProductosPageInner() {
     const [deleteProduct, setDeleteProduct] = useState(null);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [viewProduct, setViewProduct] = useState(null);
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState(() => new Set());
+    const [showBulkPrint, setShowBulkPrint] = useState(false);
 
     // ── Llegada desde /scan: precargar búsqueda y, si no existe, abrir el
     // formulario de creación con el código ya escaneado ──
@@ -61,12 +65,12 @@ function ProductosPageInner() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
-    // ── Ocultar BottomNav cuando hay un modal abierto ──
+    // ── Ocultar BottomNav cuando hay un modal abierto (o modo selección) ──
     useEffect(() => {
-        const open = !!showProductForm || !!deleteProduct || !!showCategoryManager || !!viewProduct;
+        const open = !!showProductForm || !!deleteProduct || !!showCategoryManager || !!viewProduct || !!showBulkPrint || selectMode;
         setHideBottomNav(open);
         return () => setHideBottomNav(false);
-    }, [showProductForm, deleteProduct, showCategoryManager, viewProduct, setHideBottomNav]);
+    }, [showProductForm, deleteProduct, showCategoryManager, viewProduct, showBulkPrint, selectMode, setHideBottomNav]);
 
     // category map: nombre → icono
     const catIconMap = useMemo(() => {
@@ -144,6 +148,33 @@ function ProductosPageInner() {
         return new Promise(resolve => setTimeout(resolve, 600));
     }, []);
 
+    // ── Selección múltiple → impresión masiva de códigos de barras ──
+    const toggleSelectMode = useCallback(() => {
+        setSelectMode(prev => !prev);
+        setSelectedIds(new Set());
+    }, []);
+
+    const toggleSelect = useCallback((producto) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(producto.id)) next.delete(producto.id);
+            else next.add(producto.id);
+            return next;
+        });
+    }, []);
+
+    const selectedProductos = useMemo(
+        () => productosFiltrados
+            .filter(p => selectedIds.has(p.id))
+            .map(p => ({ ...p, ubicacion_nombre: isGeneral ? UBICACIONES.find(u => u.id === p.ubicacion)?.nombre : undefined })),
+        [productosFiltrados, selectedIds, isGeneral]
+    );
+
+    const handleBulkPrint = useCallback(() => {
+        if (selectedProductos.length === 0) return;
+        setShowBulkPrint(true);
+    }, [selectedProductos]);
+
     const canManage = (role === 'admin' || role === 'encargado') && !isGeneral;
 
     return (
@@ -161,22 +192,32 @@ function ProductosPageInner() {
                 )}
 
                 {/* ── Action bar ── */}
-                {canManage && (
-                    <div className="flex flex-wrap items-center gap-3">
-                        <button
-                            onClick={() => { setEditingProduct(isGeneral ? null : { ubicacion }); setShowProductForm(true); }}
-                            className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
-                        >
-                            <PlusCircle size={20} /> Nuevo producto
-                        </button>
-                        <button
-                            onClick={() => setShowCategoryManager(true)}
-                            className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center"
-                        >
-                            <Settings2 size={18} /> Categorías
-                        </button>
-                    </div>
-                )}
+                <div className="flex flex-wrap items-center gap-3">
+                    {canManage && (
+                        <>
+                            <button
+                                onClick={() => { setEditingProduct(isGeneral ? null : { ubicacion }); setShowProductForm(true); }}
+                                className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
+                            >
+                                <PlusCircle size={20} /> Nuevo producto
+                            </button>
+                            <button
+                                onClick={() => setShowCategoryManager(true)}
+                                className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center"
+                            >
+                                <Settings2 size={18} /> Categorías
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={toggleSelectMode}
+                        className={`btn px-4 py-3 text-base font-semibold flex items-center gap-2 border rounded-xl flex-1 sm:flex-none justify-center transition-colors ${
+                            selectMode ? 'bg-brand-600 text-white border-brand-600' : 'btn-ghost border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                    >
+                        <ListChecks size={18} /> {selectMode ? 'Cancelar selección' : 'Seleccionar'}
+                    </button>
+                </div>
 
                 {/* ── Search + Filters ── */}
                 <div className="space-y-3">
@@ -252,12 +293,36 @@ function ProductosPageInner() {
                                 producto={p}
                                 isGeneral={isGeneral}
                                 onView={setViewProduct}
+                                selectMode={selectMode}
+                                selected={selectedIds.has(p.id)}
+                                onToggleSelect={toggleSelect}
                             />
                         ))}
                     </div>
                 )}
             </div>
             </PullToRefresh>
+
+            {/* ── Barra flotante de selección múltiple ── */}
+            {selectMode && (
+                <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-40 bg-white border-t border-slate-200 shadow-2xl p-3 sm:p-4 flex items-center justify-between gap-3 animate-slide-up">
+                    <p className="text-sm font-semibold text-slate-700">
+                        {selectedIds.size} seleccionado{selectedIds.size === 1 ? '' : 's'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button onClick={toggleSelectMode} className="btn btn-ghost px-4 py-2.5 text-sm font-semibold text-slate-600">
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleBulkPrint}
+                            disabled={selectedIds.size === 0}
+                            className="btn btn-primary px-4 py-2.5 text-sm font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Printer size={16} /> Imprimir códigos
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* ── Modals ── */}
             {viewProduct && (
@@ -294,6 +359,12 @@ function ProductosPageInner() {
                     onCrear={crearCategoria}
                     onActualizar={actualizarCategoria}
                     onEliminar={eliminarCategoria}
+                />
+            )}
+            {showBulkPrint && (
+                <BulkBarcodeLabelsModal
+                    productos={selectedProductos}
+                    onClose={() => setShowBulkPrint(false)}
                 />
             )}
         </div>

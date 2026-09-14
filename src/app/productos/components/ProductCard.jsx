@@ -1,5 +1,5 @@
 'use client';
-import { MapPin, Layers } from 'lucide-react';
+import { MapPin, Layers, Check } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import ProductThumb from '@/components/ui/ProductThumb';
@@ -20,15 +20,23 @@ const ESTADO_LABEL = {
 // (ubicación completa, piso, responsable, estado). Un solo tap abre el
 // visualizador de detalle completo (ProductDetailModal) con todas las
 // acciones — mantiene la grilla densa y la observación rápida.
-export default function ProductCard({ producto, isGeneral, onView }) {
+export default function ProductCard({ producto, isGeneral, onView, selectMode, selected, onToggleSelect }) {
     const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
 
     return (
         <button
-            onClick={() => onView(producto)}
-            className={`group text-left bg-white border rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col h-full p-4 gap-2.5 ${bajoStock ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'}`}
+            onClick={() => selectMode ? onToggleSelect(producto) : onView(producto)}
+            className={`group text-left bg-white border rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col h-full p-4 gap-2.5 relative ${
+                selected ? 'border-brand-400 ring-2 ring-brand-200' : bajoStock ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'
+            }`}
         >
+            {selectMode && (
+                <span className={`absolute top-2.5 right-2.5 w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 ${selected ? 'bg-brand-600 border-brand-600' : 'bg-white border-slate-300'}`}>
+                    {selected && <Check size={12} className="text-white" strokeWidth={3} />}
+                </span>
+            )}
+
             {/* Top: foto/icono + estado */}
             <div className="flex items-start justify-between gap-2">
                 <ProductThumb url={producto.imagen_url} size="sm" />
