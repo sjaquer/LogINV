@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
+import { useAuth } from '@/context/AuthContext';
+import { canAccess } from '@/lib/routePermissions';
 import {
     LayoutDashboard,
     Package,
@@ -20,8 +22,10 @@ import { cn } from '@/lib/utils';
 export default function Sidebar() {
     const pathname = usePathname();
     const { collapsed, setCollapsed } = useSidebar();
+    const { user } = useAuth();
+    const role = user?.rol || '';
 
-    const NAV_ITEMS = [
+    const ALL_NAV_ITEMS = [
         { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
         { href: '/productos', label: 'Productos', icon: Package },
         { href: '/inventario', label: 'Inventario', icon: ClipboardList },
@@ -32,6 +36,9 @@ export default function Sidebar() {
         { href: '/reports', label: 'Reportes', icon: FileText },
         { href: '/admin/users', label: 'Usuarios', icon: Users },
     ];
+
+    // Mostrar solo las rutas a las que el rol actual tiene permiso
+    const NAV_ITEMS = ALL_NAV_ITEMS.filter(item => canAccess(item.href, role));
 
     return (
         <>

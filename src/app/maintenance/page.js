@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
+import RouteGuard from '@/components/ui/RouteGuard';
 import MaintenanceFormModal from './components/MaintenanceFormModal';
 import MaintenanceCard from './components/MaintenanceCard';
 import {
@@ -51,6 +52,7 @@ export default function MaintenancePage() {
     }, []);
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Mantenimiento" />
             <PullToRefresh onRefresh={handleRefresh}>
@@ -142,5 +144,6 @@ export default function MaintenancePage() {
                 />
             )}
         </div>
+        </RouteGuard>
     );
 }

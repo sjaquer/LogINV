@@ -8,6 +8,7 @@ import { useProductos } from '@/hooks/useFirestore';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import { findProductByBarcode } from '@/lib/barcodeUtils';
+import RouteGuard from '@/components/ui/RouteGuard';
 import { 
     ScanBarcode, CheckCircle2, XCircle, RotateCcw, 
     PlusCircle, Pencil, Link as LinkIcon, Search, X, Check 
@@ -78,6 +79,7 @@ export default function ScanPage() {
     const ubicInfo = result ? UBICACIONES.find(u => u.id === result.ubicacion) : null;
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Escanear código" />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-lg mx-auto w-full">
@@ -243,5 +245,6 @@ export default function ScanPage() {
                 <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
             )}
         </div>
+        </RouteGuard>
     );
 }

@@ -8,6 +8,7 @@ import { useLocation } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
+import RouteGuard from '@/components/ui/RouteGuard';
 import LoanFormModal from './components/LoanFormModal';
 import LoanCard from './components/LoanCard';
 import ReturnModal from './components/ReturnModal';
@@ -62,6 +63,7 @@ export default function LoansPage() {
     }, []);
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Préstamos" />
             <PullToRefresh onRefresh={handleRefresh}>
@@ -152,5 +154,6 @@ export default function LoansPage() {
                 />
             )}
         </div>
+        </RouteGuard>
     );
 }

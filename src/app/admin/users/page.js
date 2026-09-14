@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/SharedComponents';
 import { ROLES } from '@/lib/constants';
 import { authService } from '@/services/auth';
 import { USE_MOCK } from '@/hooks/useFirestoreQuery';
+import RouteGuard from '@/components/ui/RouteGuard';
 import {
     Users, Plus, X, Save, Pencil, Trash2, ShieldCheck, ToggleLeft, ToggleRight, KeyRound,
 } from 'lucide-react';
@@ -212,6 +213,7 @@ export default function AdminUsersPage() {
     }, [eliminarUsuario]);
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Usuarios y Roles" />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-4xl mx-auto w-full pb-8">
@@ -309,5 +311,6 @@ export default function AdminUsersPage() {
                 />
             )}
         </div>
+        </RouteGuard>
     );
 }

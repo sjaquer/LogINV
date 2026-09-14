@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
+import RouteGuard from '@/components/ui/RouteGuard';
 import LocationFormModal from './components/LocationFormModal';
 import LocationCard from './components/LocationCard';
 import {
@@ -47,6 +48,7 @@ export default function LocationsPage() {
     const canManage = role === 'admin' || role === 'encargado';
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Ubicaciones" />
             <PullToRefresh onRefresh={handleRefresh}>
@@ -111,5 +113,6 @@ export default function LocationsPage() {
                 />
             )}
         </div>
+        </RouteGuard>
     );
 }

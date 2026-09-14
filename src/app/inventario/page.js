@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import { findProductByBarcode } from '@/lib/barcodeUtils';
 import PullToRefresh from '@/components/ui/PullToRefresh';
+import RouteGuard from '@/components/ui/RouteGuard';
 import { TapCountModal, ConteoHistoryCard, ConteoDetailModal, QuickStockModal } from './components';
 import {
     Search, X, Plus, Package,
@@ -21,9 +22,11 @@ import {
 
 export default function InventarioPage() {
     return (
+        <RouteGuard>
         <Suspense fallback={null}>
             <InventarioPageInner />
         </Suspense>
+        </RouteGuard>
     );
 }
 

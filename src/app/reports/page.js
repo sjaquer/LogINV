@@ -5,6 +5,7 @@ import { useProductos, useCategorias, useMovimientos } from '@/hooks/useFirestor
 import { UBICACIONES } from '@/context/LocationContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import { exportInventoryExcel } from '@/lib/excelExport';
+import RouteGuard from '@/components/ui/RouteGuard';
 import {
     FileText, FileSpreadsheet, Printer, Package, AlertTriangle, MapPin, Layers,
 } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function ReportsPage() {
     }
 
     return (
+        <RouteGuard>
         <div className="flex flex-col flex-1 bg-slate-50/50">
             <Header title="Reportes" />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-8">
@@ -185,5 +187,6 @@ export default function ReportsPage() {
                 </div>
             </div>
         </div>
+        </RouteGuard>
     );
 }
