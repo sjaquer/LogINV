@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import { ProductFormModal, DeleteConfirmModal, CategoryManagerModal, ProductCard, ProductDetailModal } from './components';
 import { BulkBarcodeLabelsModal } from '@/components/ui/BarcodeLabel';
+import { findProductByBarcode, normalizeBarcode } from '@/lib/barcodeUtils';
 import {
     Search, X, Plus, Package,
     PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin, ListChecks, Printer,
@@ -53,10 +54,14 @@ function ProductosPageInner() {
     useEffect(() => {
         const buscar = searchParams.get('buscar');
         const crear = searchParams.get('crear');
+        const ubic = searchParams.get('ubicacion');
+        if (ubic && ubic !== ubicacion) {
+            setUbicacion(ubic);
+        }
         if (!buscar) return;
         setBusqueda(buscar);
         if (crear === '1') {
-            const yaExiste = productos.some(p => p.codigo_barras === buscar);
+            const yaExiste = findProductByBarcode(productos, buscar);
             if (!yaExiste) {
                 setEditingProduct({ codigo_barras: buscar });
                 setShowProductForm(true);
@@ -95,12 +100,29 @@ function ProductosPageInner() {
     const catNames = useMemo(() => ['Todas', ...categorias.map(c => c.nombre)], [categorias]);
 
     const productosFiltrados = useMemo(() => {
-        let list = productosUbicacion
+        const q = busqueda.toLowerCase().trim();
+        const normQ = normalizeBarcode(q);
+
+        // Si hay una búsqueda activa y no estamos en General, pero la búsqueda coincide
+        // con un producto de otra ubicación, incluimos los productos que coinciden
+        let baseList = productosUbicacion;
+        if (q && !isGeneral) {
+            const hasMatchInLocation = productosUbicacion.some(p => 
+                p.nombre.toLowerCase().includes(q) || 
+                (p.codigo_barras && (p.codigo_barras.toLowerCase().includes(q) || normalizeBarcode(p.codigo_barras) === normQ))
+            );
+            if (!hasMatchInLocation) {
+                baseList = productos;
+            }
+        }
+
+        let list = baseList
             .filter(p => categoria === 'Todas' || p.categoria === categoria)
             .filter(p => {
-                const q = busqueda.toLowerCase();
+                if (!q) return true;
                 return p.nombre.toLowerCase().includes(q)
-                    || (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q));
+                    || (p.codigo_barras && (p.codigo_barras.toLowerCase().includes(q) || normalizeBarcode(p.codigo_barras) === normQ))
+                    || (p.id && p.id.toLowerCase() === q);
             });
         // Sort
         list = [...list].sort((a, b) => {
@@ -110,7 +132,7 @@ function ProductosPageInner() {
             return (a.nombre || '').localeCompare(b.nombre || '');
         });
         return list;
-    }, [productosUbicacion, categoria, busqueda, sortBy]);
+    }, [productosUbicacion, productos, isGeneral, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
         const productData = { ...data, _usuario: data._usuario || userName };

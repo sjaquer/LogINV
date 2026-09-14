@@ -15,13 +15,41 @@ export default function BarcodeScanner({ onScan, onClose }) {
         let mounted = true;
         (async () => {
             try {
-                const { Html5Qrcode } = await import('html5-qrcode');
+                const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
                 if (!mounted || !containerRef.current) return;
-                html5QrCode = new Html5Qrcode(scannerId);
+                
+                const formatsToSupport = [
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.CODE_93,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODABAR,
+                    Html5QrcodeSupportedFormats.ITF,
+                    Html5QrcodeSupportedFormats.DATA_MATRIX,
+                ];
+
+                html5QrCode = new Html5Qrcode(scannerId, {
+                    formatsToSupport,
+                    verbose: false,
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true,
+                    },
+                });
                 scannerRef.current = html5QrCode;
+
+                const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+                    const width = Math.floor(Math.min(viewfinderWidth * 0.9, 360));
+                    const height = Math.floor(Math.min(viewfinderHeight * 0.6, 200));
+                    return { width: Math.max(width, 240), height: Math.max(height, 120) };
+                };
+
                 await html5QrCode.start(
                     { facingMode: 'environment' },
-                    { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.777 },
+                    { fps: 15, qrbox: qrboxFunction, aspectRatio: 1.777 },
                     (decodedText) => { onScan(decodedText); },
                     () => {}
                 );

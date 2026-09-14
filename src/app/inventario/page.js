@@ -8,6 +8,7 @@ import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import { findProductByBarcode } from '@/lib/barcodeUtils';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import { TapCountModal, ConteoHistoryCard, ConteoDetailModal, QuickStockModal } from './components';
 import {
@@ -169,29 +170,42 @@ function InventarioPageInner() {
     const handleBarcodeScan = useCallback((code) => {
         setShowScanner(false);
         if (scanMode === 'INGRESO' || scanMode === 'SALIDA') {
-            // Entrada/salida rápida: buscar en TODO el inventario, sin
-            // restringir a la ubicación actual del selector.
-            const matched = productos.find(p => p.codigo_barras === code);
+            // Entrada/salida rápida: buscar en TODO el inventario con coincidencia inteligente
+            const matched = findProductByBarcode(productos, code);
             if (matched) {
                 setQuickStockProduct(matched);
                 setQuickStockTipo(scanMode);
             } else {
                 setScannedFeedback({ type: 'error', code });
-                setTimeout(() => setScannedFeedback(null), 3000);
+                setTimeout(() => setScannedFeedback(null), 4000);
             }
             return;
         }
-        // Modo conteo: solo productos de la ubicación activa
-        const matched = productosUbicacion.find(p => p.codigo_barras === code);
+        // Modo conteo: buscar primero en los productos de la ubicación activa
+        const matched = findProductByBarcode(productosUbicacion, code);
         if (matched) {
             if (conteoActivo) {
                 openTapCount(matched);
             }
             setScannedFeedback({ type: 'success', name: matched.nombre });
         } else {
-            setScannedFeedback({ type: 'error', code });
+            // Si no está en la ubicación activa, verificar si existe en todo el inventario
+            const matchedGlobal = findProductByBarcode(productos, code);
+            if (matchedGlobal) {
+                const locObj = UBICACIONES.find(u => u.id === matchedGlobal.ubicacion);
+                const locName = locObj?.nombre || matchedGlobal.ubicacion;
+                setScannedFeedback({
+                    type: 'warning',
+                    name: matchedGlobal.nombre,
+                    ubicacion: locName,
+                    icono: locObj?.icono || '📍',
+                    code,
+                });
+            } else {
+                setScannedFeedback({ type: 'error', code });
+            }
         }
-        setTimeout(() => setScannedFeedback(null), 3000);
+        setTimeout(() => setScannedFeedback(null), 4000);
     }, [productos, productosUbicacion, conteoActivo, openTapCount, scanMode]);
 
     // ── Save current count ──
@@ -355,11 +369,19 @@ function InventarioPageInner() {
                     <>
                         {/* Scanned feedback toast */}
                         {scannedFeedback && (
-                            <div className={`p-3.5 rounded-xl text-base font-medium flex items-center gap-2 animate-fade-in ${scannedFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                            <div className={`p-3.5 rounded-xl text-base font-medium flex items-center gap-2 animate-fade-in ${
+                                scannedFeedback.type === 'success' 
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                    : scannedFeedback.type === 'warning'
+                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
                                 {scannedFeedback.type === 'success' ? (
                                     <><Check size={18} /> Producto identificado: <strong>{scannedFeedback.name}</strong></>
+                                ) : scannedFeedback.type === 'warning' ? (
+                                    <><AlertTriangle size={18} /> <strong>{scannedFeedback.name}</strong> pertenece a <strong>{scannedFeedback.icono} {scannedFeedback.ubicacion}</strong> (cambia de ubicación para contarlo)</>
                                 ) : (
-                                    <><AlertTriangle size={18} /> No se encontró producto con ese código ({scannedFeedback.code})</>
+                                    <><AlertTriangle size={18} /> No se encontró producto con el código: <strong>{scannedFeedback.code}</strong></>
                                 )}
                             </div>
                         )}
