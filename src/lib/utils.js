@@ -18,6 +18,7 @@ export function cn(...inputs) {
 
 // ─── Re-exportar funciones de formatters ──────────────────────────────────
 export {
+  toValidDate,
   formatDate,
   formatDateTime,
   formatRelativeDate,

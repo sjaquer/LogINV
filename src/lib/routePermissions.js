@@ -37,15 +37,18 @@ export function canAccess(pathname, role) {
     // Sin rol → sin acceso
     if (!role) return false;
 
+    const normalizedRole = String(role).toLowerCase().trim();
+    const cleanPath = (pathname || '').replace(/\/$/, '') || '/';
+
     // Buscar la entrada más específica (más larga) que coincida como prefijo
     const matchingKey = Object.keys(ROUTE_PERMISSIONS)
-        .filter(route => route === '/' ? pathname === '/' : pathname.startsWith(route))
+        .filter(route => route === '/' ? cleanPath === '/' : cleanPath.startsWith(route))
         .sort((a, b) => b.length - a.length)[0];
 
     // Ruta no listada → acceso libre para cualquier autenticado
     if (!matchingKey) return true;
 
-    return ROUTE_PERMISSIONS[matchingKey].includes(role);
+    return ROUTE_PERMISSIONS[matchingKey].some(r => r.toLowerCase() === normalizedRole);
 }
 
 /**

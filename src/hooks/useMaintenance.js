@@ -4,6 +4,7 @@ import {
     USE_MOCK, mockTimestamp, listeners, notify, 
     getFirestore, firebaseError 
 } from './useFirestoreQuery';
+import { toValidDate } from '@/lib/utils';
 
 // Mock data for maintenance
 let mockMantenimientos = [
@@ -46,7 +47,7 @@ function notifyMantenimientos() {
 }
 
 export function useMaintenance() {
-    const [mantenimiento, setMantenimientos] = useState(USE_MOCK ? mockMantenimientos : []);
+    const [mantenimientos, setMantenimientos] = useState(USE_MOCK ? mockMantenimientos : []);
     const [loading, setLoading] = useState(!USE_MOCK);
     const [error, setError] = useState(null);
 
@@ -183,10 +184,8 @@ export function useMaintenance() {
 
     // Get overdue maintenance
     const mantenimientosVencidos = mantenimientosProgramados.filter(m => {
-        const fechaProgramada = m.fecha_programada?.toDate 
-            ? m.fecha_programada.toDate() 
-            : new Date(m.fecha_programada);
-        return fechaProgramada < new Date();
+        const fechaProgramada = toValidDate(m.fecha_programada);
+        return fechaProgramada ? fechaProgramada < new Date() : false;
     });
 
     return { 

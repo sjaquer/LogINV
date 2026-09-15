@@ -4,6 +4,7 @@ import {
     USE_MOCK, mockTimestamp, listeners, notify, 
     getFirestore, firebaseError 
 } from './useFirestoreQuery';
+import { toValidDate } from '@/lib/utils';
 
 // Mock data for loans
 let mockPrestamos = [
@@ -183,10 +184,8 @@ export function useLoans() {
     
     // Get overdue loans
     const prestamosVencidos = prestamosActivos.filter(p => {
-        const fechaEsperada = p.fecha_devolucion_esperada?.toDate 
-            ? p.fecha_devolucion_esperada.toDate() 
-            : new Date(p.fecha_devolucion_esperada);
-        return fechaEsperada < new Date();
+        const fechaEsperada = toValidDate(p.fecha_devolucion_esperada);
+        return fechaEsperada ? fechaEsperada < new Date() : false;
     });
 
     return { 

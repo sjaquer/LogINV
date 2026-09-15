@@ -3,10 +3,48 @@
 //  Funciones de formateo para fechas, números, textos, etc.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { format, formatDistanceToNow, isToday, isYesterday, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, parseISO, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // ─── Formateo de Fechas ──────────────────────────────────────────────────
+
+/**
+ * Convierte de forma robusta cualquier valor a un objeto Date válido.
+ * Soporta Date, Firestore Timestamps (.toDate()), objetos serializados ({ seconds, _seconds }),
+ * números (epoch ms o s), e strings ISO o de fecha.
+ * Retorna null si no es una fecha válida.
+ * @param {any} value
+ * @returns {Date|null}
+ */
+export function toValidDate(value) {
+  if (!value) return null;
+  try {
+    let date;
+    if (value instanceof Date) {
+      date = value;
+    } else if (typeof value?.toDate === 'function') {
+      date = value.toDate();
+    } else if (typeof value?.seconds === 'number') {
+      date = new Date(value.seconds * 1000);
+    } else if (typeof value?._seconds === 'number') {
+      date = new Date(value._seconds * 1000);
+    } else if (typeof value === 'number') {
+      date = new Date(value < 10000000000 ? value * 1000 : value);
+    } else if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      date = parseISO(trimmed);
+      if (!isValid(date)) {
+        date = new Date(trimmed);
+      }
+    } else {
+      date = new Date(value);
+    }
+    return isValid(date) ? date : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Formatea una fecha a formato legible
@@ -15,9 +53,13 @@ import { es } from 'date-fns/locale';
  * @returns {string} Fecha formateada
  */
 export function formatDate(value, pattern = 'dd MMM yyyy') {
-  if (!value) return '—';
-  const date = value?.toDate ? value.toDate() : typeof value === 'string' ? parseISO(value) : new Date(value);
-  return format(date, pattern, { locale: es });
+  const date = toValidDate(value);
+  if (!date) return '—';
+  try {
+    return format(date, pattern, { locale: es });
+  } catch {
+    return '—';
+  }
 }
 
 /**
@@ -26,9 +68,13 @@ export function formatDate(value, pattern = 'dd MMM yyyy') {
  * @returns {string} Fecha y hora formateada
  */
 export function formatDateTime(value) {
-  if (!value) return '—';
-  const date = value?.toDate ? value.toDate() : typeof value === 'string' ? parseISO(value) : new Date(value);
-  return format(date, "dd MMM yyyy HH:mm", { locale: es });
+  const date = toValidDate(value);
+  if (!date) return '—';
+  try {
+    return format(date, "dd MMM yyyy HH:mm", { locale: es });
+  } catch {
+    return '—';
+  }
 }
 
 /**
@@ -37,16 +83,19 @@ export function formatDateTime(value) {
  * @returns {string} Fecha relativa
  */
 export function formatRelativeDate(value) {
-  if (!value) return '—';
-  const date = value?.toDate ? value.toDate() : typeof value === 'string' ? parseISO(value) : new Date(value);
-  
-  if (isToday(date)) {
-    return `Hoy ${format(date, 'HH:mm')}`;
+  const date = toValidDate(value);
+  if (!date) return '—';
+  try {
+    if (isToday(date)) {
+      return `Hoy ${format(date, 'HH:mm')}`;
+    }
+    if (isYesterday(date)) {
+      return `Ayer ${format(date, 'HH:mm')}`;
+    }
+    return formatDistanceToNow(date, { addSuffix: true, locale: es });
+  } catch {
+    return '—';
   }
-  if (isYesterday(date)) {
-    return `Ayer ${format(date, 'HH:mm')}`;
-  }
-  return formatDistanceToNow(date, { addSuffix: true, locale: es });
 }
 
 /**
@@ -55,8 +104,8 @@ export function formatRelativeDate(value) {
  * @returns {number} Días restantes (negativo si ya pasó)
  */
 export function daysUntil(value) {
-  if (!value) return Infinity;
-  const date = value?.toDate ? value.toDate() : typeof value === 'string' ? parseISO(value) : new Date(value);
+  const date = toValidDate(value);
+  if (!date) return Infinity;
   const now = new Date();
   return Math.ceil((date - now) / (1000 * 60 * 60 * 24));
 }
