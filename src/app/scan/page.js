@@ -122,13 +122,18 @@ export default function ScanPage() {
                                 <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                                     <CheckCircle2 size={18} /> Producto encontrado
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <ProductThumb url={result.imagen_url} icon="📦" size="sm" className="w-14 h-14 rounded-xl shadow-xs" />
+                                <div className="flex items-start gap-3.5">
+                                    <ProductThumb
+                                        url={result.imagen_url}
+                                        icon="📦"
+                                        size="md"
+                                        className="w-16 h-16 rounded-2xl flex-shrink-0 object-cover shadow-xs border border-emerald-200/80 bg-white"
+                                    />
                                     <div className="min-w-0 flex-1">
                                         <p className="font-bold text-slate-900 text-base leading-snug">{result.nombre}</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">{result.categoria}</p>
+                                        <p className="text-xs text-brand-600 font-semibold uppercase mt-0.5">{result.categoria}</p>
                                         {ubicInfo && (
-                                            <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-white border border-emerald-200 text-emerald-800 shadow-xs">
+                                            <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-white border border-emerald-200 text-emerald-800 shadow-xs">
                                                 <span>{ubicInfo.icono}</span>
                                                 <span>{ubicInfo.nombre}</span>
                                             </span>
@@ -219,12 +224,15 @@ export default function ScanPage() {
                                 <p className="text-center text-xs text-slate-400 py-8">No se encontraron productos coincidentes</p>
                             ) : (
                                 filteredForLinking.map(prod => (
-                                    <div key={prod.id} className="p-3 hover:bg-slate-50 rounded-xl flex items-center justify-between gap-3 transition-colors">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-slate-800 text-sm truncate">{prod.nombre}</p>
-                                            <p className="text-xs text-slate-400 mt-0.5 truncate">
-                                                {prod.categoria} • Cód. actual: {prod.codigo_barras || 'ninguno'}
-                                            </p>
+                                    <div key={prod.id} className="p-3 hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-xl flex items-center justify-between gap-3 transition-colors">
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                            <ProductThumb url={prod.imagen_url} size="sm" className="w-10 h-10 rounded-lg flex-shrink-0" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{prod.nombre}</p>
+                                                <p className="text-xs text-slate-400 mt-0.5 truncate">
+                                                    {prod.categoria} • Cód. actual: {prod.codigo_barras || 'ninguno'}
+                                                </p>
+                                            </div>
                                         </div>
                                         <button
                                             disabled={linking}

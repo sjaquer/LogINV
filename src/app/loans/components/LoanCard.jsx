@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { ArrowDownCircle, Clock, CheckCircle, AlertTriangle, User, Phone, Calendar } from 'lucide-react';
 import { formatDate, daysUntil } from '@/lib/utils';
+import ProductThumb from '@/components/ui/ProductThumb';
 
-export default function LoanCard({ loan, onReturn, onDelete }) {
+export default function LoanCard({ loan, producto, onReturn, onDelete }) {
     const [deleting, setDeleting] = useState(false);
 
     const isActive = loan.estado === 'activo';
@@ -20,27 +21,31 @@ export default function LoanCard({ loan, onReturn, onDelete }) {
     }
 
     return (
-        <div className={`bg-white border rounded-xl shadow-sm overflow-hidden ${
-            isOverdue ? 'border-red-200' : isActive ? 'border-blue-200' : 'border-slate-200'
+        <div className={`bg-white dark:bg-[#0d0d10] border rounded-2xl shadow-xs overflow-hidden transition-all ${
+            isOverdue ? 'border-red-300 dark:border-red-900/60' : isActive ? 'border-blue-200 dark:border-blue-900/50' : 'border-slate-200 dark:border-[#222226]'
         }`}>
             <div className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            isOverdue ? 'bg-red-50 text-red-600' :
-                            isActive ? 'bg-blue-50 text-blue-600' :
-                            'bg-emerald-50 text-emerald-600'
-                        }`}>
-                            {isOverdue ? <AlertTriangle size={24} /> :
-                             isActive ? <Clock size={24} /> :
-                             <CheckCircle size={24} />}
-                        </div>
-                        <div className="min-w-0">
-                            <h3 className="font-bold text-slate-900 text-base truncate">{loan.producto_nombre}</h3>
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mt-1 ${
-                                isOverdue ? 'bg-red-100 text-red-700' :
-                                isActive ? 'bg-blue-100 text-blue-700' :
-                                'bg-emerald-100 text-emerald-700'
+                    <div className="flex items-center gap-3 min-w-0">
+                        {producto?.imagen_url ? (
+                            <ProductThumb url={producto.imagen_url} size="sm" className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex-shrink-0 object-cover border border-slate-200 dark:border-zinc-800" />
+                        ) : (
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                isOverdue ? 'bg-red-50 text-red-600' :
+                                isActive ? 'bg-blue-50 text-blue-600' :
+                                'bg-emerald-50 text-emerald-600'
+                            }`}>
+                                {isOverdue ? <AlertTriangle size={24} /> :
+                                 isActive ? <Clock size={24} /> :
+                                 <CheckCircle size={24} />}
+                            </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base truncate">{loan.producto_nombre}</h3>
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1 ${
+                                isOverdue ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400' :
+                                isActive ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400' :
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
                             }`}>
                                 {isOverdue ? 'Vencido' : isActive ? 'Activo' : 'Devuelto'}
                             </span>

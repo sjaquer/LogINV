@@ -124,14 +124,18 @@ export default function LoansPage() {
                     />
                 ) : (
                     <div className="space-y-3">
-                        {filteredLoans.map(loan => (
-                            <LoanCard
-                                key={loan.id}
-                                loan={loan}
-                                onReturn={tab !== 'historial' ? () => setReturnLoan(loan) : null}
-                                onDelete={eliminarPrestamo}
-                            />
-                        ))}
+                        {filteredLoans.map(loan => {
+                            const prod = productos.find(p => p.id === loan.producto_id || p.nombre === loan.producto_nombre);
+                            return (
+                                <LoanCard
+                                    key={loan.id}
+                                    loan={loan}
+                                    producto={prod}
+                                    onReturn={tab !== 'historial' ? () => setReturnLoan(loan) : null}
+                                    onDelete={eliminarPrestamo}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>

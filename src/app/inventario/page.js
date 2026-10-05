@@ -8,6 +8,7 @@ import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { findProductByBarcode } from '@/lib/barcodeUtils';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import RouteGuard from '@/components/ui/RouteGuard';
@@ -535,30 +536,37 @@ function InventarioPageInner() {
                                                     }`}
                                                     style={{ WebkitTapHighlightColor: 'transparent' }}
                                                 >
-                                                    {/* Icon / Status */}
-                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-lg font-bold ${
-                                                        counted
-                                                            ? diff !== 0
-                                                                ? 'bg-amber-100 text-amber-700'
-                                                                : 'bg-emerald-100 text-emerald-700'
-                                                            : 'bg-slate-100 text-slate-400'
-                                                    }`}>
+                                                    {/* Miniatura del producto + estado de conteo */}
+                                                    <div className="relative w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-xs">
+                                                        <ProductThumb url={p.imagen_url} size="card" className="w-full h-full object-cover" />
                                                         {counted ? (
-                                                            <span className="text-xl font-black">{conteoInfo.conteo_fisico}</span>
+                                                            <span className={`absolute inset-0 flex items-center justify-center font-black text-lg backdrop-blur-xs ${
+                                                                diff !== 0
+                                                                    ? 'bg-amber-500/85 text-white'
+                                                                    : 'bg-emerald-500/85 text-white'
+                                                            }`}>
+                                                                {conteoInfo.conteo_fisico}
+                                                            </span>
                                                         ) : (
-                                                            <Plus size={24} />
+                                                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Plus size={18} className="text-white drop-shadow-md" />
+                                                            </div>
                                                         )}
                                                     </div>
 
                                                     {/* Info */}
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs font-semibold text-brand-600 uppercase">{p.categoria}</span>
-                                                            {p.piso && <span className="text-xs text-slate-400">· {p.piso}</span>}
+                                                        <p className="font-bold text-slate-900 dark:text-zinc-100 text-base truncate">{p.nombre}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase">{p.categoria}</span>
+                                                            {p.ubicacion && (
+                                                                <span className="text-xs text-slate-400 dark:text-zinc-500 truncate">
+                                                                    · {UBICACIONES.find(u => u.id === p.ubicacion)?.icono} {UBICACIONES.find(u => u.id === p.ubicacion)?.nombre || p.ubicacion}
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                        <p className="text-sm text-slate-500 mt-1">
-                                                            Stock sistema: <strong className="text-slate-700">{p.stock_actual}</strong> {p.unidad}
+                                                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                                                            Stock sistema: <strong className="text-slate-700 dark:text-zinc-200">{p.stock_actual}</strong> {p.unidad}
                                                         </p>
                                                     </div>
 
@@ -681,16 +689,19 @@ function InventarioPageInner() {
                                 {productosFiltrados.map(p => {
                                     const ubicInfo = isGeneral ? UBICACIONES.find(u => u.id === p.ubicacion) : null;
                                     return (
-                                        <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                                        <div key={p.id} className="bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-[#222226] rounded-2xl p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+                                            <div className="w-13 h-13 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-800">
+                                                <ProductThumb url={p.imagen_url} size="card" className="w-full h-full object-cover" />
+                                            </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-slate-900 text-base truncate">{p.nombre}</p>
+                                                <p className="font-bold text-slate-900 dark:text-zinc-100 text-base truncate">{p.nombre}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-xs text-slate-500">{p.categoria}</span>
+                                                    <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase">{p.categoria}</span>
                                                     {ubicInfo && (
-                                                        <span className="text-[10px] font-bold text-slate-400">{ubicInfo.icono} {ubicInfo.nombre}</span>
+                                                        <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 truncate">· {ubicInfo.icono} {ubicInfo.nombre}</span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-slate-600 mt-1">Stock: <strong className="text-slate-800">{p.stock_actual}</strong> {p.unidad}</p>
+                                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Stock: <strong className="text-slate-800 dark:text-white font-bold">{p.stock_actual}</strong> {p.unidad}</p>
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <button
