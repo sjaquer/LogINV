@@ -11,19 +11,62 @@ let cachedToken = null;
 let tokenExpiresAt = 0;
 
 /**
- * Obtiene un access token de Google OAuth2 usando la Service Account (JWT Bearer flow)
+ * Obtiene un access token válido para Google Drive.
+ * Prioriza el Refresh Token de nutikuenta@gmail.com (para usar su cuota de 15 GB sin errores).
+ * Si no está disponible, utiliza la Service Account (JWT flow).
  */
-async function getServiceAccountAccessToken() {
+async function getDriveAccessToken() {
     const now = Math.floor(Date.now() / 1000);
     if (cachedToken && tokenExpiresAt > now + 60) {
         return cachedToken;
     }
 
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+    let refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
+
+    // 1. Si no está en env, intentar leer de Firestore (configuracion/google_drive)
+    if (!refreshToken) {
+        try {
+            const { adminDb } = await import('@/lib/firebaseAdmin');
+            const doc = await adminDb().collection('configuracion').doc('google_drive').get();
+            if (doc.exists) {
+                refreshToken = doc.data()?.refresh_token;
+            }
+        } catch (_) {}
+    }
+
+    // 2. Canjear Refresh Token por Access Token (Actúa a nombre de nutikuenta@gmail.com)
+    if (refreshToken && clientId && clientSecret) {
+        try {
+            const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    client_id: clientId,
+                    client_secret: clientSecret,
+                    refresh_token: refreshToken,
+                    grant_type: 'refresh_token',
+                }),
+            });
+            const data = await tokenRes.json();
+            if (tokenRes.ok && data.access_token) {
+                cachedToken = data.access_token;
+                tokenExpiresAt = now + (data.expires_in || 3600);
+                return cachedToken;
+            }
+            console.warn('[LogINV] Falló canje con refresh_token:', data.error_description || data.error);
+        } catch (err) {
+            console.warn('[LogINV] Error solicitando token con refresh_token:', err.message);
+        }
+    }
+
+    // 3. Fallback: Service Account JWT Bearer flow
     const email = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
     let key = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
 
     if (!email || !key) {
-        throw new Error('Credenciales de Service Account no configuradas en el servidor');
+        throw new Error('Credenciales de Google Drive / Service Account no configuradas en el servidor');
     }
 
     key = key.replace(/\\n/g, '\n');
@@ -57,7 +100,7 @@ async function getServiceAccountAccessToken() {
 
     const data = await tokenRes.json();
     if (!tokenRes.ok || !data.access_token) {
-        throw new Error(`Error obteniendo token de Service Account: ${data.error_description || data.error || 'Token no recibido'}`);
+        throw new Error(`Error obteniendo token de Google Drive: ${data.error_description || data.error || 'Token no recibido'}`);
     }
 
     cachedToken = data.access_token;
@@ -73,7 +116,7 @@ async function getServiceAccountAccessToken() {
  * @returns {Promise<{ id: string, url: string }>}
  */
 export async function uploadImageToDrive(fileBuffer, fileName, mimeType = 'image/jpeg') {
-    const accessToken = await getServiceAccountAccessToken();
+    const accessToken = await getDriveAccessToken();
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
     const metadata = {
@@ -148,7 +191,7 @@ export async function uploadImageToDrive(fileBuffer, fileName, mimeType = 'image
 export async function deleteImageFromDrive(fileId) {
     if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) return;
     try {
-        const accessToken = await getServiceAccountAccessToken();
+        const accessToken = await getDriveAccessToken();
         await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${accessToken}` },

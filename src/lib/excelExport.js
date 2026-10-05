@@ -159,9 +159,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
         { header: 'Producto', key: 'nombre', width: 32 },
         { header: 'Descripción', key: 'descripcion', width: 28 },
         { header: 'Categoría', key: 'categoria', width: 20 },
-        { header: 'Ubicación', key: 'ubicacion', width: 20 },
-        { header: 'Parte del almacén', key: 'sub_ubicacion', width: 24 },
-        { header: 'Piso', key: 'piso', width: 14 },
+        { header: 'Ubicación', key: 'ubicacion', width: 26 },
         { header: 'Estado', key: 'estado', width: 18 },
         { header: 'Stock actual', key: 'stock_actual', width: 12 },
         { header: 'Stock mínimo', key: 'stock_minimo', width: 12 },
@@ -171,7 +169,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     ];
     styleHeaderRow(inv.getRow(1));
     inv.views = [{ state: 'frozen', ySplit: 1 }];
-    inv.autoFilter = { from: 'A1', to: 'N1' };
+    inv.autoFilter = { from: 'A1', to: 'L1' };
 
     // Traer todas las fotos en paralelo antes de armar las filas, para poder
     // anclar cada imagen a la fila exacta de su producto.
@@ -191,8 +189,6 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
             descripcion: p.descripcion || '',
             categoria: p.categoria,
             ubicacion: ubicNombre(p.ubicacion),
-            sub_ubicacion: p.sub_ubicacion || '',
-            piso: p.piso || UBICACIONES.find(u => u.id === p.ubicacion)?.piso || '',
             estado: ESTADO_LABEL[p.estado] || p.estado || '',
             stock_actual: p.stock_actual,
             stock_minimo: p.stock_minimo ?? 0,

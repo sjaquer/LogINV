@@ -7,10 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 
 function getLocBadgeStyle(info) {
     if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200';
-    if (info?.piso === 'Primer Piso') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-    if (info?.piso === 'Segundo Piso') return 'text-blue-700 bg-blue-50 border-blue-200';
-    if (info?.piso === 'Tercer Piso') return 'text-purple-700 bg-purple-50 border-purple-200';
-    return 'text-slate-700 bg-white border-slate-200';
+    return 'text-brand-700 bg-brand-50 border-brand-200';
 }
 
 const LANGUAGES = [
@@ -81,65 +78,32 @@ export default function Header({ title }) {
                             <div className="p-2 border-b border-slate-100">
                                 <input
                                     type="text"
-                                    placeholder="Buscar salón, almacén o piso..."
+                                    placeholder="Buscar almacén o salón..."
                                     value={locFilter}
                                     onChange={e => setLocFilter(e.target.value)}
                                     className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:bg-white text-slate-800 placeholder-slate-400"
                                 />
                             </div>
 
-                            {/* Scrollable list grouped by floor */}
-                            <div className="overflow-y-auto flex-1 divide-y divide-slate-50">
-                                {/* Opción GENERAL si coincide con la búsqueda */}
-                                {(!locFilter || 'todas las ubicaciones general'.includes(locFilter.toLowerCase())) && (
-                                    <div className="p-1">
-                                        <button
-                                            onClick={() => { setUbicacion('GENERAL'); setOpenLocMenu(false); setLocFilter(''); }}
-                                            className={`w-full text-left px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between font-semibold ${
-                                                ubicacion === 'GENERAL'
-                                                    ? 'text-violet-700 bg-violet-50 font-bold'
-                                                    : 'text-slate-700 hover:bg-slate-50'
-                                            }`}
-                                        >
-                                            <span className="flex items-center gap-2">🌐 Todas las ubicaciones</span>
-                                            {ubicacion === 'GENERAL' && <div className="w-2 h-2 rounded-full bg-violet-600" />}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {['Primer Piso', 'Segundo Piso', 'Tercer Piso'].map(piso => {
-                                    const locsDelPiso = UBICACIONES.filter(l => 
-                                        l.piso === piso &&
-                                        (!locFilter || l.nombre.toLowerCase().includes(locFilter.toLowerCase()) || piso.toLowerCase().includes(locFilter.toLowerCase()))
-                                    );
-                                    if (locsDelPiso.length === 0) return null;
-
-                                    return (
-                                        <div key={piso} className="p-1.5">
-                                            <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/70 rounded-md mb-1 flex items-center justify-between">
-                                                <span>{piso}</span>
-                                                <span className="text-[9px] font-normal text-slate-400">{locsDelPiso.length} espacios</span>
-                                            </div>
-                                            {locsDelPiso.map(loc => (
-                                                <button
-                                                    key={loc.id}
-                                                    onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); setLocFilter(''); }}
-                                                    className={`w-full text-left px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between ${
-                                                        loc.id === ubicacion
-                                                            ? 'text-brand-700 bg-brand-50 font-bold'
-                                                            : 'text-slate-600 hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    <span className="flex items-center gap-2 truncate">
-                                                        <span>{loc.icono}</span>
-                                                        <span className="truncate">{loc.nombre}</span>
-                                                    </span>
-                                                    {loc.id === ubicacion && <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    );
-                                })}
+                            {/* Scrollable list */}
+                            <div className="overflow-y-auto flex-1 p-1 space-y-0.5">
+                                {UBICACIONES.filter(l => !locFilter || l.nombre.toLowerCase().includes(locFilter.toLowerCase())).map(loc => (
+                                    <button
+                                        key={loc.id}
+                                        onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); setLocFilter(''); }}
+                                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between ${
+                                            loc.id === ubicacion
+                                                ? 'text-brand-700 bg-brand-50 font-bold'
+                                                : 'text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2 truncate">
+                                            <span>{loc.icono}</span>
+                                            <span className="truncate">{loc.nombre}</span>
+                                        </span>
+                                        {loc.id === ubicacion && <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0" />}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     )}

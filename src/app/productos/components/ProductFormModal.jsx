@@ -4,7 +4,7 @@ import { X, Save, AlertTriangle, ScanBarcode, Tag } from 'lucide-react';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import ProductImageUploader from './ProductImageUploader';
-import { UBICACIONES_FISICAS, PISOS, getPisoDeUbicacion } from '@/context/LocationContext';
+import { UBICACIONES_FISICAS } from '@/context/LocationContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 const UNIDADES = ['pieza', 'unidades', 'cajas', 'bolsas', 'pares', 'metros', 'kg', 'litros', 'packs'];
@@ -25,7 +25,6 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
     useEscapeKey(onClose);
 
     const initialUbicacion = producto?.ubicacion || UBICACIONES_FISICAS[0]?.id || '';
-    const initialPiso = producto?.piso || getPisoDeUbicacion(initialUbicacion) || 'Primer Piso';
 
     const [form, setForm] = useState({
         nombre: producto?.nombre || '',
@@ -37,8 +36,6 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
         codigo_barras: producto?.codigo_barras || '',
         estado: producto?.estado || 'OPTIMO',
         responsabilidad: producto?.responsabilidad || '',
-        sub_ubicacion: producto?.sub_ubicacion || '',
-        piso: initialPiso,
         observaciones: producto?.observaciones || '',
         descripcion: producto?.descripcion || '',
         imagen_url: producto?.imagen_url || '',
@@ -193,65 +190,18 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Ubicación / Salón / Almacén *</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Ubicación / Almacén *</label>
                             <select
                                 value={form.ubicacion}
-                                onChange={e => {
-                                    const locId = e.target.value;
-                                    const pisoAuto = getPisoDeUbicacion(locId);
-                                    setForm(prev => ({
-                                        ...prev,
-                                        ubicacion: locId,
-                                        piso: pisoAuto || prev.piso,
-                                    }));
-                                }}
+                                onChange={e => handleChange('ubicacion', e.target.value)}
                                 className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
                                 required
                             >
-                                {PISOS.map(piso => {
-                                    const locs = UBICACIONES_FISICAS.filter(u => u.piso === piso);
-                                    return (
-                                        <optgroup key={piso} label={`── ${piso.toUpperCase()} ──`}>
-                                            {locs.map(u => (
-                                                <option key={u.id} value={u.id}>{u.icono} {u.nombre}</option>
-                                            ))}
-                                        </optgroup>
-                                    );
-                                })}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Ubicación detallada en el almacén + Piso */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                                <span>📍</span> Parte del almacén / Sección
-                            </label>
-                            <input
-                                type="text"
-                                value={form.sub_ubicacion}
-                                onChange={e => handleChange('sub_ubicacion', e.target.value)}
-                                placeholder="Ej: Estante 3 - Nivel 2 / Caja B / Ropero"
-                                className="inp text-sm py-2.5 bg-white border-slate-200 text-slate-900 font-medium"
-                            />
-                            <p className="text-[11px] text-slate-400 mt-1">Estante, repisa, pasillo, mesa o caja exacta</p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                                <span>🏢</span> Piso / Nivel
-                            </label>
-                            <select
-                                value={form.piso}
-                                onChange={e => handleChange('piso', e.target.value)}
-                                className="inp text-sm py-2.5 bg-white border-slate-200 text-slate-900 font-medium"
-                            >
-                                <option value="">— Seleccionar Piso —</option>
-                                {PISOS.map(p => (
-                                    <option key={p} value={p}>{p}</option>
+                                <option value="">— Selecciona —</option>
+                                {UBICACIONES_FISICAS.map(u => (
+                                    <option key={u.id} value={u.id}>{u.icono} {u.nombre}</option>
                                 ))}
                             </select>
-                            <p className="text-[11px] text-slate-400 mt-1">Se asigna automáticamente según el salón/almacén</p>
                         </div>
                     </div>
 

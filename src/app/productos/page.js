@@ -39,7 +39,6 @@ function ProductosPageInner() {
 
     const [busqueda, setBusqueda] = useState('');
     const [categoria, setCategoria] = useState('Todas');
-    const [filtroPiso, setFiltroPiso] = useState('Todos');
     const [sortBy, setSortBy] = useState('nombre');
     const [showProductForm, setShowProductForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -118,17 +117,11 @@ function ProductosPageInner() {
         }
 
         let list = baseList
-            .filter(p => {
-                if (filtroPiso === 'Todos') return true;
-                const floor = p.piso || UBICACIONES.find(u => u.id === p.ubicacion)?.piso;
-                return floor === filtroPiso;
-            })
             .filter(p => categoria === 'Todas' || p.categoria === categoria)
             .filter(p => {
                 if (!q) return true;
                 return p.nombre.toLowerCase().includes(q)
                     || (p.codigo_barras && (p.codigo_barras.toLowerCase().includes(q) || normalizeBarcode(p.codigo_barras) === normQ))
-                    || (p.sub_ubicacion && p.sub_ubicacion.toLowerCase().includes(q))
                     || (p.id && p.id.toLowerCase() === q);
             });
         // Sort
@@ -139,7 +132,7 @@ function ProductosPageInner() {
             return (a.nombre || '').localeCompare(b.nombre || '');
         });
         return list;
-    }, [productosUbicacion, productos, isGeneral, filtroPiso, categoria, busqueda, sortBy]);
+    }, [productosUbicacion, productos, isGeneral, categoria, busqueda, sortBy]);
 
     const handleSaveProduct = useCallback(async (data, id) => {
         const productData = { ...data, _usuario: data._usuario || userName };
@@ -265,25 +258,6 @@ function ProductosPageInner() {
                             </button>
                         )}
                     </div>
-                    {/* Floor filter bar */}
-                    {isGeneral && (
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar items-center pb-1">
-                            {['Todos', 'Primer Piso', 'Segundo Piso', 'Tercer Piso'].map(piso => (
-                                <button
-                                    key={piso}
-                                    onClick={() => setFiltroPiso(piso)}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-2xs whitespace-nowrap flex items-center gap-1.5 ${
-                                        filtroPiso === piso
-                                            ? 'bg-slate-900 text-white border-slate-900 ring-2 ring-slate-900/10'
-                                            : 'bg-white border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <span>🏢</span>
-                                    <span>{piso === 'Todos' ? 'Todos los pisos' : piso}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
                     <div className="flex gap-2 overflow-x-auto no-scrollbar items-center pb-1">
                         {catNames.map(cat => {
                             const label = cat === 'Todas' ? 'Todas' : cat;
