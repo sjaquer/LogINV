@@ -6,7 +6,7 @@ import { formatProductImageUrl, getDriveFallbackUrl } from '@/lib/imageUtils';
 export { formatProductImageUrl, getDriveFallbackUrl };
 
 // Miniatura de producto con resiliencia de carga y fallbacks visuales de alta calidad
-export default function ProductThumb({ url, icon, size = 'sm', className = '', alt = '' }) {
+export default function ProductThumb({ url, icon, size = 'sm', fit = 'cover', className = '', alt = '' }) {
     const [failed, setFailed] = useState(false);
     const [useFallback, setUseFallback] = useState(false);
 
@@ -36,6 +36,8 @@ export default function ProductThumb({ url, icon, size = 'sm', className = '', a
         }
     }
 
+    const fitClass = fit === 'contain' ? 'object-contain' : 'object-cover';
+
     if (currentSrc && !failed) {
         return (
             <img
@@ -44,7 +46,7 @@ export default function ProductThumb({ url, icon, size = 'sm', className = '', a
                 loading="lazy"
                 referrerPolicy="no-referrer"
                 onError={handleImageError}
-                className={`${dims} object-cover bg-slate-100 dark:bg-zinc-900 ${className}`}
+                className={`${dims} ${fitClass} bg-transparent ${className}`}
             />
         );
     }

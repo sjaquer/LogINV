@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import {
     X, Pencil, Trash2, Copy, Tag, MapPin, Layers,
-    ClipboardList, StickyNote, Clock,
+    ClipboardList, StickyNote, Clock, Maximize2, Minimize2, ExternalLink,
 } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
-import ProductThumb from '@/components/ui/ProductThumb';
+import ProductThumb, { formatProductImageUrl } from '@/components/ui/ProductThumb';
 import { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import BarcodeLabelModal from '@/components/ui/BarcodeLabel';
 import { formatDateTime } from '@/lib/formatters';
@@ -44,41 +44,57 @@ function Field({ icon: Icon, label, children }) {
 // barras, observaciones) en una sola vista, sin necesidad de editar.
 export default function ProductDetailModal({ producto, canManage, isGeneral, onClose, onEdit, onDelete, onDuplicate }) {
     const [showLabel, setShowLabel] = useState(false);
+    const [imageFit, setImageFit] = useState('contain'); // 'contain' para ver foto 100% completa, o 'cover'
     useEscapeKey(onClose);
 
     const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
+    const ambientBg = producto.imagen_url ? formatProductImageUrl(producto.imagen_url) : null;
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 dark:border-[#222226] shadow-2xl bg-white dark:bg-[#0d0d10] max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-[#0d0d10] flex-shrink-0">
                     <div className="flex items-start gap-3 min-w-0">
-                        <ProductThumb url={producto.imagen_url} size="sm" />
+                        <ProductThumb url={producto.imagen_url} size="sm" fit="cover" />
                         <div className="min-w-0">
-                            <h3 className="font-bold text-slate-900 text-lg leading-snug break-words">{producto.nombre}</h3>
-                            <p className="text-xs font-semibold text-brand-600 uppercase mt-0.5">{producto.categoria}</p>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-snug break-words">{producto.nombre}</h3>
+                            <p className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase mt-0.5">{producto.categoria}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0">
+                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0">
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                    {/* Foto principal destacada */}
-                    <div className="relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden bg-slate-100 dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 flex items-center justify-center group/hero shadow-xs">
-                        <ProductThumb
-                            url={producto.imagen_url}
-                            size="card"
-                            className="w-full h-full object-cover"
-                            alt={producto.nombre}
-                        />
+                    {/* Foto principal destacada con vista completa sin recortes */}
+                    <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden bg-slate-950 dark:bg-black border border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-center group/hero shadow-inner select-none">
+                        {/* Fondo ambiental desenfocado derivado de la foto original */}
+                        {ambientBg && (
+                            <img
+                                src={ambientBg}
+                                alt=""
+                                aria-hidden="true"
+                                className="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-125 pointer-events-none"
+                            />
+                        )}
+
+                        {/* Foto del producto con ajuste completo (contain) para que NUNCA se recorte */}
+                        <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
+                            <ProductThumb
+                                url={producto.imagen_url}
+                                size="card"
+                                fit={imageFit}
+                                className="w-full h-full transition-transform duration-300"
+                                alt={producto.nombre}
+                            />
+                        </div>
 
                         {/* Badges flotantes en la foto */}
-                        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+                        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20 pointer-events-none">
                             {producto.estado && (
                                 <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md border shadow-xs ${ESTADO_BADGE[producto.estado] || 'bg-black/60 text-white border-white/20'}`}>
                                     {ESTADO_LABEL[producto.estado] || producto.estado}
@@ -91,16 +107,28 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                             )}
                         </div>
 
-                        {/* Botón ver imagen completa en pestaña nueva */}
+                        {/* Controles de visualización de imagen */}
                         {producto.imagen_url && (
-                            <a
-                                href={producto.imagen_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 sm:group-hover/hero:opacity-100 transition-opacity shadow-md"
-                            >
-                                Ver original
-                            </a>
+                            <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setImageFit(f => f === 'contain' ? 'cover' : 'contain')}
+                                    className="px-2.5 py-1.5 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                                    title={imageFit === 'contain' ? 'Modo Rellenar (expandir)' : 'Modo Completo (ajustar todo)'}
+                                >
+                                    {imageFit === 'contain' ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
+                                    <span>{imageFit === 'contain' ? 'Completa' : 'Rellenar'}</span>
+                                </button>
+                                <a
+                                    href={formatProductImageUrl(producto.imagen_url)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center transition-all shadow-md active:scale-95"
+                                    title="Abrir imagen original en nueva pestaña"
+                                >
+                                    <ExternalLink size={13} />
+                                </a>
+                            </div>
                         )}
                     </div>
 
