@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
     X, Pencil, Trash2, Copy, Tag, MapPin, Layers,
-    ClipboardList, StickyNote, Clock, Maximize2, Minimize2, ExternalLink,
+    ClipboardList, StickyNote, Clock, Maximize2, Minimize2, ZoomIn,
 } from 'lucide-react';
 import { UBICACIONES } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
@@ -45,7 +45,15 @@ function Field({ icon: Icon, label, children }) {
 export default function ProductDetailModal({ producto, canManage, isGeneral, onClose, onEdit, onDelete, onDuplicate }) {
     const [showLabel, setShowLabel] = useState(false);
     const [imageFit, setImageFit] = useState('contain'); // 'contain' para ver foto 100% completa, o 'cover'
-    useEscapeKey(onClose);
+    const [showFullscreen, setShowFullscreen] = useState(false);
+
+    useEscapeKey(() => {
+        if (showFullscreen) {
+            setShowFullscreen(false);
+        } else {
+            onClose();
+        }
+    });
 
     const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
@@ -71,7 +79,13 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
                     {/* Foto principal destacada con vista completa sin recortes */}
-                    <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden bg-slate-950 dark:bg-black border border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-center group/hero shadow-inner select-none">
+                    <div
+                        onClick={() => producto.imagen_url && setShowFullscreen(true)}
+                        className={`relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden bg-slate-950 dark:bg-black border border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-center group/hero shadow-inner select-none ${
+                            producto.imagen_url ? 'cursor-zoom-in' : ''
+                        }`}
+                        title={producto.imagen_url ? 'Haz clic para ver en pantalla completa' : undefined}
+                    >
                         {/* Fondo ambiental desenfocado derivado de la foto original */}
                         {ambientBg && (
                             <img
@@ -109,7 +123,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
 
                         {/* Controles de visualización de imagen */}
                         {producto.imagen_url && (
-                            <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5">
+                            <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                                 <button
                                     type="button"
                                     onClick={() => setImageFit(f => f === 'contain' ? 'cover' : 'contain')}
@@ -119,15 +133,15 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                                     {imageFit === 'contain' ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
                                     <span>{imageFit === 'contain' ? 'Completa' : 'Rellenar'}</span>
                                 </button>
-                                <a
-                                    href={formatProductImageUrl(producto.imagen_url)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center transition-all shadow-md active:scale-95"
-                                    title="Abrir imagen original en nueva pestaña"
+                                <button
+                                    type="button"
+                                    onClick={() => setShowFullscreen(true)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                                    title="Ver foto en pantalla completa"
                                 >
-                                    <ExternalLink size={13} />
-                                </a>
+                                    <ZoomIn size={13} />
+                                    <span>Pantalla completa</span>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -209,6 +223,44 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                     producto={{ ...producto, ubicacion_nombre: ubicInfo?.nombre }}
                     onClose={() => setShowLabel(false)}
                 />
+            )}
+
+            {/* Lightbox / Visor de Imagen en Pantalla Completa nativo (sin links vacíos ni navegación externa) */}
+            {showFullscreen && producto.imagen_url && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-fade-in"
+                    onClick={() => setShowFullscreen(false)}
+                >
+                    {/* Barra superior con datos del producto y botón cerrar */}
+                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
+                        <div className="bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-white min-w-0 max-w-[80%] shadow-lg">
+                            <p className="text-sm font-bold truncate">{producto.nombre}</p>
+                            <p className="text-[10px] text-white/70 font-semibold uppercase">{producto.categoria}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowFullscreen(false)}
+                            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/15 transition-all shadow-lg pointer-events-auto active:scale-95"
+                            aria-label="Cerrar pantalla completa"
+                            title="Cerrar (Esc)"
+                        >
+                            <X size={22} />
+                        </button>
+                    </div>
+
+                    {/* Imagen completa en alta resolución escalada para ajustarse al 100% de la pantalla */}
+                    <div className="relative max-w-full max-h-full flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={formatProductImageUrl(producto.imagen_url)}
+                            alt={producto.nombre}
+                            className="max-w-[95vw] max-h-[85vh] object-contain rounded-2xl shadow-2xl transition-transform select-none"
+                        />
+                    </div>
+
+                    <p className="absolute bottom-4 text-xs text-white/50 pointer-events-none select-none">
+                        Haz clic en cualquier parte o pulsa ESC para salir
+                    </p>
+                </div>
             )}
         </div>
     );
