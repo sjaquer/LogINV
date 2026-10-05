@@ -58,7 +58,11 @@ export default function ProductCard({ producto, isGeneral, onView, selectMode, s
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                     <MapPin size={12} className="flex-shrink-0 text-slate-400" />
                     <span className="truncate">{ubicInfo?.icono} {ubicInfo?.nombre || producto.ubicacion}</span>
-                    {producto.piso && <span className="text-slate-300">· {producto.piso}</span>}
+                    {producto.sub_ubicacion ? (
+                        <span className="text-brand-600 font-semibold truncate">· {producto.sub_ubicacion}</span>
+                    ) : (
+                        producto.piso && <span className="text-slate-400 truncate">· {producto.piso}</span>
+                    )}
                 </div>
             )}
 

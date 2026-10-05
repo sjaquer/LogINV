@@ -97,9 +97,18 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
 
                     {/* Campos */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={MapPin} label="Ubicación">
+                        <Field icon={MapPin} label="Almacén / Depósito">
                             {ubicInfo ? `${ubicInfo.icono} ${ubicInfo.nombre}` : producto.ubicacion}
-                            {producto.piso && ` · ${producto.piso}`}
+                            {producto.piso && ` (${producto.piso})`}
+                        </Field>
+                        <Field icon={MapPin} label="Parte del almacén / Sección">
+                            {producto.sub_ubicacion ? (
+                                <span className="font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200 inline-block">
+                                    {producto.sub_ubicacion}
+                                </span>
+                            ) : (
+                                <span className="text-slate-400 italic">No especificada</span>
+                            )}
                         </Field>
                         <Field icon={Layers} label="Responsable / Ministerio">{producto.responsabilidad}</Field>
                         <Field icon={Tag} label="Código de barras">{producto.codigo_barras}</Field>

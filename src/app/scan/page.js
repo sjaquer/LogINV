@@ -133,6 +133,12 @@ export default function ScanPage() {
                                                 <span>{ubicInfo.nombre}</span>
                                             </span>
                                         )}
+                                        {result.sub_ubicacion && (
+                                            <p className="text-xs text-slate-600 mt-1.5 flex items-center gap-1">
+                                                <span className="font-semibold text-slate-800">📍 Sección:</span>
+                                                <span>{result.sub_ubicacion}</span>
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 
