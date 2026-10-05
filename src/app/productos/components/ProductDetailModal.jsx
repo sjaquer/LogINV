@@ -68,31 +68,59 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                    {/* Foto */}
-                    <ProductThumb url={producto.imagen_url} size="lg" />
+                    {/* Foto principal destacada */}
+                    <div className="relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden bg-slate-100 dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 flex items-center justify-center group/hero shadow-xs">
+                        <ProductThumb
+                            url={producto.imagen_url}
+                            size="card"
+                            className="w-full h-full object-cover"
+                            alt={producto.nombre}
+                        />
 
-                    {/* Estado + stock bajo */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        {producto.estado && (
-                            <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${ESTADO_BADGE[producto.estado] || 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                                {ESTADO_LABEL[producto.estado] || producto.estado}
-                            </span>
-                        )}
-                        {bajoStock && (
-                            <span className="text-xs font-bold px-3 py-1.5 rounded-full border bg-amber-100 text-amber-700 border-amber-200">
-                                ⚠ Stock bajo
-                            </span>
+                        {/* Badges flotantes en la foto */}
+                        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+                            {producto.estado && (
+                                <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md border shadow-xs ${ESTADO_BADGE[producto.estado] || 'bg-black/60 text-white border-white/20'}`}>
+                                    {ESTADO_LABEL[producto.estado] || producto.estado}
+                                </span>
+                            )}
+                            {bajoStock && (
+                                <span className="text-xs font-extrabold px-3 py-1 rounded-full backdrop-blur-md bg-amber-500/95 text-white border border-amber-300/40 shadow-xs flex items-center gap-1">
+                                    ⚠ Stock bajo
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Botón ver imagen completa en pestaña nueva */}
+                        {producto.imagen_url && (
+                            <a
+                                href={producto.imagen_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/65 hover:bg-black/85 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 sm:group-hover/hero:opacity-100 transition-opacity shadow-md"
+                            >
+                                Ver original
+                            </a>
                         )}
                     </div>
 
-                    {/* Stock */}
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                    {/* Stock Card */}
+                    <div className="bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800 rounded-2xl p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm font-bold text-slate-700">Stock</p>
-                            <p className="text-lg font-black text-slate-900">{producto.stock_actual} <span className="text-xs font-normal text-slate-400">{producto.unidad}</span></p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Existencias</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white">
+                                {producto.stock_actual} <span className="text-xs font-medium text-slate-400 dark:text-zinc-500">{producto.unidad}</span>
+                            </p>
                         </div>
                         <StockBar actual={producto.stock_actual} minimo={producto.stock_minimo} />
-                        <p className="text-[11px] text-slate-400 mt-1.5">Stock mínimo: {producto.stock_minimo ?? 0} {producto.unidad}</p>
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-zinc-500 mt-2">
+                            <span>Stock mínimo: {producto.stock_minimo ?? 0} {producto.unidad}</span>
+                            {producto.stock_minimo > 0 && (
+                                <span className={bajoStock ? 'text-amber-600 font-bold' : 'text-emerald-600 font-medium'}>
+                                    {bajoStock ? 'Por debajo del mínimo' : 'Nivel adecuado'}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {/* Campos */}
@@ -113,7 +141,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                     {/* Código de barras visual */}
                     {producto.codigo_barras && (
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Etiqueta</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-2">Etiqueta con código de barras</p>
                             <BarcodeLabelPreview value={producto.codigo_barras} />
                         </div>
                     )}
