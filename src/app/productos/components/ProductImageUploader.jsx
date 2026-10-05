@@ -43,16 +43,24 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
 
             let uploadedToDrive = false;
 
-            // 2. Si Google Drive está configurado, intentar subirlo
-            if (process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID) {
-                try {
-                    const result = await upload(compressed);
-                    onChange({ imagen_url: result.url, imagen_drive_id: result.id });
+            // 2. Intentar subir al servidor (directo a Google Drive vía Service Account)
+            try {
+                const formData = new FormData();
+                formData.append('file', compressed, file.name || 'image.jpg');
+                const res = await fetch('/api/drive-upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+                if (res.ok && data.url && data.id) {
+                    onChange({ imagen_url: data.url, imagen_drive_id: data.id });
                     uploadedToDrive = true;
-                    setInfoMsg('Foto subida a Google Drive con éxito.');
-                } catch (driveErr) {
-                    console.warn('[LogINV] Google Drive no disponible, usando almacenamiento local optimizado:', driveErr.message);
+                    setInfoMsg('Foto guardada en Google Drive con éxito.');
+                } else {
+                    console.warn('[LogINV] Aviso Drive API:', data.error);
                 }
+            } catch (driveErr) {
+                console.warn('[LogINV] Error conectando con API de Drive:', driveErr.message);
             }
 
             // 3. Fallback seguro: si no se subió a Drive, guardar la imagen comprimida (DataURL)
@@ -62,7 +70,10 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
                 setInfoMsg('Foto guardada y optimizada en alta calidad.');
             }
 
-            if (oldId) remove(oldId);
+            if (oldId) {
+                fetch(`/api/drive-upload?id=${encodeURIComponent(oldId)}`, { method: 'DELETE' }).catch(() => {});
+                remove(oldId);
+            }
         } catch (err) {
             console.error('[LogINV] Error procesando imagen:', err);
             setLocalError(err.message || 'Error al procesar la imagen');
@@ -76,7 +87,10 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
         onChange({ imagen_url: '', imagen_drive_id: '' });
         setInfoMsg('');
         setLocalError('');
-        if (oldId) remove(oldId);
+        if (oldId) {
+            fetch(`/api/drive-upload?id=${encodeURIComponent(oldId)}`, { method: 'DELETE' }).catch(() => {});
+            remove(oldId);
+        }
     }
 
     const isLoading = processing || driveLoading;
