@@ -188,6 +188,14 @@ function ProductosPageInner() {
         });
     }, []);
 
+    const selectAllVisible = useCallback(() => {
+        setSelectedIds(new Set(productosFiltrados.map(p => p.id)));
+    }, [productosFiltrados]);
+
+    const deselectAll = useCallback(() => {
+        setSelectedIds(new Set());
+    }, []);
+
     const selectedProductos = useMemo(
         () => productosFiltrados
             .filter(p => selectedIds.has(p.id))
@@ -203,7 +211,7 @@ function ProductosPageInner() {
     const canManage = role === 'admin' || role === 'encargado';
 
     return (
-        <div className="flex flex-col flex-1 bg-slate-50/50">
+        <div className="flex flex-col flex-1 bg-slate-50/50 dark:bg-black min-h-screen">
             <Header title="Productos" />
             <PullToRefresh onRefresh={handleRefresh}>
                 <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-7xl mx-auto w-full pb-4">
@@ -448,20 +456,42 @@ function ProductosPageInner() {
 
             {/* ── Barra flotante de selección múltiple ── */}
             {selectMode && (
-                <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-40 bg-white border-t border-slate-200 shadow-2xl p-3 sm:p-4 flex items-center justify-between gap-3 animate-slide-up">
-                    <p className="text-sm font-semibold text-slate-700">
-                        {selectedIds.size} seleccionado{selectedIds.size === 1 ? '' : 's'}
-                    </p>
+                <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-40 bg-white dark:bg-[#0d0d10] border-t border-slate-200 dark:border-white/10 shadow-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 animate-slide-up">
+                    <div className="flex items-center gap-3">
+                        <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                {selectedIds.size} de {productosFiltrados.length} seleccionado{selectedIds.size === 1 ? '' : 's'}
+                            </p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {selectedProductos.filter(p => p.codigo_barras).length} listos para hoja de etiquetas
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-2">
+                            <button
+                                type="button"
+                                onClick={selectedIds.size === productosFiltrados.length ? deselectAll : selectAllVisible}
+                                className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline px-2.5 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 transition-colors"
+                            >
+                                {selectedIds.size === productosFiltrados.length ? 'Deseleccionar todos' : 'Seleccionar visibles'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
-                        <button onClick={toggleSelectMode} className="btn btn-ghost px-4 py-2.5 text-sm font-semibold text-slate-600">
+                        <button 
+                            type="button" 
+                            onClick={toggleSelectMode} 
+                            className="btn btn-ghost px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300"
+                        >
                             Cancelar
                         </button>
                         <button
+                            type="button"
                             onClick={handleBulkPrint}
                             disabled={selectedIds.size === 0}
-                            className="btn btn-primary px-4 py-2.5 text-sm font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn btn-primary px-5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Printer size={16} /> Imprimir códigos
+                            <Printer size={16} /> Imprimir etiquetas ({selectedIds.size})
                         </button>
                     </div>
                 </div>

@@ -637,28 +637,21 @@ html.dark [class~="ring-brand-500\\/10"] {
 /* Impresión de etiquetas de código de barras: cuando el modal de etiqueta
    (individual o masivo) está abierto (ver BarcodeLabel.jsx), oculta todo
    excepto su contenido. Se restringe con :has() para no afectar la
-   impresión normal de otras páginas (ej. /reports) cuando el modal no
-   está presente. */
+/* Reglas de impresión limpias para documentos e informes */
 @media print {
-    body:has(#barcode-print-area) * {
-        visibility: hidden;
+    @page {
+        margin: 10mm;
+        size: auto;
     }
-    body:has(#barcode-print-area) #barcode-print-area,
-    body:has(#barcode-print-area) #barcode-print-area * {
-        visibility: visible;
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
     }
-    /* Etiqueta única: se centra en una sola hoja. */
-    body:has(#barcode-print-area:not(.print-sheet)) #barcode-print-area {
-        position: fixed;
-        inset: 0;
-        margin: auto;
-        width: fit-content;
-        height: fit-content;
-    }
-    /* Hoja de varias etiquetas: fluye en el documento para que el navegador
-       pueda repartirla en varias páginas (position:fixed cortaría el resto). */
-    body:has(#barcode-print-area.print-sheet) #barcode-print-area.print-sheet {
-        position: static;
-        width: 100%;
+    .print\\:hidden,
+    header,
+    nav,
+    aside,
+    button:not(.print-allow) {
+        display: none !important;
     }
 }
