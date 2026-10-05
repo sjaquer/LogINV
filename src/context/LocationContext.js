@@ -1,8 +1,9 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { getFirestore, USE_MOCK } from '@/hooks/useFirestoreQuery';
 
-// Ubicaciones reales del inventario IACYM CNC
-export const UBICACIONES = [
+// Ubicaciones reales y base del inventario IACYM CNC
+export const UBICACIONES_DEFAULT = [
     { id: 'GENERAL', nombre: 'Todas las ubicaciones', icono: '🌐', color: 'violet' },
     { id: 'TEMPLO', nombre: 'Templo', icono: '⛪', color: 'brand' },
     { id: 'BANOS', nombre: 'Baños', icono: '🚻', color: 'slate' },
@@ -28,39 +29,88 @@ export const UBICACIONES = [
     { id: 'SALON_309', nombre: 'Salón 309', icono: '🚪', color: 'indigo' },
 ];
 
-// Ubicaciones físicas (para operaciones que requieren ubicación real)
-export const UBICACIONES_FISICAS = UBICACIONES.filter(u => u.id !== 'GENERAL');
+export const UBICACIONES = UBICACIONES_DEFAULT;
+export const UBICACIONES_FISICAS = UBICACIONES_DEFAULT.filter(u => u.id !== 'GENERAL');
+
+const GENERAL_DEFAULT = UBICACIONES_DEFAULT[0];
 
 const LocationContext = createContext({
     ubicacion: 'GENERAL',
     setUbicacion: () => {},
-    ubicacionInfo: UBICACIONES[0],
+    ubicacionInfo: GENERAL_DEFAULT,
     isGeneral: true,
-    UBICACIONES,
+    UBICACIONES: UBICACIONES_DEFAULT,
+    ubicaciones: UBICACIONES_DEFAULT,
+    ubicacionesFisicas: UBICACIONES_FISICAS,
 });
 
 export function LocationProvider({ children }) {
+    const [ubicacionesList, setUbicacionesList] = useState(UBICACIONES_DEFAULT);
     const [ubicacion, setUbicacion] = useState('GENERAL');
+
+    // Sincronización en tiempo real con la colección 'ubicaciones' de Firestore
+    useEffect(() => {
+        if (USE_MOCK) return;
+        let unsub;
+        (async () => {
+            try {
+                const { fs, db } = await getFirestore();
+                const colRef = fs.collection(db, 'ubicaciones');
+                unsub = fs.onSnapshot(colRef,
+                    (snap) => {
+                        if (!snap.empty) {
+                            const dbList = snap.docs.map(d => ({
+                                id: d.id,
+                                ...d.data(),
+                            }));
+                            dbList.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+                            setUbicacionesList([GENERAL_DEFAULT, ...dbList]);
+                        }
+                    },
+                    (err) => {
+                        console.warn('[LocationContext] Realtime listener notice:', err.message);
+                    }
+                );
+            } catch (err) {
+                console.warn('[LocationContext] Error setting up listener:', err);
+            }
+        })();
+        return () => unsub?.();
+    }, []);
 
     useEffect(() => {
         try {
             const stored = localStorage.getItem('loginv_ubicacion');
-            if (stored && UBICACIONES.find(u => u.id === stored)) {
+            if (stored && ubicacionesList.find(u => u.id === stored)) {
                 setUbicacion(stored);
             }
         } catch (_) {}
-    }, []);
+    }, [ubicacionesList]);
 
     function handleSetUbicacion(id) {
         setUbicacion(id);
         try { localStorage.setItem('loginv_ubicacion', id); } catch (_) {}
     }
 
-    const ubicacionInfo = UBICACIONES.find(u => u.id === ubicacion) || UBICACIONES[0];
+    const ubicacionInfo = useMemo(() => {
+        return ubicacionesList.find(u => u.id === ubicacion) || GENERAL_DEFAULT;
+    }, [ubicacionesList, ubicacion]);
+
     const isGeneral = ubicacion === 'GENERAL';
+    const ubicacionesFisicas = useMemo(() => {
+        return ubicacionesList.filter(u => u.id !== 'GENERAL');
+    }, [ubicacionesList]);
 
     return (
-        <LocationContext.Provider value={{ ubicacion, setUbicacion: handleSetUbicacion, ubicacionInfo, isGeneral, UBICACIONES }}>
+        <LocationContext.Provider value={{
+            ubicacion,
+            setUbicacion: handleSetUbicacion,
+            ubicacionInfo,
+            isGeneral,
+            UBICACIONES: ubicacionesList,
+            ubicaciones: ubicacionesList,
+            ubicacionesFisicas,
+        }}>
             {children}
         </LocationContext.Provider>
     );

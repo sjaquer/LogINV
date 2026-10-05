@@ -5,12 +5,14 @@ import {
     getFirestore, firebaseError 
 } from './useFirestoreQuery';
 
-// Mock data for locations
+// Mock data for locations fallback
 let mockUbicaciones = [
-    { id: 'loc_1', nombre: 'Iglesia Principal', descripcion: 'Templo principal de la congregación', capacidad: 200, activa: true, created_at: mockTimestamp() },
-    { id: 'loc_2', nombre: 'Almacén General', descripcion: 'Almacenamiento central de equipos y suministros', capacidad: 500, activa: true, created_at: mockTimestamp() },
-    { id: 'loc_3', nombre: 'Sala de Eventos', descripcion: 'Espacio para eventos y reuniones', capacidad: 150, activa: true, created_at: mockTimestamp() },
-    { id: 'loc_4', nombre: 'Oficina Parroquial', descripcion: 'Oficina administrativa de la iglesia', capacidad: 20, activa: true, created_at: mockTimestamp() },
+    { id: 'TEMPLO', codigo: 'TEMPLO', nombre: 'Templo', descripcion: 'Templo Principal - Auditorio y Altar', capacidad: 500, icono: '⛪', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B1', codigo: 'ALMACEN_B1', nombre: 'Almacén B1 (Herramientas)', descripcion: 'Almacén B1 - Primer Piso', capacidad: 100, icono: '🧰', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B2', codigo: 'ALMACEN_B2', nombre: 'Almacén B2 (Escaleras y Albañilería)', descripcion: 'Almacén B2 - Primer Piso', capacidad: 100, icono: '🪜', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B3', codigo: 'ALMACEN_B3', nombre: 'Almacén B3 Salón 209 (Ministerio de Adoración)', descripcion: 'Almacén B3 - Salón 209', capacidad: 80, icono: '🎵', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B4', codigo: 'ALMACEN_B4', nombre: 'Almacén B4 (Redes Juveniles)', descripcion: 'Almacén B4 - Tercer Piso', capacidad: 100, icono: '📦', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_DISCOVERY', codigo: 'ALMACEN_DISCOVERY', nombre: 'Salón 308 (Almacén Discovery)', descripcion: 'Almacén Discovery Land (B5)', capacidad: 100, icono: '🧸', activa: true, created_at: mockTimestamp() },
 ];
 
 const ubicacionesListeners = new Set();
@@ -34,10 +36,12 @@ export function useLocations() {
         (async () => {
             try {
                 const { fs, db } = await getFirestore();
-                const q = fs.query(fs.collection(db, 'ubicaciones'), fs.orderBy('nombre', 'asc'));
-                unsub = fs.onSnapshot(q,
+                const colRef = fs.collection(db, 'ubicaciones');
+                unsub = fs.onSnapshot(colRef,
                     (snap) => {
-                        setUbicaciones(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        list.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+                        setUbicaciones(list);
                         setLoading(false);
                         setError(null);
                     },
@@ -45,20 +49,6 @@ export function useLocations() {
                         console.error('[LogINV] Error listener ubicaciones:', err.code, err.message);
                         setLoading(false);
                         setError(err.message);
-                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            const qSimple = fs.collection(db, 'ubicaciones');
-                            unsub = fs.onSnapshot(qSimple,
-                                (snap) => {
-                                    setUbicaciones(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                                    setLoading(false);
-                                    setError(null);
-                                },
-                                (fallbackErr) => {
-                                    console.error('[LogINV] Error fallback ubicaciones:', fallbackErr);
-                                    setLoading(false);
-                                }
-                            );
-                        }
                     }
                 );
             } catch (err) {
@@ -85,15 +75,33 @@ export function useLocations() {
         try {
             const { fs, db } = await getFirestore();
             const nowIso = new Date().toISOString();
-            const ref = await fs.addDoc(fs.collection(db, 'ubicaciones'), {
-                ...data,
-                activa: true,
+            
+            // Clean uppercase code ID
+            const rawCode = data.codigo || data.id || data.nombre.toUpperCase().trim()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^A-Z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '');
+            const finalId = rawCode || ('LOC_' + Date.now());
+
+            const newDoc = {
+                id: finalId,
+                codigo: finalId,
+                nombre: (data.nombre || '').trim(),
+                descripcion: (data.descripcion || '').trim(),
+                capacidad: Number(data.capacidad) || 100,
+                icono: data.icono || '📍',
+                piso: data.piso || 'Piso 1',
+                color: data.color || 'violet',
+                activa: data.activa !== false,
                 created_at: nowIso,
                 fecha_creacion: nowIso,
-            });
-            return ref.id;
+            };
+
+            await fs.setDoc(fs.doc(db, 'ubicaciones', finalId), newDoc);
+            return finalId;
         } catch (err) {
             firebaseError('crearUbicacion', err);
+            throw err;
         }
     }, []);
 
@@ -105,9 +113,10 @@ export function useLocations() {
         }
         try {
             const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'ubicaciones', id), data);
+            await fs.setDoc(fs.doc(db, 'ubicaciones', id), data, { merge: true });
         } catch (err) {
             firebaseError('actualizarUbicacion', err);
+            throw err;
         }
     }, []);
 
@@ -122,6 +131,7 @@ export function useLocations() {
             await fs.deleteDoc(fs.doc(db, 'ubicaciones', id));
         } catch (err) {
             firebaseError('eliminarUbicacion', err);
+            throw err;
         }
     }, []);
 
