@@ -300,171 +300,338 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   Applied via html.dark class — toggled by ThemeContext
+   DARK MODE OVERRIDES (TRUE BLACK / OLED & PURE DEEP ZINC)
+   Elimina los tonos azules/slate descoloridos y los reemplaza por negros
+   reales (#000000, #09090b, #0d0d10) con alto contraste y estética premium.
    ══════════════════════════════════════════════════════════════════════════ */
 html.dark {
     color-scheme: dark;
 }
+
 html.dark body {
-    background: #0f172a;
-    color: #e2e8f0;
-}
-html.dark .bg-app-bg {
-    background: #0f172a !important;
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+    color: #f4f4f5;
 }
 
-/* ── Cards & Panels ── */
+html.dark .bg-app-bg {
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+}
+
+/* ── Superficies principales, tarjetas y paneles ── */
 html.dark .glass-card,
 html.dark .glass-panel {
-    background: #1e293b;
-    border-color: #334155;
+    background: #0d0d10 !important;
+    border-color: #222226 !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
 }
+
 html.dark .kpi-card {
-    background: #1e293b;
-    border-color: #334155;
+    background: #0d0d10 !important;
+    border-color: #222226 !important;
+    box-shadow: 0 2px 10px -1px rgba(0, 0, 0, 0.5);
 }
+
 html.dark .kpi-card::after {
-    @apply bg-brand-400;
+    @apply bg-brand-500;
 }
 
-/* ── Buttons ── */
+/* ── Botones ── */
 html.dark .btn-ghost {
-    color: #94a3b8;
+    color: #a1a1aa;
 }
+
 html.dark .btn-ghost:hover {
-    background: #334155;
-    color: #e2e8f0;
+    background: #18181c !important;
+    color: #ffffff !important;
 }
+
 html.dark .btn-danger {
-    background: #1e293b;
-    border-color: #7f1d1d;
-    color: #fca5a5;
+    background: #140d0f !important;
+    border-color: #5f1515 !important;
+    color: #fca5a5 !important;
 }
+
+html.dark .btn-danger:hover {
+    background: #201014 !important;
+    color: #ffffff !important;
+}
+
 html.dark .btn-success {
-    background: #1e293b;
-    border-color: #064e3b;
-    color: #6ee7b7;
+    background: #0d1410 !important;
+    border-color: #064e3b !important;
+    color: #6ee7b7 !important;
 }
 
-/* ── Inputs ── */
+html.dark .btn-success:hover {
+    background: #122018 !important;
+    color: #ffffff !important;
+}
+
+/* ── Campos de entrada (Inputs & Selects) ── */
 html.dark .inp {
-    background: #0f172a;
-    border-color: #334155;
-    color: #e2e8f0;
+    background: #060608 !important;
+    border-color: #26262b !important;
+    color: #f4f4f5 !important;
 }
+
 html.dark .inp::placeholder {
-    color: #64748b;
+    color: #52525b !important;
 }
+
 html.dark .inp:focus {
-    border-color: #3b82f6;
+    border-color: #3b82f6 !important;
+    background: #09090c !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
 
-/* ── Modals ── */
-html.dark .modal-overlay {
-    background: rgba(0, 0, 0, 0.6);
-}
-html.dark .modal-box {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-/* ── Tables ── */
-html.dark .data-table thead tr {
-    background: #0f172a;
-    border-color: #334155;
-}
-html.dark .data-table th {
-    color: #94a3b8;
-}
-html.dark .data-table tbody tr {
-    border-color: #1e293b;
-}
-html.dark .data-table tbody tr:hover {
-    background: #334155;
-}
-html.dark .data-table td {
-    color: #cbd5e1;
-}
-
-/* ── Badges ── */
-html.dark .badge-gray {
-    background: #334155;
-    border-color: #475569;
-    color: #94a3b8;
-}
-
-/* ── Nav ── */
-html.dark .nav-link {
-    color: #94a3b8;
-}
-html.dark .nav-link:hover {
-    background: #1e293b;
-    color: #e2e8f0;
-}
-html.dark .nav-link.active {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-}
-
-/* ── Semáforo rows ── */
-html.dark .row-red {
-    background: rgba(239, 68, 68, 0.08);
-}
-html.dark .row-yellow {
-    background: rgba(245, 158, 11, 0.08);
-}
-
-/* ── Scrollbar ── */
-html.dark ::-webkit-scrollbar-thumb {
-    background: #475569;
-}
-html.dark ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
-}
-
-/* ── Generic element overrides (high-frequency Tailwind patterns) ── */
-html.dark header {
-    background: rgba(15, 23, 42, 0.85) !important;
-    border-color: rgba(51, 65, 85, 0.6) !important;
-}
-html.dark aside {
-    background: #0f172a !important;
-    border-color: #1e293b !important;
-}
-html.dark nav.fixed {
-    background: rgba(15, 23, 42, 0.95) !important;
-    border-color: rgba(51, 65, 85, 0.8) !important;
-}
-
-/* Utility: common bg patterns */
-html.dark [class~="bg-white"] { background-color: #1e293b !important; }
-html.dark [class~="bg-slate-50"] { background-color: #0f172a !important; }
-html.dark [class~="bg-slate-50\\/50"] { background-color: rgba(15,23,42,0.5) !important; }
-html.dark [class~="bg-slate-100"] { background-color: #1e293b !important; }
-html.dark [class~="bg-white\\/80"] { background-color: rgba(30,41,59,0.85) !important; }
-html.dark [class~="bg-white\\/95"] { background-color: rgba(30,41,59,0.95) !important; }
-html.dark [class~="bg-white\\/10"] { background-color: rgba(255,255,255,0.1) !important; }
-
-/* Utility: common text patterns */
-html.dark [class~="text-slate-900"] { color: #f1f5f9 !important; }
-html.dark [class~="text-slate-800"] { color: #e2e8f0 !important; }
-html.dark [class~="text-slate-700"] { color: #cbd5e1 !important; }
-html.dark [class~="text-slate-600"] { color: #94a3b8 !important; }
-html.dark [class~="text-slate-500"] { color: #94a3b8 !important; }
-html.dark [class~="text-slate-400"] { color: #64748b !important; }
-
-/* Utility: common border patterns */
-html.dark [class~="border-slate-200"] { border-color: #334155 !important; }
-html.dark [class~="border-slate-200\\/60"] { border-color: rgba(51,65,85,0.6) !important; }
-html.dark [class~="border-slate-100"] { border-color: #1e293b !important; }
-html.dark [class~="border-slate-50"] { border-color: #1e293b !important; }
-
-/* Select / dropdown in dark */
 html.dark select {
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: #060608 !important;
+    color: #f4f4f5 !important;
+    border-color: #26262b !important;
+}
+
+html.dark option {
+    background-color: #0d0d10 !important;
+    color: #f4f4f5 !important;
+}
+
+html.dark optgroup {
+    background-color: #08080a !important;
+    color: #a1a1aa !important;
+}
+
+html.dark textarea {
+    background-color: #060608 !important;
+    color: #f4f4f5 !important;
+    border-color: #26262b !important;
+}
+
+/* ── Modales & Overlays ── */
+html.dark .modal-overlay {
+    background: rgba(0, 0, 0, 0.82) !important;
+    backdrop-filter: blur(8px);
+}
+
+html.dark .modal-box {
+    background: #0d0d10 !important;
+    border-color: #26262b !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* ── Tablas ── */
+html.dark .data-table thead tr {
+    background: #060608 !important;
+    border-color: #222226 !important;
+}
+
+html.dark .data-table th {
+    color: #71717a !important;
+}
+
+html.dark .data-table tbody tr {
+    border-color: #18181c !important;
+}
+
+html.dark .data-table tbody tr:hover {
+    background: #141418 !important;
+}
+
+html.dark .data-table td {
+    color: #d4d4d8 !important;
+}
+
+/* ── Barra de Navegación Lateral (Sidebar) ── */
+html.dark aside {
+    background: #08080a !important;
+    border-color: #18181c !important;
+}
+
+html.dark .nav-link {
+    color: #8b8b93;
+}
+
+html.dark .nav-link:hover {
+    background: #141418 !important;
+    color: #ffffff !important;
+}
+
+html.dark .nav-link.active {
+    background: rgba(37, 99, 235, 0.16) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    color: #60a5fa !important;
+}
+
+html.dark .nav-link.active svg {
+    color: #3b82f6 !important;
+}
+
+/* ── Encabezado & Barra Móvil ── */
+html.dark header {
+    background: rgba(0, 0, 0, 0.88) !important;
+    border-color: rgba(38, 38, 42, 0.7) !important;
+    backdrop-filter: blur(12px);
+}
+
+html.dark nav.fixed {
+    background: rgba(8, 8, 10, 0.95) !important;
+    border-color: rgba(38, 38, 42, 0.8) !important;
+}
+
+/* ── Mapeos globales de utilidades de Tailwind a Negro Real ── */
+html.dark [class~="bg-white"] { background-color: #0d0d10 !important; }
+html.dark [class~="bg-slate-50"] { background-color: #050505 !important; }
+html.dark [class~="bg-slate-50\\/50"] { background-color: #000000 !important; }
+html.dark [class~="bg-slate-50\\/70"] { background-color: #09090b !important; }
+html.dark [class~="bg-slate-100"] { background-color: #151518 !important; }
+html.dark [class~="bg-white\\/80"] { background-color: rgba(13, 13, 16, 0.88) !important; }
+html.dark [class~="bg-white\\/95"] { background-color: rgba(13, 13, 16, 0.95) !important; }
+html.dark [class~="bg-white\\/10"] { background-color: rgba(255, 255, 255, 0.08) !important; }
+
+/* ── Tipografía de Alto Contraste ── */
+html.dark [class~="text-slate-900"] { color: #ffffff !important; }
+html.dark [class~="text-slate-800"] { color: #f4f4f5 !important; }
+html.dark [class~="text-slate-700"] { color: #d4d4d8 !important; }
+html.dark [class~="text-slate-600"] { color: #a1a1aa !important; }
+html.dark [class~="text-slate-500"] { color: #71717a !important; }
+html.dark [class~="text-slate-400"] { color: #52525b !important; }
+html.dark [class~="text-slate-300"] { color: #3f3f46 !important; }
+
+/* ── Bordes en Negro Real (Zinc/Carbon) ── */
+html.dark [class~="border-slate-200"] { border-color: #222226 !important; }
+html.dark [class~="border-slate-200\\/60"] { border-color: rgba(34, 34, 38, 0.6) !important; }
+html.dark [class~="border-slate-100"] { border-color: #18181c !important; }
+html.dark [class~="border-slate-50"] { border-color: #141416 !important; }
+html.dark [class~="divide-slate-50"] > * + * { border-color: #141416 !important; }
+html.dark [class~="divide-slate-100"] > * + * { border-color: #18181c !important; }
+
+/* ── Badges y Píldoras con Colores Neón Sutiles sobre Fondo Negro ── */
+html.dark [class~="bg-emerald-100"] {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+html.dark [class~="bg-amber-100"] {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+html.dark [class~="bg-emerald-50"],
+html.dark [class~="bg-emerald-50\\/80"] {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.25) !important;
+}
+html.dark [class~="text-emerald-700"],
+html.dark [class~="text-emerald-800"] {
+    color: #34d399 !important;
+}
+
+html.dark [class~="bg-amber-50"],
+html.dark [class~="bg-amber-50\\/80"] {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
+}
+html.dark [class~="text-amber-700"],
+html.dark [class~="text-amber-800"] {
+    color: #fbbf24 !important;
+}
+
+html.dark [class~="bg-rose-50"],
+html.dark [class~="bg-red-50"] {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.25) !important;
+}
+html.dark [class~="text-rose-700"],
+html.dark [class~="text-red-700"] {
+    color: #f87171 !important;
+}
+
+html.dark [class~="bg-brand-50"] {
+    background-color: rgba(37, 99, 235, 0.14) !important;
+    color: #60a5fa !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+}
+
+html.dark [class~="bg-violet-50"] {
+    background-color: rgba(139, 92, 246, 0.14) !important;
+    color: #c084fc !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+html.dark [class~="bg-blue-50"] {
+    background-color: rgba(59, 130, 246, 0.14) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+html.dark [class~="bg-purple-50"] {
+    background-color: rgba(168, 85, 247, 0.14) !important;
+    color: #c084fc !important;
+    border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+html.dark .badge-gray {
+    background: #18181c !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+
+/* ── Tarjetas de Producto & Hover States ── */
+html.dark button.group.bg-white:hover {
+    background-color: #141418 !important;
+    border-color: #2e2e34 !important;
+}
+
+html.dark [class~="hover\\:bg-slate-50"]:hover {
+    background-color: #18181c !important;
+}
+
+html.dark [class~="hover\\:bg-slate-100"]:hover {
+    background-color: #202024 !important;
+}
+
+/* Miniatura de producto sin foto */
+html.dark div[class~="bg-slate-50"][class~="border-slate-100"] {
+    background-color: #121215 !important;
+    border-color: #222226 !important;
+}
+
+/* ── Scrollbars OLED ── */
+html.dark ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 9999px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+}
+
+/* ── Rings & Accents en Modo Oscuro Real ── */
+html.dark [class~="border-amber-300"] {
+    border-color: rgba(245, 158, 11, 0.65) !important;
+}
+html.dark [class~="ring-amber-200"] {
+    --tw-ring-color: rgba(245, 158, 11, 0.25) !important;
+}
+html.dark [class~="ring-brand-200"] {
+    --tw-ring-color: rgba(59, 130, 246, 0.3) !important;
+}
+html.dark [class~="ring-brand-500\\/10"] {
+    --tw-ring-color: rgba(59, 130, 246, 0.25) !important;
 }
 
 /* Impresión de etiquetas de código de barras: cuando el modal de etiqueta

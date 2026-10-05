@@ -131,12 +131,15 @@ export default function ScanPage() {
                                             <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-white border border-emerald-200 text-emerald-800 shadow-xs">
                                                 <span>{ubicInfo.icono}</span>
                                                 <span>{ubicInfo.nombre}</span>
+                                                {(result.piso || ubicInfo.piso) && (
+                                                    <span className="text-slate-400 font-normal">· {result.piso || ubicInfo.piso}</span>
+                                                )}
                                             </span>
                                         )}
                                         {result.sub_ubicacion && (
                                             <p className="text-xs text-slate-600 mt-1.5 flex items-center gap-1">
                                                 <span className="font-semibold text-slate-800">📍 Sección:</span>
-                                                <span>{result.sub_ubicacion}</span>
+                                                <span className="bg-emerald-100/70 text-emerald-900 font-semibold px-2 py-0.5 rounded">{result.sub_ubicacion}</span>
                                             </p>
                                         )}
                                     </div>

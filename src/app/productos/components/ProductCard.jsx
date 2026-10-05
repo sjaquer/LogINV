@@ -61,7 +61,7 @@ export default function ProductCard({ producto, isGeneral, onView, selectMode, s
                     {producto.sub_ubicacion ? (
                         <span className="text-brand-600 font-semibold truncate">· {producto.sub_ubicacion}</span>
                     ) : (
-                        producto.piso && <span className="text-slate-400 truncate">· {producto.piso}</span>
+                        (producto.piso || ubicInfo?.piso) && <span className="text-slate-400 truncate">· {producto.piso || ubicInfo?.piso}</span>
                     )}
                 </div>
             )}

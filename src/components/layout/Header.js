@@ -5,15 +5,13 @@ import { useTheme } from '@/context/ThemeContext';
 import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-const LOCATION_COLORS = {
-    GENERAL: 'text-violet-600 bg-violet-50 border-violet-200',
-    TEMPLO: 'text-brand-600 bg-brand-50 border-brand-200',
-    ALMACEN_B1: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B2: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B3: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_B4: 'text-amber-600 bg-amber-50 border-amber-200',
-    ALMACEN_DISCOVERY: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-};
+function getLocBadgeStyle(info) {
+    if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200';
+    if (info?.piso === 'Primer Piso') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    if (info?.piso === 'Segundo Piso') return 'text-blue-700 bg-blue-50 border-blue-200';
+    if (info?.piso === 'Tercer Piso') return 'text-purple-700 bg-purple-50 border-purple-200';
+    return 'text-slate-700 bg-white border-slate-200';
+}
 
 const LANGUAGES = [
     { code: 'es', label: 'Español' },
@@ -31,6 +29,7 @@ export default function Header({ title }) {
     const { mode, toggleTheme, resolved } = useTheme();
     const [openLocMenu, setOpenLocMenu] = useState(false);
     const [openUserMenu, setOpenUserMenu] = useState(false);
+    const [locFilter, setLocFilter] = useState('');
     const locRef = useRef(null);
     const userRef = useRef(null);
     const ThemeIcon = THEME_ICONS[mode];
@@ -59,7 +58,7 @@ export default function Header({ title }) {
                 <div className="relative" ref={locRef}>
                     <button
                         onClick={() => { setOpenLocMenu(!openLocMenu); setOpenUserMenu(false); }}
-                        className={`flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl border transition-all font-bold ${LOCATION_COLORS[ubicacion] || 'text-slate-600 bg-white border-slate-200'}`}
+                        className={`flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl border transition-all font-bold ${getLocBadgeStyle(ubicacionInfo)}`}
                     >
                         <MapPin size={15} />
                         <span className="hidden sm:inline">{ubicacionInfo.nombre}</span>
@@ -68,20 +67,80 @@ export default function Header({ title }) {
                     </button>
 
                     {openLocMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg ring-1 ring-slate-900/5 py-1 z-40 animate-fade-in origin-top-right overflow-hidden">
-                            <p className="px-4 py-2 text-[10px] text-slate-400 uppercase tracking-wider font-bold border-b border-slate-100 mb-1">
-                                Ubicación
-                            </p>
-                            {UBICACIONES.map(loc => (
-                                <button
-                                    key={loc.id}
-                                    onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 flex items-center justify-between ${loc.id === ubicacion ? 'text-brand-600 font-medium bg-brand-50' : 'text-slate-600'}`}
-                                >
-                                    <span className="flex items-center gap-2">{loc.icono} {loc.nombre}</span>
-                                    {loc.id === ubicacion && <div className="w-1.5 h-1.5 rounded-full bg-brand-600" />}
-                                </button>
-                            ))}
+                        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white border border-slate-200 rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-40 animate-fade-in origin-top-right overflow-hidden flex flex-col max-h-[80vh]">
+                            <div className="px-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+                                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-bold">
+                                    Filtrar por Ubicación
+                                </span>
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                                    {UBICACIONES.length - 1} áreas
+                                </span>
+                            </div>
+
+                            {/* Search within locations */}
+                            <div className="p-2 border-b border-slate-100">
+                                <input
+                                    type="text"
+                                    placeholder="Buscar salón, almacén o piso..."
+                                    value={locFilter}
+                                    onChange={e => setLocFilter(e.target.value)}
+                                    className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:bg-white text-slate-800 placeholder-slate-400"
+                                />
+                            </div>
+
+                            {/* Scrollable list grouped by floor */}
+                            <div className="overflow-y-auto flex-1 divide-y divide-slate-50">
+                                {/* Opción GENERAL si coincide con la búsqueda */}
+                                {(!locFilter || 'todas las ubicaciones general'.includes(locFilter.toLowerCase())) && (
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => { setUbicacion('GENERAL'); setOpenLocMenu(false); setLocFilter(''); }}
+                                            className={`w-full text-left px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between font-semibold ${
+                                                ubicacion === 'GENERAL'
+                                                    ? 'text-violet-700 bg-violet-50 font-bold'
+                                                    : 'text-slate-700 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2">🌐 Todas las ubicaciones</span>
+                                            {ubicacion === 'GENERAL' && <div className="w-2 h-2 rounded-full bg-violet-600" />}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {['Primer Piso', 'Segundo Piso', 'Tercer Piso'].map(piso => {
+                                    const locsDelPiso = UBICACIONES.filter(l => 
+                                        l.piso === piso &&
+                                        (!locFilter || l.nombre.toLowerCase().includes(locFilter.toLowerCase()) || piso.toLowerCase().includes(locFilter.toLowerCase()))
+                                    );
+                                    if (locsDelPiso.length === 0) return null;
+
+                                    return (
+                                        <div key={piso} className="p-1.5">
+                                            <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/70 rounded-md mb-1 flex items-center justify-between">
+                                                <span>{piso}</span>
+                                                <span className="text-[9px] font-normal text-slate-400">{locsDelPiso.length} espacios</span>
+                                            </div>
+                                            {locsDelPiso.map(loc => (
+                                                <button
+                                                    key={loc.id}
+                                                    onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); setLocFilter(''); }}
+                                                    className={`w-full text-left px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between ${
+                                                        loc.id === ubicacion
+                                                            ? 'text-brand-700 bg-brand-50 font-bold'
+                                                            : 'text-slate-600 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    <span className="flex items-center gap-2 truncate">
+                                                        <span>{loc.icono}</span>
+                                                        <span className="truncate">{loc.nombre}</span>
+                                                    </span>
+                                                    {loc.id === ubicacion && <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>

@@ -34,9 +34,11 @@ module.exports = {
                     border: 'rgba(226, 232, 240, 0.8)',
                 },
                 dark: {
-                    DEFAULT: '#ffffff',
-                    panel: '#f8fafc',
-                    accent: '#f1f5f9',
+                    DEFAULT: '#000000',
+                    panel: '#0d0d10',
+                    surface: '#121215',
+                    border: '#222226',
+                    accent: '#18181c',
                 }
             },
             backgroundImage: {

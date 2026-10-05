@@ -192,7 +192,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
             categoria: p.categoria,
             ubicacion: ubicNombre(p.ubicacion),
             sub_ubicacion: p.sub_ubicacion || '',
-            piso: p.piso || '',
+            piso: p.piso || UBICACIONES.find(u => u.id === p.ubicacion)?.piso || '',
             estado: ESTADO_LABEL[p.estado] || p.estado || '',
             stock_actual: p.stock_actual,
             stock_minimo: p.stock_minimo ?? 0,

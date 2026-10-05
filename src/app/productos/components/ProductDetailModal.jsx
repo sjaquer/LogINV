@@ -97,9 +97,9 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
 
                     {/* Campos */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Field icon={MapPin} label="Almacén / Depósito">
+                        <Field icon={MapPin} label="Almacén / Depósito / Salón">
                             {ubicInfo ? `${ubicInfo.icono} ${ubicInfo.nombre}` : producto.ubicacion}
-                            {producto.piso && ` (${producto.piso})`}
+                            {(producto.piso || ubicInfo?.piso) && ` (${producto.piso || ubicInfo?.piso})`}
                         </Field>
                         <Field icon={MapPin} label="Parte del almacén / Sección">
                             {producto.sub_ubicacion ? (
