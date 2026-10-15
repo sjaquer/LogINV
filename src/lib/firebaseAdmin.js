@@ -13,14 +13,20 @@ import { getFirestore } from 'firebase-admin/firestore';
 function getAdminApp() {
     if (getApps().length) return getApps()[0];
 
-    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-    const privateKey = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+    let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY || '';
+
+    if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        privateKey = privateKey.slice(1, -1);
+    }
+    privateKey = privateKey.replace(/\\n/g, '\n');
 
     if (!projectId || !clientEmail || !privateKey) {
         throw new Error(
-            'Firebase Admin no está configurado. Define FIREBASE_ADMIN_PROJECT_ID, ' +
-            'FIREBASE_ADMIN_CLIENT_EMAIL y FIREBASE_ADMIN_PRIVATE_KEY (service account).'
+            'Firebase Admin no está configurado en el servidor. ' +
+            'Define FIREBASE_ADMIN_CLIENT_EMAIL y FIREBASE_ADMIN_PRIVATE_KEY (service account) en Vercel.'
         );
     }
 

@@ -324,13 +324,17 @@ service cloud.firestore {
                     && request.resource.data.rol is string
                     && request.resource.data.rol in ['admin', 'encargado', 'voluntario']
                     && request.resource.data.activo is bool
-                    && strLenOk('telefono', 20)
+                    && strLenOk('telefono', 50)
+                    && strLenOk('departamento', 100)
                     && timestampOk('fecha_creacion');
 
       allow update: if isSignedIn()
                     && docSizeOk()
                     && strLenOk('nombre', 100)
-                    && strLenOk('telefono', 20);
+                    && strLenOk('telefono', 50)
+                    && strLenOk('departamento', 100)
+                    && (!request.resource.data.keys().hasAny(['rol']) || request.resource.data.rol in ['admin', 'encargado', 'voluntario'])
+                    && boolOk('activo');
 
       allow delete: if isSignedIn();
     }

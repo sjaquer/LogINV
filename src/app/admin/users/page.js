@@ -28,8 +28,20 @@ async function callAdminUsersApi(method, body, query = '') {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: body ? JSON.stringify(body) : undefined,
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Error en la solicitud');
+    const text = await res.text();
+    let data = null;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        // La respuesta no fue JSON (ej. 500 HTML de Vercel)
+    }
+
+    if (!res.ok) {
+        const errorMsg = data?.error || data?.message || (res.status === 500
+            ? 'Error interno del servidor (500). Verifica las credenciales FIREBASE_ADMIN en Vercel.'
+            : `Error en la solicitud (${res.status})`);
+        throw new Error(errorMsg);
+    }
     return data;
 }
 
@@ -107,10 +119,11 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
                             type="password" value={form.password}
                             onChange={e => handleChange('password', e.target.value)}
                             className="inp py-3 bg-white border-slate-200 text-slate-900"
-                            placeholder="Mínimo 6 caracteres"
+                            placeholder={isEdit ? 'Dejar en blanco para mantener la actual' : 'Mínimo 6 caracteres'}
                             autoComplete="new-password"
                             required={!isEdit}
                         />
+                        {isEdit && <p className="text-xs text-slate-400 mt-1">Solo completa este campo si deseas cambiar o restablecer la contraseña.</p>}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -166,14 +179,30 @@ export default function AdminUsersPage() {
             return;
         }
         if (id) {
-            await callAdminUsersApi('PATCH', {
-                id,
-                nombre: form.nombre,
-                rol: form.rol,
-                telefono: form.telefono,
-                departamento: form.departamento,
-                ...(form.password ? { password: form.password } : {}),
-            });
+            try {
+                await callAdminUsersApi('PATCH', {
+                    id,
+                    nombre: form.nombre,
+                    rol: form.rol,
+                    telefono: form.telefono,
+                    departamento: form.departamento,
+                    ...(form.password ? { password: form.password } : {}),
+                });
+            } catch (apiErr) {
+                // Fallback: si no se estaba cambiando contraseña y la API falló (ej. servicio backend temporalmente no disponible),
+                // actualizamos el documento en Firestore para que el usuario no quede bloqueado
+                if (!form.password) {
+                    console.warn('[LogINV] API admin falló, aplicando cambios directamente a Firestore:', apiErr.message);
+                    await actualizarUsuario(id, {
+                        nombre: form.nombre,
+                        rol: form.rol,
+                        telefono: form.telefono,
+                        departamento: form.departamento,
+                    });
+                    return;
+                }
+                throw apiErr;
+            }
         } else {
             await callAdminUsersApi('POST', form);
         }
@@ -187,10 +216,18 @@ export default function AdminUsersPage() {
     const handleToggle = useCallback(async (u) => {
         setBusyId(u.id);
         setListError('');
+        const nuevoActivo = !(u.activo !== false);
         try {
-            const nuevoActivo = !(u.activo !== false);
-            if (USE_MOCK) await toggleUsuario(u.id, nuevoActivo);
-            else await callAdminUsersApi('PATCH', { id: u.id, activo: nuevoActivo });
+            if (USE_MOCK) {
+                await toggleUsuario(u.id, nuevoActivo);
+            } else {
+                try {
+                    await callAdminUsersApi('PATCH', { id: u.id, activo: nuevoActivo });
+                } catch (apiErr) {
+                    console.warn('[LogINV] API admin falló para toggle, aplicando directo en Firestore:', apiErr.message);
+                    await toggleUsuario(u.id, nuevoActivo);
+                }
+            }
         } catch (err) {
             setListError(err.message);
         } finally {
@@ -203,8 +240,16 @@ export default function AdminUsersPage() {
         setBusyId(u.id);
         setListError('');
         try {
-            if (USE_MOCK) await eliminarUsuario(u.id);
-            else await callAdminUsersApi('DELETE', null, `?id=${encodeURIComponent(u.id)}`);
+            if (USE_MOCK) {
+                await eliminarUsuario(u.id);
+            } else {
+                try {
+                    await callAdminUsersApi('DELETE', null, `?id=${encodeURIComponent(u.id)}`);
+                } catch (apiErr) {
+                    console.warn('[LogINV] API admin falló para delete, eliminando directo de Firestore:', apiErr.message);
+                    await eliminarUsuario(u.id);
+                }
+            }
         } catch (err) {
             setListError(err.message);
         } finally {

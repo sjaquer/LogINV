@@ -10,6 +10,9 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 class HttpError extends Error {
     constructor(message, status) {
         super(message);
@@ -22,14 +25,25 @@ async function requireAdmin(request) {
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
     if (!idToken) throw new HttpError('No autenticado', 401);
 
-    const decoded = await adminAuth().verifyIdToken(idToken).catch(() => {
-        throw new HttpError('Sesión inválida o expirada', 401);
+    const decoded = await adminAuth().verifyIdToken(idToken).catch((err) => {
+        throw new HttpError(`Sesión inválida o expirada: ${err.message}`, 401);
     });
 
-    const snap = await adminDb().collection('usuarios').where('email', '==', decoded.email).limit(1).get();
-    if (snap.empty) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403);
+    // 1. Buscar primero directamente por uid (en LogINV el id del doc en usuarios es el UID de Auth)
+    let usuario = null;
+    const docSnap = await adminDb().collection('usuarios').doc(decoded.uid).get();
+    if (docSnap.exists) {
+        usuario = docSnap.data();
+    } else if (decoded.email) {
+        // Fallback por email en caso de ids generados previamente
+        const snap = await adminDb().collection('usuarios').where('email', '==', decoded.email).limit(1).get();
+        if (!snap.empty) {
+            usuario = snap.docs[0].data();
+        }
+    }
 
-    const usuario = snap.docs[0].data();
+    if (!usuario) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403);
+
     if (usuario.rol !== 'admin' || usuario.activo === false) {
         throw new HttpError('Requiere rol de administrador', 403);
     }
@@ -117,12 +131,36 @@ export async function PATCH(request) {
         if (typeof departamento === 'string') docUpdates.departamento = departamento;
 
         if (Object.keys(authUpdates).length) {
-            await adminAuth().updateUser(id, authUpdates).catch((err) => {
-                throw new HttpError(err.message, 400);
-            });
+            try {
+                await adminAuth().updateUser(id, authUpdates);
+            } catch (err) {
+                if (err.code === 'auth/user-not-found') {
+                    // Si se intentó asignar una nueva contraseña a un usuario que existía en Firestore
+                    // pero aún no en Firebase Auth (ej. seed inicial), crearlo en Auth
+                    if (authUpdates.password) {
+                        const uDoc = await adminDb().collection('usuarios').doc(id).get();
+                        const uData = uDoc.data();
+                        if (uData?.email) {
+                            await adminAuth().createUser({
+                                uid: id,
+                                email: uData.email,
+                                password: authUpdates.password,
+                                displayName: authUpdates.displayName || uData.nombre,
+                                disabled: authUpdates.disabled ?? false,
+                            });
+                        } else {
+                            throw new HttpError('No se encontró el correo del usuario para registrar sus credenciales', 400);
+                        }
+                    } else {
+                        console.warn(`[LogINV] Usuario ${id} no encontrado en Firebase Auth, actualizando solo Firestore.`);
+                    }
+                } else {
+                    throw new HttpError(err.message || 'Error al actualizar credenciales en Auth', 400);
+                }
+            }
         }
         if (Object.keys(docUpdates).length) {
-            await adminDb().collection('usuarios').doc(id).update(docUpdates);
+            await adminDb().collection('usuarios').doc(id).set(docUpdates, { merge: true });
         }
 
         return NextResponse.json({ ok: true });
