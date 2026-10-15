@@ -56,6 +56,30 @@ function handleError(err) {
     return NextResponse.json({ error: err.message || 'Error inesperado' }, { status });
 }
 
+// ─── Estado / Healthcheck de Firebase Admin en el servidor ─────────────────
+export async function GET() {
+    try {
+        const auth = adminAuth();
+        return NextResponse.json({
+            ok: true,
+            hasAuth: !!auth,
+            projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+            hasClientEmail: !!(process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL),
+            hasPrivateKey: !!(process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY),
+        });
+    } catch (err) {
+        return NextResponse.json({
+            ok: false,
+            error: err.message,
+            envCheck: {
+                hasProjectId: !!(process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+                hasClientEmail: !!(process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL),
+                hasPrivateKey: !!(process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY),
+            }
+        }, { status: 500 });
+    }
+}
+
 // ─── Crear una cuenta de acceso ────────────────────────────────────────────
 export async function POST(request) {
     try {

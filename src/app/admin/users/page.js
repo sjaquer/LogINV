@@ -47,6 +47,7 @@ async function callAdminUsersApi(method, body, query = '') {
 
 function UsuarioFormModal({ usuario, onClose, onSave }) {
     const isEdit = !!usuario?.id;
+    const [cambiarPassword, setCambiarPassword] = useState(false);
     const [form, setForm] = useState({
         nombre: usuario?.nombre || '',
         email: usuario?.email || '',
@@ -68,12 +69,16 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
         if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return; }
         if (!isEdit && !form.email.trim()) { setError('El correo es obligatorio'); return; }
         if (!isEdit && form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-        if (isEdit && form.password && form.password.length < 6) { setError('La nueva contraseña debe tener al menos 6 caracteres'); return; }
+        if (isEdit && cambiarPassword && form.password.length < 6) { setError('La nueva contraseña debe tener al menos 6 caracteres'); return; }
 
         setSaving(true);
         setError('');
         try {
-            await onSave(form, isEdit ? usuario.id : null);
+            const payload = {
+                ...form,
+                password: isEdit && !cambiarPassword ? '' : form.password,
+            };
+            await onSave(payload, isEdit ? usuario.id : null);
             onClose();
         } catch (err) {
             setError(err.message || 'Error al guardar');
@@ -111,20 +116,54 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
                         />
                         {isEdit && <p className="text-xs text-slate-400 mt-1">El correo no se puede cambiar una vez creada la cuenta.</p>}
                     </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">
-                            {isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña *'}
-                        </label>
-                        <input
-                            type="password" value={form.password}
-                            onChange={e => handleChange('password', e.target.value)}
-                            className="inp py-3 bg-white border-slate-200 text-slate-900"
-                            placeholder={isEdit ? 'Dejar en blanco para mantener la actual' : 'Mínimo 6 caracteres'}
-                            autoComplete="new-password"
-                            required={!isEdit}
-                        />
-                        {isEdit && <p className="text-xs text-slate-400 mt-1">Solo completa este campo si deseas cambiar o restablecer la contraseña.</p>}
-                    </div>
+                    {isEdit ? (
+                        <div className="pt-1">
+                            {!cambiarPassword ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setCambiarPassword(true)}
+                                    className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 p-2 rounded-lg hover:bg-brand-50/60 transition-colors"
+                                >
+                                    <KeyRound size={14} /> Cambiar contraseña de esta cuenta
+                                </button>
+                            ) : (
+                                <div className="space-y-1.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-xs font-bold text-slate-700">Nueva contraseña</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setCambiarPassword(false); handleChange('password', ''); }}
+                                            className="text-xs text-slate-400 hover:text-slate-600"
+                                        >
+                                            Cancelar cambio
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={form.password}
+                                        onChange={e => handleChange('password', e.target.value)}
+                                        className="inp py-2.5 bg-white border-slate-200 text-slate-900 text-sm"
+                                        placeholder="Mínimo 6 caracteres"
+                                        autoComplete="new-password"
+                                        required
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña *</label>
+                            <input
+                                type="password"
+                                value={form.password}
+                                onChange={e => handleChange('password', e.target.value)}
+                                className="inp py-3 bg-white border-slate-200 text-slate-900"
+                                placeholder="Mínimo 6 caracteres"
+                                autoComplete="new-password"
+                                required
+                            />
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Rol</label>

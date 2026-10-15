@@ -13,15 +13,15 @@ import { getFirestore } from 'firebase-admin/firestore';
 function getAdminApp() {
     if (getApps().length) return getApps()[0];
 
-    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-    let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY || '';
+    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = (process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL || '').trim();
+    let privateKey = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY || '').trim();
 
     if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
         (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
         privateKey = privateKey.slice(1, -1);
     }
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    privateKey = privateKey.replace(/\\n/g, '\n').trim();
 
     if (!projectId || !clientEmail || !privateKey) {
         throw new Error(
