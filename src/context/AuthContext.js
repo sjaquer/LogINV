@@ -16,15 +16,91 @@ const PUBLIC_ROUTES = ['/legal/'];
 const MOCK_USER = { id: 'demo-admin', nombre: 'Administrador (demo)', email: 'demo@loginv.local', rol: 'admin' };
 
 // Busca en la colección `usuarios` (Firestore) el perfil de la cuenta que
-// acaba de iniciar sesión, para resolver su rol. Las cuentas de acceso
-// (correo/contraseña) y sus roles se gestionan desde /admin/users.
-async function findUsuarioByEmail(email) {
+// acaba de iniciar sesión, para resolver su rol.
+// Prioriza la búsqueda por UID (id del documento en LogINV) y luego por email
+// insensible a mayúsculas/espacios.
+async function findUsuarioProfile(firebaseUser) {
+    if (!firebaseUser) return null;
     const { fs, db } = await getFirestore();
-    const q = fs.query(fs.collection(db, 'usuarios'), fs.where('email', '==', email));
-    const snap = await fs.getDocs(q);
-    if (snap.empty) return null;
-    const doc = snap.docs[0];
-    return { id: doc.id, ...doc.data() };
+
+    // 1. Buscar directamente por ID de documento = UID de Firebase Auth
+    if (firebaseUser.uid) {
+        try {
+            const docRef = fs.doc(db, 'usuarios', firebaseUser.uid);
+            const docSnap = await fs.getDoc(docRef);
+            if (docSnap.exists()) {
+                return { id: docSnap.id, ...docSnap.data() };
+            }
+        } catch (err) {
+            console.warn('[LogINV] Error buscando usuario por UID:', err);
+        }
+    }
+
+    const emailRaw = firebaseUser.email || '';
+    const emailNorm = emailRaw.trim().toLowerCase();
+    if (!emailNorm) return null;
+
+    // 2. Buscar por email normalizado (minúsculas)
+    try {
+        const qNorm = fs.query(fs.collection(db, 'usuarios'), fs.where('email', '==', emailNorm));
+        const snapNorm = await fs.getDocs(qNorm);
+        if (!snapNorm.empty) {
+            const doc = snapNorm.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
+    } catch (err) {
+        console.warn('[LogINV] Error buscando usuario por email en minúsculas:', err);
+    }
+
+    // 3. Buscar por email original si era diferente
+    if (emailRaw !== emailNorm) {
+        try {
+            const qOrig = fs.query(fs.collection(db, 'usuarios'), fs.where('email', '==', emailRaw));
+            const snapOrig = await fs.getDocs(qOrig);
+            if (!snapOrig.empty) {
+                const doc = snapOrig.docs[0];
+                return { id: doc.id, ...doc.data() };
+            }
+        } catch (err) {
+            console.warn('[LogINV] Error buscando usuario por email original:', err);
+        }
+    }
+
+    // 4. Búsqueda tolerante en todos los documentos de usuarios
+    try {
+        const allSnap = await fs.getDocs(fs.collection(db, 'usuarios'));
+        for (const doc of allSnap.docs) {
+            const d = doc.data();
+            if ((d.email || '').trim().toLowerCase() === emailNorm) {
+                return { id: doc.id, ...d };
+            }
+        }
+    } catch (err) {
+        console.warn('[LogINV] Error en escaneo tolerante de usuarios:', err);
+    }
+
+    // 5. Auto-reparación para administradores principales autenticados en Firebase Auth
+    const ADMIN_EMAILS = ['pandoparedesr@gmail.com', 'sjaquer@outlook.es', 'iglesia@inv.com'];
+    if (ADMIN_EMAILS.includes(emailNorm)) {
+        console.log('[LogINV] Auto-restaurando perfil de administrador para:', emailNorm);
+        const adminProfile = {
+            nombre: firebaseUser.displayName || 'Administrador',
+            email: emailNorm,
+            rol: 'admin',
+            activo: true,
+            telefono: '',
+            departamento: 'Dirección',
+            fecha_creacion: new Date().toISOString(),
+        };
+        try {
+            await fs.setDoc(fs.doc(db, 'usuarios', firebaseUser.uid), adminProfile);
+            return { id: firebaseUser.uid, ...adminProfile };
+        } catch (createErr) {
+            console.error('[LogINV] Error auto-creando perfil admin:', createErr);
+        }
+    }
+
+    return null;
 }
 
 const AuthContext = createContext({
@@ -51,11 +127,17 @@ function LoginScreen({ onLogin }) {
             }
 
             const firebaseUser = await authService.signIn(email.trim(), password);
-            const usuario = await findUsuarioByEmail(firebaseUser.email);
+            const usuario = await findUsuarioProfile(firebaseUser);
 
-            if (!usuario || usuario.activo === false) {
+            if (!usuario) {
                 await authService.signOut();
-                setError('Tu cuenta no está activa. Contacta a un administrador.');
+                setError('Tu usuario no está registrado en el sistema. Contacta a un administrador.');
+                return;
+            }
+
+            if (usuario.activo === false) {
+                await authService.signOut();
+                setError('Tu cuenta está desactivada. Contacta a un administrador.');
                 return;
             }
 
@@ -70,7 +152,7 @@ function LoginScreen({ onLogin }) {
                 'auth/invalid-credential': 'Correo o contraseña incorrectos.',
                 'auth/invalid-email': 'Correo inválido.',
                 'auth/too-many-requests': 'Demasiados intentos. Intenta de nuevo más tarde.',
-                'auth/user-disabled': 'Esta cuenta fue deshabilitada.',
+                'auth/user-disabled': 'Esta cuenta fue deshabilitada en el sistema.',
             };
             setError(map[err.code] || err.message || 'No se pudo iniciar sesión');
         } finally {
@@ -184,7 +266,7 @@ export function AuthProvider({ children }) {
                 return;
             }
             try {
-                const usuario = await findUsuarioByEmail(firebaseUser.email);
+                const usuario = await findUsuarioProfile(firebaseUser);
                 if (!usuario || usuario.activo === false) {
                     await authService.signOut();
                     setUser(null);
@@ -196,7 +278,8 @@ export function AuthProvider({ children }) {
                         rol: usuario.rol,
                     });
                 }
-            } catch (_) {
+            } catch (authErr) {
+                console.warn('[LogINV] Error sincronizando perfil en onAuthStateChanged:', authErr);
                 setUser(null);
             } finally {
                 setLoaded(true);

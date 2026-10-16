@@ -45,6 +45,43 @@ async function callAdminUsersApi(method, body, query = '') {
     return data;
 }
 
+// Fallback cliente: Si la API del servidor falla (ej. credenciales FIREBASE_ADMIN no configuradas en Vercel),
+// crea la cuenta de acceso usando una instancia secundaria de Firebase Auth en el navegador
+// sin cerrar la sesión del administrador actual.
+async function crearUsuarioResiliente(form) {
+    const { initializeApp, deleteApp } = await import('firebase/app');
+    const { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } = await import('firebase/auth');
+    const { firebaseConfig } = await import('@/lib/firebase');
+    const { getFirestore } = await import('@/hooks/useFirestoreQuery');
+
+    const appName = `UserCreator_${Date.now()}`;
+    const secondaryApp = initializeApp(firebaseConfig, appName);
+    try {
+        const secondaryAuth = getAuth(secondaryApp);
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, form.email.trim(), form.password);
+        if (form.nombre?.trim()) {
+            await updateProfile(cred.user, { displayName: form.nombre.trim() }).catch(() => {});
+        }
+        const uid = cred.user.uid;
+        await signOut(secondaryAuth);
+
+        // Guardar documento en Firestore con la sesión del admin actual
+        const { fs, db } = await getFirestore();
+        await fs.setDoc(fs.doc(db, 'usuarios', uid), {
+            nombre: form.nombre.trim(),
+            email: form.email.trim(),
+            rol: form.rol || 'voluntario',
+            activo: true,
+            telefono: form.telefono || '',
+            departamento: form.departamento || '',
+            fecha_creacion: new Date().toISOString(),
+        });
+        return { id: uid };
+    } finally {
+        await deleteApp(secondaryApp).catch(() => {});
+    }
+}
+
 function UsuarioFormModal({ usuario, onClose, onSave }) {
     const isEdit = !!usuario?.id;
     const [cambiarPassword, setCambiarPassword] = useState(false);
@@ -228,22 +265,34 @@ export default function AdminUsersPage() {
                     ...(form.password ? { password: form.password } : {}),
                 });
             } catch (apiErr) {
-                // Fallback: si no se estaba cambiando contraseña y la API falló (ej. servicio backend temporalmente no disponible),
-                // actualizamos el documento en Firestore para que el usuario no quede bloqueado
-                if (!form.password) {
-                    console.warn('[LogINV] API admin falló, aplicando cambios directamente a Firestore:', apiErr.message);
-                    await actualizarUsuario(id, {
-                        nombre: form.nombre,
-                        rol: form.rol,
-                        telefono: form.telefono,
-                        departamento: form.departamento,
-                    });
-                    return;
+                console.warn('[LogINV] API admin falló, aplicando cambios directamente a Firestore:', apiErr.message);
+                await actualizarUsuario(id, {
+                    nombre: form.nombre,
+                    rol: form.rol,
+                    telefono: form.telefono,
+                    departamento: form.departamento,
+                });
+                if (form.password) {
+                    try {
+                        await authService.resetPassword(form.email);
+                    } catch (resetErr) {
+                        console.warn('[LogINV] Error enviando correo de reset:', resetErr);
+                    }
                 }
-                throw apiErr;
+                return;
             }
         } else {
-            await callAdminUsersApi('POST', form);
+            try {
+                await callAdminUsersApi('POST', form);
+            } catch (apiErr) {
+                console.warn('[LogINV] API /api/admin/users falló en creación, usando fallback directo de cliente:', apiErr.message);
+                try {
+                    await crearUsuarioResiliente(form);
+                } catch (clientErr) {
+                    console.error('[LogINV] Fallback de creación cliente también falló:', clientErr);
+                    throw new Error(clientErr.message || apiErr.message);
+                }
+            }
         }
     }, [crearUsuario, actualizarUsuario]);
 

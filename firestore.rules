@@ -110,7 +110,7 @@ service cloud.firestore {
                     && strLenOk('piso', 100)
                     && strLenOk('sub_ubicacion', 200)
                     && strLenOk('estado', 50)
-                    && strLenOk('imagen_url', 250000)
+                    && strLenOk('imagen_url', 1048000)
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo')
                     && timestampOk('fecha_creacion')
@@ -131,7 +131,7 @@ service cloud.firestore {
                     && strLenOk('piso', 100)
                     && strLenOk('sub_ubicacion', 200)
                     && strLenOk('estado', 50)
-                    && strLenOk('imagen_url', 250000)
+                    && strLenOk('imagen_url', 1048000)
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo');
 
@@ -147,7 +147,7 @@ service cloud.firestore {
                     && request.resource.data.keys().hasAll(['producto_id', 'tipo', 'cantidad'])
                     && request.resource.data.producto_id is string
                     && request.resource.data.tipo is string
-                    && (request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE', 'CONTEO', 'ingreso', 'salida', 'merma', 'ajuste', 'conteo'])
+                    && (request.resource.data.tipo in ['INGRESO', 'SALIDA', 'MERMA', 'AJUSTE', 'CONTEO', 'PRESTAMO', 'DEVOLUCION', 'ingreso', 'salida', 'merma', 'ajuste', 'conteo', 'prestamo', 'devolucion'])
                     && request.resource.data.cantidad is number
                     && request.resource.data.cantidad >= 0
                     && strLenOk('producto_nombre', 200)

@@ -107,8 +107,8 @@ export const GOOGLE_DRIVE = {
 
 // ─── Compresión de imágenes de productos (antes de subir a Drive) ────────
 export const IMAGE_COMPRESSION = {
-  MAX_DIMENSION: 1600, // px, lado más largo
-  QUALITY: 0.8,        // 0–1 (JPEG/WebP)
+  MAX_DIMENSION: 1200, // px, lado más largo (balance perfecto calidad/tamaño <80KB)
+  QUALITY: 0.75,       // 0–1 (JPEG/WebP)
 };
 
 // ─── Configuración de la Aplicación ──────────────────────────────────────
