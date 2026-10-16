@@ -4,7 +4,7 @@ import {
     X, Pencil, Trash2, Copy, Tag, MapPin, Layers,
     ClipboardList, StickyNote, Clock, Maximize2, Minimize2, ZoomIn,
 } from 'lucide-react';
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import ProductThumb, { formatProductImageUrl } from '@/components/ui/ProductThumb';
 import { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
@@ -55,7 +55,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
         }
     });
 
-    const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
+    const ubicInfo = getLocationInfo(producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
     const ambientBg = producto.imagen_url ? formatProductImageUrl(producto.imagen_url) : null;
 

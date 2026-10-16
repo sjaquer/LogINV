@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation, UBICACIONES } from '@/context/LocationContext';
+import { useLocation, getLocationInfo } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState, StockBar } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
@@ -199,7 +199,7 @@ function ProductosPageInner() {
     const selectedProductos = useMemo(
         () => productosFiltrados
             .filter(p => selectedIds.has(p.id))
-            .map(p => ({ ...p, ubicacion_nombre: isGeneral ? UBICACIONES.find(u => u.id === p.ubicacion)?.nombre : undefined })),
+            .map(p => ({ ...p, ubicacion_nombre: isGeneral ? getLocationInfo(p.ubicacion)?.nombre : undefined })),
         [productosFiltrados, selectedIds, isGeneral]
     );
 
@@ -368,7 +368,7 @@ function ProductosPageInner() {
                         /* ── Vista de Lista Compacta ── */
                         <div className="bg-white dark:bg-[#0d0d10] border border-slate-200/90 dark:border-[#222226] rounded-2xl overflow-hidden shadow-xs divide-y divide-slate-100 dark:divide-zinc-800/80">
                             {productosFiltrados.map(p => {
-                                const ubicInfo = UBICACIONES.find(u => u.id === p.ubicacion);
+                                const ubicInfo = getLocationInfo(p.ubicacion);
                                 const bajoStock = p.stock_actual <= (p.stock_minimo ?? 0);
                                 const isSelected = selectedIds.has(p.id);
 

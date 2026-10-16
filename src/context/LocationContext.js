@@ -34,6 +34,32 @@ export const UBICACIONES_FISICAS = UBICACIONES_DEFAULT.filter(u => u.id !== 'GEN
 
 const GENERAL_DEFAULT = UBICACIONES_DEFAULT[0];
 
+// Live in-memory cache for helper functions outside React hook lifecycle
+let liveLocationsCache = [...UBICACIONES_DEFAULT];
+
+/**
+ * Resilient lookup helper to resolve any location ID, code, or name to its location object.
+ * Safe for use in components, hooks, export scripts, and modals.
+ */
+export function getLocationInfo(id, customList) {
+    if (!id || id === 'GENERAL') return GENERAL_DEFAULT;
+    const list = customList || liveLocationsCache;
+    const found = list.find(u => 
+        u.id === id || 
+        u.codigo === id || 
+        (u.nombre && u.nombre.toLowerCase() === String(id).toLowerCase())
+    );
+    if (found) return found;
+    return {
+        id: String(id),
+        codigo: String(id),
+        nombre: String(id),
+        icono: '📍',
+        color: 'slate',
+        activa: true,
+    };
+}
+
 const LocationContext = createContext({
     ubicacion: 'GENERAL',
     setUbicacion: () => {},
@@ -41,7 +67,10 @@ const LocationContext = createContext({
     isGeneral: true,
     UBICACIONES: UBICACIONES_DEFAULT,
     ubicaciones: UBICACIONES_DEFAULT,
+    ubicacionesActivas: UBICACIONES_DEFAULT,
     ubicacionesFisicas: UBICACIONES_FISICAS,
+    todasLasUbicacionesFisicas: UBICACIONES_FISICAS,
+    getLocationInfo,
 });
 
 export function LocationProvider({ children }) {
@@ -64,7 +93,9 @@ export function LocationProvider({ children }) {
                                 ...d.data(),
                             }));
                             dbList.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
-                            setUbicacionesList([GENERAL_DEFAULT, ...dbList]);
+                            const fullList = [GENERAL_DEFAULT, ...dbList];
+                            liveLocationsCache = fullList;
+                            setUbicacionesList(fullList);
                         }
                     },
                     (err) => {
@@ -78,18 +109,38 @@ export function LocationProvider({ children }) {
         return () => unsub?.();
     }, []);
 
+    // Restaurar desde localStorage o validar ubicación existente
     useEffect(() => {
         try {
             const stored = localStorage.getItem('loginv_ubicacion');
-            if (stored && ubicacionesList.find(u => u.id === stored)) {
-                setUbicacion(stored);
+            if (stored && stored !== 'GENERAL') {
+                const exists = ubicacionesList.some(u => u.id === stored);
+                if (exists) {
+                    setUbicacion(stored);
+                } else if (ubicacionesList.length > 1) {
+                    // Si la ubicación guardada ya no existe en Firestore, auto-sanar a GENERAL
+                    setUbicacion('GENERAL');
+                    localStorage.setItem('loginv_ubicacion', 'GENERAL');
+                }
             }
         } catch (_) {}
     }, [ubicacionesList]);
 
+    // Auto-sanar si la ubicación actual seleccionada fue eliminada
+    useEffect(() => {
+        if (ubicacion !== 'GENERAL') {
+            const exists = ubicacionesList.some(u => u.id === ubicacion);
+            if (!exists && ubicacionesList.length > 1) {
+                setUbicacion('GENERAL');
+                try { localStorage.setItem('loginv_ubicacion', 'GENERAL'); } catch (_) {}
+            }
+        }
+    }, [ubicacionesList, ubicacion]);
+
     function handleSetUbicacion(id) {
-        setUbicacion(id);
-        try { localStorage.setItem('loginv_ubicacion', id); } catch (_) {}
+        const targetId = id || 'GENERAL';
+        setUbicacion(targetId);
+        try { localStorage.setItem('loginv_ubicacion', targetId); } catch (_) {}
     }
 
     const ubicacionInfo = useMemo(() => {
@@ -97,7 +148,19 @@ export function LocationProvider({ children }) {
     }, [ubicacionesList, ubicacion]);
 
     const isGeneral = ubicacion === 'GENERAL';
+
+    // Ubicaciones activas para el switcher del header
+    const ubicacionesActivas = useMemo(() => {
+        return ubicacionesList.filter(u => u.id === 'GENERAL' || u.activa !== false);
+    }, [ubicacionesList]);
+
+    // Ubicaciones físicas activas para asignación de productos
     const ubicacionesFisicas = useMemo(() => {
+        return ubicacionesList.filter(u => u.id !== 'GENERAL' && u.activa !== false);
+    }, [ubicacionesList]);
+
+    // Todas las ubicaciones físicas (incluye inactivas para administración o historial)
+    const todasLasUbicacionesFisicas = useMemo(() => {
         return ubicacionesList.filter(u => u.id !== 'GENERAL');
     }, [ubicacionesList]);
 
@@ -109,7 +172,10 @@ export function LocationProvider({ children }) {
             isGeneral,
             UBICACIONES: ubicacionesList,
             ubicaciones: ubicacionesList,
+            ubicacionesActivas,
             ubicacionesFisicas,
+            todasLasUbicacionesFisicas,
+            getLocationInfo,
         }}>
             {children}
         </LocationContext.Provider>

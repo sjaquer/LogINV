@@ -1,13 +1,14 @@
 'use client';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useTheme } from '@/context/ThemeContext';
-import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
+import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor, Settings } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 function getLocBadgeStyle(info) {
-    if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200';
-    return 'text-brand-700 bg-brand-50 border-brand-200';
+    if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/40';
+    return 'text-brand-700 bg-brand-50 border-brand-200 dark:bg-brand-950/40 dark:text-brand-300 dark:border-brand-800/40';
 }
 
 const LANGUAGES = [
@@ -22,7 +23,7 @@ const THEME_LABELS = { light: 'Claro', dark: 'Oscuro', auto: 'Auto' };
 
 export default function Header({ title }) {
     const { user, logout } = useAuth();
-    const { ubicacion, setUbicacion, ubicacionInfo, UBICACIONES: liveLocations } = useLocation();
+    const { ubicacion, setUbicacion, ubicacionInfo, ubicaciones, ubicacionesActivas } = useLocation();
     const { mode, toggleTheme, resolved } = useTheme();
     const [openLocMenu, setOpenLocMenu] = useState(false);
     const [openUserMenu, setOpenUserMenu] = useState(false);
@@ -31,7 +32,9 @@ export default function Header({ title }) {
     const userRef = useRef(null);
     const ThemeIcon = THEME_ICONS[mode];
 
-    const ubicacionesList = liveLocations || UBICACIONES;
+    const canManage = user?.rol === 'admin' || user?.rol === 'encargado';
+    const ubicacionesList = ubicaciones || UBICACIONES;
+    const activeLocationsCount = (ubicacionesActivas || ubicacionesList).filter(u => u.id !== 'GENERAL').length;
 
     // Close menus on outside click
     useEffect(() => {
@@ -58,10 +61,11 @@ export default function Header({ title }) {
                     <button
                         onClick={() => { setOpenLocMenu(!openLocMenu); setOpenUserMenu(false); }}
                         className={`flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl border transition-all font-bold ${getLocBadgeStyle(ubicacionInfo)}`}
+                        title={`Ubicación seleccionada: ${ubicacionInfo?.nombre}`}
                     >
                         <MapPin size={15} />
-                        <span className="hidden sm:inline">{ubicacionInfo.nombre}</span>
-                        <span className="sm:hidden">{ubicacionInfo.icono}</span>
+                        <span className="hidden sm:inline max-w-[140px] md:max-w-[180px] truncate">{ubicacionInfo.nombre}</span>
+                        <span className="sm:hidden">{ubicacionInfo.icono || '📍'}</span>
                         <ChevronDown size={14} />
                     </button>
 
@@ -72,7 +76,7 @@ export default function Header({ title }) {
                                     Filtrar por Ubicación
                                 </span>
                                 <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 px-2 py-0.5 rounded-full">
-                                    {ubicacionesList.length - 1} áreas
+                                    {activeLocationsCount} activas
                                 </span>
                             </div>
 
@@ -89,24 +93,49 @@ export default function Header({ title }) {
 
                             {/* Scrollable list */}
                             <div className="overflow-y-auto flex-1 p-1 space-y-0.5">
-                                {ubicacionesList.filter(l => !locFilter || l.nombre.toLowerCase().includes(locFilter.toLowerCase())).map(loc => (
-                                    <button
-                                        key={loc.id}
-                                        onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); setLocFilter(''); }}
-                                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between ${
-                                            loc.id === ubicacion
-                                                ? 'text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 font-bold'
-                                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2 truncate">
-                                            <span>{loc.icono}</span>
-                                            <span className="truncate">{loc.nombre}</span>
-                                        </span>
-                                        {loc.id === ubicacion && <div className="w-2 h-2 rounded-full bg-violet-600 flex-shrink-0" />}
-                                    </button>
-                                ))}
+                                {ubicacionesList.filter(l => !locFilter || (l.nombre || '').toLowerCase().includes(locFilter.toLowerCase())).map(loc => {
+                                    const isSelected = loc.id === ubicacion;
+                                    const isInactive = loc.id !== 'GENERAL' && loc.activa === false;
+
+                                    return (
+                                        <button
+                                            key={loc.id}
+                                            onClick={() => { setUbicacion(loc.id); setOpenLocMenu(false); setLocFilter(''); }}
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-between ${
+                                                isSelected
+                                                    ? 'text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 font-bold'
+                                                    : isInactive
+                                                        ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 opacity-70'
+                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2 truncate">
+                                                <span>{loc.icono || '📍'}</span>
+                                                <span className="truncate">{loc.nombre}</span>
+                                                {isInactive && (
+                                                    <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-400">
+                                                        Inactiva
+                                                    </span>
+                                                )}
+                                            </span>
+                                            {isSelected && <div className="w-2 h-2 rounded-full bg-violet-600 flex-shrink-0" />}
+                                        </button>
+                                    );
+                                })}
                             </div>
+
+                            {/* Shortcut to manage locations */}
+                            {canManage && (
+                                <div className="p-2 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-black/40">
+                                    <Link
+                                        href="/locations"
+                                        onClick={() => { setOpenLocMenu(false); setLocFilter(''); }}
+                                        className="flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-100/50 dark:hover:bg-violet-950/50 rounded-xl transition-colors"
+                                    >
+                                        <Settings size={14} /> Administrar ubicaciones
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -114,7 +143,7 @@ export default function Header({ title }) {
                 {/* Theme toggle */}
                 <button
                     onClick={toggleTheme}
-                    className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-brand-400 transition-all text-slate-500 hover:text-brand-600"
+                    className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d0d10] shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400"
                     title={`Tema: ${THEME_LABELS[mode]}`}
                 >
                     <ThemeIcon size={16} />
@@ -124,27 +153,27 @@ export default function Header({ title }) {
                 <div className="relative" ref={userRef}>
                     <button
                         onClick={() => { setOpenUserMenu(!openUserMenu); setOpenLocMenu(false); }}
-                        className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm bg-white border border-slate-200 shadow-sm hover:border-brand-400 transition-all py-1.5 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl"
+                        className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all py-1.5 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl"
                     >
-                        <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center text-brand-600 dark:text-brand-400 flex-shrink-0">
                             <User size={14} />
                         </div>
                         <div className="hidden sm:flex flex-col items-start leading-none gap-0.5 min-w-0">
-                            <span className="hidden lg:block text-slate-700 max-w-[120px] truncate font-semibold text-xs">{user?.nombre}</span>
-                            <span className="text-[10px] uppercase tracking-wider font-bold text-brand-400">{user?.rol}</span>
+                            <span className="hidden lg:block text-slate-700 dark:text-slate-200 max-w-[120px] truncate font-semibold text-xs">{user?.nombre}</span>
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-brand-400 dark:text-brand-300">{user?.rol}</span>
                         </div>
                         <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
                     </button>
 
                     {openUserMenu && (
-                        <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-56 animate-fade-in z-40 origin-top-right max-w-[calc(100vw-2rem)]">
-                            <div className="px-4 py-3 border-b border-slate-100">
-                                <p className="text-sm font-semibold text-slate-800">{user?.nombre}</p>
-                                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mt-0.5">{user?.rol}</p>
+                        <div className="absolute right-0 top-full mt-2 bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-56 animate-fade-in z-40 origin-top-right max-w-[calc(100vw-2rem)]">
+                            <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
+                                <p className="text-sm font-semibold text-slate-800 dark:text-white">{user?.nombre}</p>
+                                <p className="text-xs text-slate-400 dark:text-slate-400 uppercase tracking-wider font-bold mt-0.5">{user?.rol}</p>
                             </div>
                             <button
                                 onClick={logout}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                             >
                                 <LogOut size={16} />
                                 <span className="font-medium">Cerrar sesión</span>

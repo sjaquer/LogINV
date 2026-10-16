@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import ProductThumb from '@/components/ui/ProductThumb';
 import { useProductos } from '@/hooks/useFirestore';
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import { findProductByBarcode } from '@/lib/barcodeUtils';
 import RouteGuard from '@/components/ui/RouteGuard';
@@ -76,7 +76,7 @@ export default function ScanPage() {
         ).slice(0, 30);
     }, [productos, linkSearch]);
 
-    const ubicInfo = result ? UBICACIONES.find(u => u.id === result.ubicacion) : null;
+    const ubicInfo = result ? getLocationInfo(result.ubicacion) : null;
 
     return (
         <RouteGuard>

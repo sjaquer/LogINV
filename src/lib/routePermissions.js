@@ -15,11 +15,16 @@
 // Si una ruta NO aparece aquí se asume que cualquier usuario autenticado puede entrar.
 export const ROUTE_PERMISSIONS = {
     '/admin/users':   ['admin'],
+    '/usuarios':      ['admin'],
     '/reports':       ['admin', 'encargado'],
+    '/reportes':      ['admin', 'encargado'],
     '/maintenance':   ['admin', 'encargado'],
+    '/mantenimiento': ['admin', 'encargado'],
     '/locations':     ['admin', 'encargado'],
+    '/ubicaciones':   ['admin', 'encargado'],
     '/inventario':    ['admin', 'encargado'],
     '/loans':         ['admin', 'encargado', 'voluntario'],
+    '/prestamos':     ['admin', 'encargado', 'voluntario'],
     '/scan':          ['admin', 'encargado', 'voluntario'],
     '/productos':     ['admin', 'encargado', 'voluntario'],
     '/':              ['admin', 'encargado', 'voluntario'],

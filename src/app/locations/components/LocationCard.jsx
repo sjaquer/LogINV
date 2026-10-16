@@ -1,22 +1,32 @@
 'use client';
 import { useState } from 'react';
-import { Pencil, Trash2, MapPin, Users } from 'lucide-react';
+import { Pencil, Trash2, MapPin, Users, Package, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 
-export default function LocationCard({ ubicacion, canManage, onEdit, onToggle, onDelete }) {
+export default function LocationCard({ ubicacion, productCount = 0, canManage, onEdit, onToggle, onDelete, onSelectLocation }) {
     const [deleting, setDeleting] = useState(false);
+    const [deleteWarning, setDeleteWarning] = useState('');
+
+    const isActiva = ubicacion.activa !== false;
 
     async function handleDelete() {
+        if (productCount > 0) {
+            setDeleteWarning(`No puedes eliminar una ubicación con ${productCount} producto(s) asociado(s). Reubica o elimina los productos primero.`);
+            setTimeout(() => setDeleteWarning(''), 5000);
+            return;
+        }
+
         if (deleting) {
             await onDelete(ubicacion.id);
         } else {
             setDeleting(true);
-            setTimeout(() => setDeleting(false), 3000);
+            setTimeout(() => setDeleting(false), 3500);
         }
     }
 
     return (
         <div className={`border rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden ${
-            ubicacion.activa 
+            isActiva 
                 ? 'bg-white border-slate-200 dark:bg-[#0d0d10] dark:border-white/10' 
                 : 'bg-white/80 border-slate-200 opacity-60 dark:bg-[#0d0d10]/60 dark:border-white/5'
         }`}>
@@ -24,7 +34,7 @@ export default function LocationCard({ ubicacion, canManage, onEdit, onToggle, o
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl ${
-                            ubicacion.activa 
+                            isActiva 
                                 ? 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300' 
                                 : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500'
                         }`}>
@@ -56,22 +66,45 @@ export default function LocationCard({ ubicacion, canManage, onEdit, onToggle, o
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className={`p-2 rounded-lg transition-colors ${
+                                className={`p-2 rounded-lg transition-colors flex items-center gap-1 ${
                                     deleting 
-                                        ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' 
+                                        ? 'bg-red-500 text-white font-bold text-xs px-2.5 shadow-sm' 
                                         : 'hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-400 hover:text-red-600 dark:hover:text-red-400'
                                 }`}
                                 aria-label={deleting ? 'Confirmar eliminación' : 'Eliminar'}
-                                title={deleting ? 'Click para confirmar eliminación' : 'Eliminar ubicación'}
+                                title={productCount > 0 ? `Contiene ${productCount} productos asignados` : (deleting ? 'Click para confirmar eliminación' : 'Eliminar ubicación')}
                             >
-                                <Trash2 size={18} />
+                                <Trash2 size={16} />
+                                {deleting && <span>¿Confirmar?</span>}
                             </button>
                         </div>
                     )}
                 </div>
 
+                {deleteWarning && (
+                    <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5 animate-fade-in">
+                        <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+                        <span>{deleteWarning}</span>
+                    </div>
+                )}
+
                 <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    {/* Link to view products in this location */}
+                    <Link
+                        href="/productos"
+                        onClick={() => onSelectLocation && onSelectLocation(ubicacion.id)}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${
+                            productCount > 0
+                                ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900/50 hover:bg-violet-100'
+                                : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
+                        }`}
+                        title="Ver productos en esta ubicación"
+                    >
+                        <Package size={14} />
+                        <span>{productCount} {productCount === 1 ? 'producto' : 'productos'}</span>
+                    </Link>
+
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs">
                         <Users size={14} />
                         <span>Capacidad: <strong className="text-slate-700 dark:text-slate-200">{ubicacion.capacidad || '—'}</strong></span>
                     </div>
@@ -83,11 +116,11 @@ export default function LocationCard({ ubicacion, canManage, onEdit, onToggle, o
                     )}
 
                     <div className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                        ubicacion.activa 
+                        isActiva 
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' 
                             : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-500'
                     }`}>
-                        {ubicacion.activa ? 'Activa' : 'Inactiva'}
+                        {isActiva ? 'Activa' : 'Inactiva'}
                     </div>
                 </div>
 
@@ -96,7 +129,7 @@ export default function LocationCard({ ubicacion, canManage, onEdit, onToggle, o
                         <label className="flex items-center gap-3 cursor-pointer select-none">
                             <input
                                 type="checkbox"
-                                checked={ubicacion.activa !== false}
+                                checked={isActiva}
                                 onChange={(e) => onToggle(ubicacion.id, e.target.checked)}
                                 className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-violet-600 focus:ring-violet-500 dark:bg-black/50"
                             />

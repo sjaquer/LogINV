@@ -255,6 +255,16 @@ async function runTests() {
         const refLoc = await addDoc(collection(clientDb, 'ubicaciones'), locDoc);
         locId = refLoc.id;
         assert(!!locId, 'Ubicación creada correctamente', `ID: ${locId}`);
+
+        // Probar actualización de ubicación (incluyendo piso y capacidad)
+        await updateDoc(doc(clientDb, 'ubicaciones', locId), {
+            nombre: 'Almacén de Prueba Actualizado',
+            capacidad: 120,
+            piso: 'Piso 2',
+            color: 'violet',
+            activa: false,
+        });
+        assert(true, 'Ubicación actualizada correctamente con piso, capacidad y estado activa');
     } catch (e) {
         assert(false, 'Módulo de ubicaciones', e.message);
     }

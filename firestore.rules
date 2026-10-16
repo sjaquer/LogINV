@@ -219,6 +219,9 @@ service cloud.firestore {
                     && strLenOk('descripcion', 300)
                     && strLenOk('direccion', 300)
                     && strLenOk('responsable', 100)
+                    && strLenOk('piso', 50)
+                    && numRangeOk('capacidad', 0, 100000)
+                    && strLenOk('codigo', 100)
                     && strLenOk('icono', 50)
                     && strLenOk('color', 50)
                     && timestampOk('fecha_creacion')
@@ -230,8 +233,12 @@ service cloud.firestore {
                     && strLenOk('descripcion', 300)
                     && strLenOk('direccion', 300)
                     && strLenOk('responsable', 100)
+                    && strLenOk('piso', 50)
+                    && numRangeOk('capacidad', 0, 100000)
+                    && strLenOk('codigo', 100)
                     && strLenOk('icono', 50)
-                    && strLenOk('color', 50);
+                    && strLenOk('color', 50)
+                    && boolOk('activa');
 
       allow delete: if isSignedIn();
     }

@@ -106,14 +106,25 @@ export function useLocations() {
     }, []);
 
     const actualizarUbicacion = useCallback(async (id, data) => {
+        const cleanData = { ...data };
+        if ('capacidad' in cleanData) {
+            cleanData.capacidad = Number(cleanData.capacidad) || 0;
+        }
+        if ('nombre' in cleanData && typeof cleanData.nombre === 'string') {
+            cleanData.nombre = cleanData.nombre.trim();
+        }
+        if ('descripcion' in cleanData && typeof cleanData.descripcion === 'string') {
+            cleanData.descripcion = cleanData.descripcion.trim();
+        }
+
         if (USE_MOCK) {
-            mockUbicaciones = mockUbicaciones.map(u => u.id === id ? { ...u, ...data } : u);
+            mockUbicaciones = mockUbicaciones.map(u => u.id === id ? { ...u, ...cleanData } : u);
             notifyUbicaciones();
             return;
         }
         try {
             const { fs, db } = await getFirestore();
-            await fs.setDoc(fs.doc(db, 'ubicaciones', id), data, { merge: true });
+            await fs.setDoc(fs.doc(db, 'ubicaciones', id), cleanData, { merge: true });
         } catch (err) {
             firebaseError('actualizarUbicacion', err);
             throw err;

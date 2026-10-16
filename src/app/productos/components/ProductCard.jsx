@@ -1,6 +1,6 @@
 'use client';
 import { MapPin, Layers, Check, AlertTriangle } from 'lucide-react';
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import ProductThumb from '@/components/ui/ProductThumb';
 
@@ -25,7 +25,7 @@ export default function ProductCard({
     onToggleSelect,
     catIcon,
 }) {
-    const ubicInfo = UBICACIONES.find(u => u.id === producto.ubicacion);
+    const ubicInfo = getLocationInfo(producto.ubicacion);
     const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
 
     const handleClick = () => {

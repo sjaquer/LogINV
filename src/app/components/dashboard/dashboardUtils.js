@@ -3,7 +3,7 @@
 //  Funciones de utilidad para el Dashboard
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 
 /**
  * Genera un reporte PDF del conteo de inventario
@@ -17,7 +17,7 @@ export function generatePDFReport(conteo) {
         ? conteo.fecha.toDate().toLocaleString('es-PE')
         : new Date(conteo.fecha).toLocaleString('es-PE');
 
-    const ubicNombre = UBICACIONES.find(u => u.id === conteo.ubicacion)?.nombre || conteo.ubicacion || '—';
+    const ubicNombre = getLocationInfo(conteo.ubicacion)?.nombre || conteo.ubicacion || '—';
 
     const rows = items.map(i => `
         <tr style="${i.diferencia !== 0 ? 'background:#FEF3C7;' : ''}">

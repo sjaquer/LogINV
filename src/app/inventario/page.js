@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useConteos, useCrearMovimiento } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation, UBICACIONES } from '@/context/LocationContext';
+import { useLocation, getLocationInfo } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
@@ -196,7 +196,7 @@ function InventarioPageInner() {
             // Si no está en la ubicación activa, verificar si existe en todo el inventario
             const matchedGlobal = findProductByBarcode(productos, code);
             if (matchedGlobal) {
-                const locObj = UBICACIONES.find(u => u.id === matchedGlobal.ubicacion);
+                const locObj = getLocationInfo(matchedGlobal.ubicacion);
                 const locName = locObj?.nombre || matchedGlobal.ubicacion;
                 setScannedFeedback({
                     type: 'warning',
@@ -561,7 +561,7 @@ function InventarioPageInner() {
                                                             <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase">{p.categoria}</span>
                                                             {p.ubicacion && (
                                                                 <span className="text-xs text-slate-400 dark:text-zinc-500 truncate">
-                                                                    · {UBICACIONES.find(u => u.id === p.ubicacion)?.icono} {UBICACIONES.find(u => u.id === p.ubicacion)?.nombre || p.ubicacion}
+                                                                    · {getLocationInfo(p.ubicacion)?.icono} {getLocationInfo(p.ubicacion)?.nombre || p.ubicacion}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -687,7 +687,7 @@ function InventarioPageInner() {
                         ) : (
                             <div className="space-y-2">
                                 {productosFiltrados.map(p => {
-                                    const ubicInfo = isGeneral ? UBICACIONES.find(u => u.id === p.ubicacion) : null;
+                                    const ubicInfo = isGeneral ? getLocationInfo(p.ubicacion) : null;
                                     return (
                                         <div key={p.id} className="bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-[#222226] rounded-2xl p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
                                             <div className="w-13 h-13 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-800">
@@ -780,7 +780,7 @@ function InventarioPageInner() {
                             </div>
                         ) : (
                             historialConteos.map(c => {
-                                const ubicInfo = isGeneral ? UBICACIONES.find(u => u.id === c.ubicacion) : null;
+                                const ubicInfo = isGeneral ? getLocationInfo(c.ubicacion) : null;
                                 return (
                                     <div key={c.id}>
                                         {ubicInfo && (

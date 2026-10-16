@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import Header from '@/components/layout/Header';
 import { useProductos, useCategorias, useMovimientos } from '@/hooks/useFirestore';
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import { exportInventoryExcel } from '@/lib/excelExport';
 import RouteGuard from '@/components/ui/RouteGuard';
@@ -16,7 +16,7 @@ export default function ReportsPage() {
     const { movimientos } = useMovimientos();
     const [exporting, setExporting] = useState(false);
 
-    const ubicNombre = (id) => UBICACIONES.find(u => u.id === id)?.nombre || id || '—';
+    const ubicNombre = (id) => getLocationInfo(id)?.nombre || id || '—';
 
     const stockBajo = useMemo(
         () => productos.filter(p => p.stock_actual <= (p.stock_minimo ?? 0)),

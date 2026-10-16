@@ -6,7 +6,7 @@
 //  generador compartido, con formato, colores y 3 hojas de interés.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { UBICACIONES } from '@/context/LocationContext';
+import { getLocationInfo } from '@/context/LocationContext';
 
 const BRAND = 'FF1E40AF';       // azul institucional (encabezados)
 const BRAND_LIGHT = 'FFEFF6FF'; // fondo suave para totales
@@ -27,7 +27,7 @@ const ESTADO_LABEL = {
 };
 
 function ubicNombre(id) {
-    return UBICACIONES.find(u => u.id === id)?.nombre || id || 'Sin ubicación';
+    return getLocationInfo(id)?.nombre || id || 'Sin ubicación';
 }
 
 function arrayBufferToBase64(buffer) {

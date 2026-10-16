@@ -4,7 +4,7 @@ import { X, Save, AlertTriangle, ScanBarcode, Tag } from 'lucide-react';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
 import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import ProductImageUploader from './ProductImageUploader';
-import { UBICACIONES_FISICAS } from '@/context/LocationContext';
+import { useLocation } from '@/context/LocationContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 const UNIDADES = ['pieza', 'unidades', 'cajas', 'bolsas', 'pares', 'metros', 'kg', 'litros', 'packs'];
@@ -16,6 +16,7 @@ const ESTADOS = [
 ];
 
 export default function ProductFormModal({ producto, categorias, onClose, onSave, userName }) {
+    const { ubicacionesFisicas } = useLocation();
     const isEdit = !!producto?.id;
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -24,7 +25,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
 
     useEscapeKey(onClose);
 
-    const initialUbicacion = producto?.ubicacion || UBICACIONES_FISICAS[0]?.id || '';
+    const initialUbicacion = producto?.ubicacion || (ubicacionesFisicas.length > 0 ? ubicacionesFisicas[0].id : 'TEMPLO');
 
     const [form, setForm] = useState({
         nombre: producto?.nombre || '',
@@ -198,8 +199,12 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 required
                             >
                                 <option value="">— Selecciona —</option>
-                                {UBICACIONES_FISICAS.map(u => (
-                                    <option key={u.id} value={u.id}>{u.icono} {u.nombre}</option>
+                                {/* Fallback si la ubicación actual del producto no está en la lista de activas */}
+                                {form.ubicacion && !ubicacionesFisicas.some(u => u.id === form.ubicacion) && (
+                                    <option value={form.ubicacion}>📍 {form.ubicacion} (Actual)</option>
+                                )}
+                                {ubicacionesFisicas.map(u => (
+                                    <option key={u.id} value={u.id}>{u.icono || '📍'} {u.nombre}</option>
                                 ))}
                             </select>
                         </div>

@@ -37,7 +37,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
             await onSave({
                 ...form,
                 producto_nombre: producto?.nombre || '',
-                ubicacion_origen: ubicacion,
+                ubicacion_origen: producto?.ubicacion || (ubicacion !== 'GENERAL' ? ubicacion : 'TEMPLO'),
             });
             onClose();
         } catch (err) {

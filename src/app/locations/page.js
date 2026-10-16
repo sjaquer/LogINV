@@ -2,7 +2,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { useLocations } from '@/hooks/useLocations';
+import { useProductos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
@@ -10,11 +12,13 @@ import RouteGuard from '@/components/ui/RouteGuard';
 import LocationFormModal from './components/LocationFormModal';
 import LocationCard from './components/LocationCard';
 import {
-    MapPin, Plus, Building2, Search, CheckCircle2, ShieldAlert
+    MapPin, Plus, Building2, Search, CheckCircle2, Package
 } from 'lucide-react';
 
 export default function LocationsPage() {
     const { ubicaciones, loading, crearUbicacion, actualizarUbicacion, eliminarUbicacion, toggleUbicacion } = useLocations();
+    const { productos } = useProductos();
+    const { setUbicacion } = useLocation();
     const { user } = useAuth();
     const { setHideBottomNav } = useSidebar();
     const role = user?.rol || 'voluntario';
@@ -28,6 +32,15 @@ export default function LocationsPage() {
         setHideBottomNav(!!showForm);
         return () => setHideBottomNav(false);
     }, [showForm, setHideBottomNav]);
+
+    // Product count mapped to each location ID
+    const productCountByLocation = useMemo(() => {
+        const counts = {};
+        (productos || []).forEach(p => {
+            if (p.ubicacion) counts[p.ubicacion] = (counts[p.ubicacion] || 0) + 1;
+        });
+        return counts;
+    }, [productos]);
 
     const handleSave = useCallback(async (data, id) => {
         if (id) {
@@ -55,9 +68,14 @@ export default function LocationsPage() {
                 (loc.descripcion || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (loc.codigo || loc.id || '').toLowerCase().includes(searchQuery.toLowerCase());
             
-            const matchesPiso = pisoFilter === 'TODOS' || 
-                (pisoFilter === 'ALMACENES' && (loc.nombre || '').toLowerCase().includes('almacén')) ||
-                (loc.piso === pisoFilter);
+            let matchesPiso = true;
+            if (pisoFilter === 'ALMACENES') {
+                matchesPiso = (loc.nombre || '').toLowerCase().includes('almacén');
+            } else if (pisoFilter === 'INACTIVAS') {
+                matchesPiso = loc.activa === false;
+            } else if (pisoFilter !== 'TODOS') {
+                matchesPiso = loc.piso === pisoFilter;
+            }
 
             return matchesQuery && matchesPiso;
         });
@@ -66,9 +84,9 @@ export default function LocationsPage() {
     const stats = useMemo(() => {
         const total = ubicaciones.length;
         const activas = ubicaciones.filter(u => u.activa !== false).length;
-        const totalCapacidad = ubicaciones.reduce((acc, u) => acc + (Number(u.capacidad) || 0), 0);
-        return { total, activas, totalCapacidad };
-    }, [ubicaciones]);
+        const totalProductos = (productos || []).length;
+        return { total, activas, totalProductos };
+    }, [ubicaciones, productos]);
 
     return (
         <RouteGuard>
@@ -108,7 +126,7 @@ export default function LocationsPage() {
                             <div className="flex items-center gap-2">
                                 <Building2 size={16} className="text-violet-500 flex-shrink-0" />
                                 <div>
-                                    <div className="text-xs text-slate-400">Total</div>
+                                    <div className="text-xs text-slate-400">Total Espacios</div>
                                     <div className="text-sm font-bold text-slate-800 dark:text-white">{stats.total}</div>
                                 </div>
                             </div>
@@ -120,10 +138,10 @@ export default function LocationsPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <ShieldAlert size={16} className="text-blue-500 flex-shrink-0" />
+                                <Package size={16} className="text-brand-500 flex-shrink-0" />
                                 <div>
-                                    <div className="text-xs text-slate-400">Capacidad Total</div>
-                                    <div className="text-sm font-bold text-slate-800 dark:text-white">{stats.totalCapacidad} pers.</div>
+                                    <div className="text-xs text-slate-400">Total Productos</div>
+                                    <div className="text-sm font-bold text-slate-800 dark:text-white">{stats.totalProductos}</div>
                                 </div>
                             </div>
                         </div>
@@ -149,6 +167,7 @@ export default function LocationsPage() {
                             { id: 'Piso 2', label: 'Piso 2' },
                             { id: 'Piso 3', label: 'Piso 3' },
                             { id: 'ALMACENES', label: 'Almacenes' },
+                            { id: 'INACTIVAS', label: 'Inactivas' },
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -184,10 +203,12 @@ export default function LocationsPage() {
                             <LocationCard
                                 key={loc.id}
                                 ubicacion={loc}
+                                productCount={productCountByLocation[loc.id] || 0}
                                 canManage={canManage}
                                 onEdit={handleEdit}
                                 onToggle={toggleUbicacion}
                                 onDelete={eliminarUbicacion}
+                                onSelectLocation={setUbicacion}
                             />
                         ))}
                     </div>
