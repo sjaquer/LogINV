@@ -26,3 +26,7 @@ pnpm-debug.log*
 # Misc
 *.log
 *.local
+
+# Exportaciones completas de base de datos e imágenes
+/exports/
+__pycache__/

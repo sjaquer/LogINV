@@ -9,6 +9,7 @@ import RouteGuard from '@/components/ui/RouteGuard';
 import {
     FileText, FileSpreadsheet, Printer, Package, AlertTriangle, MapPin, Layers,
 } from 'lucide-react';
+import { isLowStock } from '@/lib/stock';
 
 export default function ReportsPage() {
     const { productos, loading } = useProductos();
@@ -19,7 +20,7 @@ export default function ReportsPage() {
     const ubicNombre = (id) => getLocationInfo(id)?.nombre || id || '—';
 
     const stockBajo = useMemo(
-        () => productos.filter(p => p.stock_actual <= (p.stock_minimo ?? 0)),
+        () => productos.filter(isLowStock),
         [productos]
     );
 

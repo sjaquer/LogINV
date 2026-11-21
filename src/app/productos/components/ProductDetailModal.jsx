@@ -11,6 +11,7 @@ import { BarcodeLabelPreview } from '@/components/ui/BarcodeLabel';
 import BarcodeLabelModal from '@/components/ui/BarcodeLabel';
 import { formatDateTime } from '@/lib/formatters';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { isLowStock } from '@/lib/stock';
 
 const ESTADO_BADGE = {
     OPTIMO: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -56,7 +57,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
     });
 
     const ubicInfo = getLocationInfo(producto.ubicacion);
-    const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
+    const bajoStock = isLowStock(producto);
     const ambientBg = producto.imagen_url ? formatProductImageUrl(producto.imagen_url) : null;
 
     return (

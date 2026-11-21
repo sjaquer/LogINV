@@ -1,24 +1,22 @@
 {
-    "name": "LogINV - Control de Inventario Bar",
+    "name": "LogINV – Control de Inventario CNC",
     "short_name": "LogINV",
-    "description": "Sistema de control de inventario para bares y restaurantes",
+    "description": "Gestión de inventario de la Iglesia CNC: stock, ubicaciones, préstamos y mantenimiento.",
+    "lang": "es",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#f8fafc",
     "theme_color": "#2563eb",
     "orientation": "portrait",
+    "categories": ["productivity", "business"],
+    "shortcuts": [
+        { "name": "Escanear", "url": "/scan", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+        { "name": "Productos", "url": "/productos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+        { "name": "Inventario", "url": "/inventario", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    ],
     "icons": [
-        {
-            "src": "/icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
-        }
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
     ]
 }

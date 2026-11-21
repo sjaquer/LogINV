@@ -18,7 +18,7 @@ const MOCK_USER = { id: 'demo-admin', nombre: 'Administrador (demo)', email: 'de
 // Busca en la colección `usuarios` (Firestore) el perfil de la cuenta que
 // acaba de iniciar sesión, para resolver su rol.
 // Prioriza la búsqueda por UID (id del documento en LogINV) y luego por email
-// insensible a mayúsculas/espacios.
+// (perfiles antiguos cuyo id no coincide con el UID).
 async function findUsuarioProfile(firebaseUser) {
     if (!firebaseUser) return null;
     const { fs, db } = await getFirestore();
@@ -66,40 +66,10 @@ async function findUsuarioProfile(firebaseUser) {
         }
     }
 
-    // 4. Búsqueda tolerante en todos los documentos de usuarios
-    try {
-        const allSnap = await fs.getDocs(fs.collection(db, 'usuarios'));
-        for (const doc of allSnap.docs) {
-            const d = doc.data();
-            if ((d.email || '').trim().toLowerCase() === emailNorm) {
-                return { id: doc.id, ...d };
-            }
-        }
-    } catch (err) {
-        console.warn('[LogINV] Error en escaneo tolerante de usuarios:', err);
-    }
-
-    // 5. Auto-reparación para administradores principales autenticados en Firebase Auth
-    const ADMIN_EMAILS = ['pandoparedesr@gmail.com', 'sjaquer@outlook.es', 'iglesia@inv.com'];
-    if (ADMIN_EMAILS.includes(emailNorm)) {
-        console.log('[LogINV] Auto-restaurando perfil de administrador para:', emailNorm);
-        const adminProfile = {
-            nombre: firebaseUser.displayName || 'Administrador',
-            email: emailNorm,
-            rol: 'admin',
-            activo: true,
-            telefono: '',
-            departamento: 'Dirección',
-            fecha_creacion: new Date().toISOString(),
-        };
-        try {
-            await fs.setDoc(fs.doc(db, 'usuarios', firebaseUser.uid), adminProfile);
-            return { id: firebaseUser.uid, ...adminProfile };
-        } catch (createErr) {
-            console.error('[LogINV] Error auto-creando perfil admin:', createErr);
-        }
-    }
-
+    // Nota de seguridad: no hay auto-creación de perfiles desde el cliente.
+    // Un perfil faltante se repara con `npm run create-admin` o desde
+    // /admin/users; las reglas de Firestore solo dejan escribir `usuarios`
+    // a administradores.
     return null;
 }
 
@@ -247,7 +217,7 @@ function LoginScreen({ onLogin }) {
 }
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(USE_MOCK ? MOCK_USER : null);
     const [loaded, setLoaded] = useState(false);
     const pathname = usePathname();
     const isPublicRoute = PUBLIC_ROUTES.some(p => pathname?.startsWith(p));

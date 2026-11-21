@@ -13,7 +13,9 @@
     "seed": "node scripts/seedExcel.js",
     "create-admin": "node scripts/createAdminUser.js",
     "mock:generate": "node scripts/generateMockData.js",
-    "excel:analyze": "node scripts/analyzeExcel.js"
+    "excel:analyze": "node scripts/analyzeExcel.js",
+    "export:db": "node scripts/exportFullDatabase.mjs",
+    "export:upload-images": "node scripts/uploadImagesToDrive.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.1",
@@ -28,18 +30,18 @@
     "html5-qrcode": "^2.3.8",
     "jsbarcode": "^3.12.3",
     "lucide-react": "^0.400.0",
-    "next": "14.2.5",
+    "next": "^14.2.35",
     "react": "^18",
     "react-dom": "^18",
-    "tailwind-merge": "^2.4.0",
-    "xlsx": "^0.18.5"
+    "tailwind-merge": "^2.4.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
     "dotenv": "^17.4.2",
     "eslint": "^8",
-    "eslint-config-next": "14.2.5",
+    "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.4"
+    "tailwindcss": "^3.4.4",
+    "xlsx": "^0.18.5"
   }
 }

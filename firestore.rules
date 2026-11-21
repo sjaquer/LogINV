@@ -33,6 +33,32 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // ── Identidad y roles ───────────────────────────────────────────────
+    // El perfil de cada cuenta vive en usuarios/{uid}. Tener una cuenta de
+    // Firebase Auth NO basta: el registro por correo está habilitado (se usa
+    // para crear cuentas), así que sin perfil activo no hay acceso a nada.
+    function userDoc() {
+      return /databases/$(database)/documents/usuarios/$(request.auth.uid);
+    }
+
+    function isActiveUser() {
+      return isSignedIn()
+             && exists(userDoc())
+             && get(userDoc()).data.get('activo', true) != false;
+    }
+
+    function hasRole(roles) {
+      return isActiveUser() && get(userDoc()).data.rol in roles;
+    }
+
+    function isAdmin() {
+      return hasRole(['admin']);
+    }
+
+    function isManager() {
+      return hasRole(['admin', 'encargado']);
+    }
+
     function docSizeOk() {
       return request.resource.data.keys().size() < 40;
     }
@@ -66,9 +92,9 @@ service cloud.firestore {
 
     // ── Categorías ──────────────────────────────────────────────────────
     match /categorias/{categoriaId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isManager()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre'])
                     && request.resource.data.nombre is string
@@ -79,19 +105,19 @@ service cloud.firestore {
                     && strLenOk('color', 20)
                     && numRangeOk('orden', 0, 100);
 
-      allow update: if isSignedIn()
+      allow update: if isManager()
                     && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300);
 
-      allow delete: if isSignedIn();
+      allow delete: if isManager();
     }
 
     // ── Productos ───────────────────────────────────────────────────────
     match /productos/{productoId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isManager()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'categoria', 'stock_actual', 'ubicacion'])
                     && request.resource.data.nombre is string
@@ -116,7 +142,7 @@ service cloud.firestore {
                     && timestampOk('fecha_creacion')
                     && timestampOk('ultima_actualizacion');
 
-      allow update: if isSignedIn()
+      allow update: if isActiveUser()
                     && docSizeOk()
                     && strLenOk('nombre', 200)
                     && strLenOk('categoria', 100)
@@ -135,14 +161,14 @@ service cloud.firestore {
                     && strLenOk('imagen_drive_id', 200)
                     && boolOk('activo');
 
-      allow delete: if isSignedIn();
+      allow delete: if isManager();
     }
 
     // ── Movimientos de stock ────────────────────────────────────────────
     match /movimientos/{movimientoId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'tipo', 'cantidad'])
                     && request.resource.data.producto_id is string
@@ -166,9 +192,9 @@ service cloud.firestore {
 
     // ── Conteos de inventario ───────────────────────────────────────────
     match /conteos/{conteoId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['usuario', 'estado', 'ubicacion'])
                     && request.resource.data.usuario is string
@@ -178,7 +204,7 @@ service cloud.firestore {
                     && strLenOk('notas', 1000)
                     && timestampOk('fecha');
 
-      allow update: if isSignedIn()
+      allow update: if isActiveUser()
                     && docSizeOk()
                     && strLenOk('usuario', 100)
                     && strLenOk('notas', 1000);
@@ -188,9 +214,9 @@ service cloud.firestore {
 
     // ── Requerimientos ──────────────────────────────────────────────────
     match /requerimientos/{requerimientoId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['solicitante', 'estado'])
                     && request.resource.data.solicitante is string
@@ -198,18 +224,18 @@ service cloud.firestore {
                     && request.resource.data.estado in ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPRADO', 'pendiente', 'aprobado', 'rechazado', 'comprado']
                     && timestampOk('fecha_creacion');
 
-      allow update: if isSignedIn()
+      allow update: if isActiveUser()
                     && docSizeOk()
                     && strLenOk('solicitante', 100);
 
-      allow delete: if isSignedIn();
+      allow delete: if isManager();
     }
 
     // ── Ubicaciones ─────────────────────────────────────────────────────
     match /ubicaciones/{ubicacionId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isManager()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'activa'])
                     && request.resource.data.nombre is string
@@ -227,7 +253,7 @@ service cloud.firestore {
                     && timestampOk('fecha_creacion')
                     && timestampOk('created_at');
 
-      allow update: if isSignedIn()
+      allow update: if isManager()
                     && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('descripcion', 300)
@@ -240,14 +266,14 @@ service cloud.firestore {
                     && strLenOk('color', 50)
                     && boolOk('activa');
 
-      allow delete: if isSignedIn();
+      allow delete: if isManager();
     }
 
     // ── Préstamos ───────────────────────────────────────────────────────
     match /prestamos/{prestamoId} {
-      allow read: if true;
+      allow read: if isActiveUser();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'producto_nombre', 'prestado_a', 'estado'])
                     && request.resource.data.producto_id is string
@@ -268,21 +294,21 @@ service cloud.firestore {
                     && timestampOk('fecha_limite')
                     && timestampOk('created_at');
 
-      allow update: if isSignedIn()
+      allow update: if isActiveUser()
                     && docSizeOk()
                     && strLenOk('estado', 50)
                     && strLenOk('notas', 500)
                     && timestampOk('fecha_devolucion_real');
 
-      allow delete: if isSignedIn();
+      allow delete: if isActiveUser();
     }
 
     // ── Mantenimiento (soporta mantenimiento y mantenimientos) ─────────
     match /{mantenimientoCol}/{mantenimientoId} {
-      allow read: if mantenimientoCol in ['mantenimiento', 'mantenimientos'];
+      allow read: if mantenimientoCol in ['mantenimiento', 'mantenimientos'] && isActiveUser();
 
       allow create: if (mantenimientoCol in ['mantenimiento', 'mantenimientos'])
-                    && isSignedIn()
+                    && isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['producto_id', 'producto_nombre', 'tipo', 'estado'])
                     && request.resource.data.producto_id is string
@@ -305,7 +331,7 @@ service cloud.firestore {
                     && timestampOk('created_at');
 
       allow update: if (mantenimientoCol in ['mantenimiento', 'mantenimientos'])
-                    && isSignedIn()
+                    && isActiveUser()
                     && docSizeOk()
                     && strLenOk('estado', 50)
                     && strLenOk('tecnico', 100)
@@ -316,14 +342,19 @@ service cloud.firestore {
                     && timestampOk('fecha_fin')
                     && timestampOk('fecha_completado');
 
-      allow delete: if (mantenimientoCol in ['mantenimiento', 'mantenimientos']) && isSignedIn();
+      allow delete: if (mantenimientoCol in ['mantenimiento', 'mantenimientos']) && isManager();
     }
 
     // ── Usuarios ────────────────────────────────────────────────────────
     match /usuarios/{usuarioId} {
-      allow read: if true;
+      // Cada cuenta puede leer su propio perfil (por UID o por email, para
+      // perfiles antiguos); el resto de perfiles solo los usuarios activos.
+      allow read: if isSignedIn()
+                  && (usuarioId == request.auth.uid
+                      || resource.data.email == request.auth.token.email
+                      || isActiveUser());
 
-      allow create: if isSignedIn()
+      allow create: if isAdmin()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['nombre', 'email', 'rol', 'activo'])
                     && request.resource.data.nombre is string
@@ -335,7 +366,7 @@ service cloud.firestore {
                     && strLenOk('departamento', 100)
                     && timestampOk('fecha_creacion');
 
-      allow update: if isSignedIn()
+      allow update: if isAdmin()
                     && docSizeOk()
                     && strLenOk('nombre', 100)
                     && strLenOk('telefono', 50)
@@ -343,14 +374,14 @@ service cloud.firestore {
                     && (!request.resource.data.keys().hasAny(['rol']) || request.resource.data.rol in ['admin', 'encargado', 'voluntario'])
                     && boolOk('activo');
 
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin() && usuarioId != request.auth.uid;
     }
 
     // ── Auditoría ───────────────────────────────────────────────────────
     match /auditoria/{auditoriaId} {
-      allow read: if true;
+      allow read: if isManager();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['usuario_id', 'accion', 'entidad'])
                     && request.resource.data.usuario_id is string

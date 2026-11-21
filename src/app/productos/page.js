@@ -17,6 +17,7 @@ import {
     PlusCircle, Settings2, ChevronRight, ArrowUpDown, MapPin, ListChecks, Printer,
     LayoutGrid, List, Check,
 } from 'lucide-react';
+import { isLowStock } from '@/lib/stock';
 
 export default function ProductosPage() {
     return (
@@ -369,7 +370,7 @@ function ProductosPageInner() {
                         <div className="bg-white dark:bg-[#0d0d10] border border-slate-200/90 dark:border-[#222226] rounded-2xl overflow-hidden shadow-xs divide-y divide-slate-100 dark:divide-zinc-800/80">
                             {productosFiltrados.map(p => {
                                 const ubicInfo = getLocationInfo(p.ubicacion);
-                                const bajoStock = p.stock_actual <= (p.stock_minimo ?? 0);
+                                const bajoStock = isLowStock(p);
                                 const isSelected = selectedIds.has(p.id);
 
                                 return (

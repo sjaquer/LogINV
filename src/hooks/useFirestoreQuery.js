@@ -10,7 +10,7 @@ export const USE_MOCK = typeof window !== 'undefined'
     ? (process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)
     : true;
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
     console.log('[LogINV] Modo:', USE_MOCK ? 'MOCK (datos de prueba)' : 'FIREBASE (producción)');
 }
 
@@ -68,10 +68,7 @@ export function firebaseError(operation, err) {
     console.error(`[LogINV] Error en ${operation}:`, code, msg);
 
     if (code === 'permission-denied' || code === 'PERMISSION_DENIED' || msg.includes('Missing or insufficient permissions')) {
-        throw new Error(
-            'Permisos denegados en Firestore. Revisa las Security Rules en Firebase Console → Firestore → Rules. ' +
-            'Asegúrate de que permiten lectura/escritura.'
-        );
+        throw new Error('No tienes permisos para realizar esta acción. Si crees que es un error, contacta a un administrador.');
     }
     if (code === 'failed-precondition' || msg.includes('index')) {
         throw new Error(

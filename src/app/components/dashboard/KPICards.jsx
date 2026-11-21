@@ -8,13 +8,15 @@ export default function KPICards({
     alertasStock, 
     conteosHoy, 
     diferenciasUltimoConteo,
-    ubicacionInfo 
+    ubicacionInfo,
+    loading,
 }) {
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 [&>a]:block [&>a]:h-full">
             <KPICard
                 icon={Package}
                 label="Total productos"
+                loading={loading}
                 value={totalProductos}
                 color="brand"
                 subtitle={`${ubicacionInfo.icono} ${ubicacionInfo.nombre}`}
@@ -22,26 +24,29 @@ export default function KPICards({
             <Link href="/inventario?tab=rapido">
                 <KPICard
                     icon={AlertTriangle}
-                    label="Stock bajo"
-                    value={alertasStock}
+                    label="Bajo mínimo"
+                    loading={loading}
+                value={alertasStock}
                     color={alertasStock > 0 ? 'red' : 'emerald'}
-                    subtitle="Requieren reposición"
+                    subtitle={alertasStock > 0 ? 'Requieren reposición' : 'Todo en orden'}
                 />
             </Link>
             <Link href="/inventario">
                 <KPICard
                     icon={ClipboardCheck}
                     label="Conteos hoy"
-                    value={conteosHoy}
+                    loading={loading}
+                value={conteosHoy}
                     color="violet"
-                    subtitle="Inventario físico"
+                    subtitle="Conteos físicos"
                 />
             </Link>
             <Link href="/inventario?tab=historial">
                 <KPICard
                     icon={TrendingDown}
                     label="Diferencias"
-                    value={diferenciasUltimoConteo}
+                    loading={loading}
+                value={diferenciasUltimoConteo}
                     color={diferenciasUltimoConteo > 0 ? 'amber' : 'emerald'}
                     subtitle="Último conteo"
                 />

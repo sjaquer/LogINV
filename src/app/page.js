@@ -16,6 +16,7 @@ import {
 } from './components/dashboard';
 import { exportInventoryExcel } from '@/lib/excelExport';
 import { History } from 'lucide-react';
+import { isLowStock } from '@/lib/stock';
 
 export default function DashboardPage() {
     const { productos, loading: pLoading } = useProductos();
@@ -32,7 +33,7 @@ export default function DashboardPage() {
     );
 
     const alertasStock = useMemo(
-        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo).length,
+        () => productosUbicacion.filter(isLowStock).length,
         [productosUbicacion]
     );
 
@@ -60,7 +61,7 @@ export default function DashboardPage() {
 
     // ── Low stock alerts ──
     const stockBajo = useMemo(
-        () => productosUbicacion.filter((p) => p.stock_actual <= p.stock_minimo).slice(0, 8),
+        () => productosUbicacion.filter(isLowStock).slice(0, 8),
         [productosUbicacion]
     );
 
@@ -78,7 +79,7 @@ export default function DashboardPage() {
 
     const loading = pLoading || cLoading || mLoading;
 
-    const handleWeeklyReport = useCallback(() => {
+    const ultimoConteoCompletado = useMemo(() => {
         const completados = conteos
             .filter(c => c.estado === 'COMPLETADO' && (isGeneral || c.ubicacion === ubicacion))
             .sort((a, b) => {
@@ -86,11 +87,12 @@ export default function DashboardPage() {
                 const fB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
                 return fB - fA;
             });
-        
-        if (completados.length > 0) {
-            generatePDFReport(completados[0]);
-        }
+        return completados[0] || null;
     }, [conteos, ubicacion, isGeneral]);
+
+    const handleWeeklyReport = useCallback(() => {
+        if (ultimoConteoCompletado) generatePDFReport(ultimoConteoCompletado);
+    }, [ultimoConteoCompletado]);
 
     const handleExportExcel = useCallback(() => {
         return exportInventoryExcel(productosUbicacion, categorias, ubicacionInfo.nombre);
@@ -100,51 +102,63 @@ export default function DashboardPage() {
         return new Promise(resolve => setTimeout(resolve, 600));
     }, []);
 
+    const hoyLabel = useMemo(
+        () => new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }),
+        []
+    );
+
     return (
-        <div className="flex flex-col flex-1 bg-slate-50/50">
-            <Header title="Dashboard" />
+        <div className="flex flex-col flex-1">
+            <Header title="Panel de control" />
             <PullToRefresh onRefresh={handleRefresh}>
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
+            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 animate-fade-in max-w-6xl mx-auto w-full pb-4">
 
-                {/* Welcome banner */}
-                <div className="bg-gradient-to-r from-brand-600 to-brand-700 rounded-2xl p-5 sm:p-6 text-white shadow-lg shadow-brand-500/20">
-                    <h2 className="text-xl sm:text-2xl font-bold">Hola, {user?.nombre?.split(' ')[0] || 'Usuario'} 👋</h2>
-                    <p className="text-white/80 mt-1 text-sm sm:text-base">
-                        {isGeneral ? 'Vista general del inventario' : `Ubicación: ${ubicacionInfo.icono} ${ubicacionInfo.nombre}`}
-                    </p>
-                </div>
+                {/* Saludo + acciones de reporte */}
+                <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 sm:p-7 text-white shadow-lg shadow-brand-900/10">
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+                    <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-white/60 first-letter:uppercase">{hoyLabel}</p>
+                            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
+                                Hola, {user?.nombre?.split(' ')[0] || 'Usuario'}
+                            </h2>
+                            <p className="mt-1 text-sm sm:text-base text-white/75 truncate">
+                                {isGeneral ? 'Vista general de todas las ubicaciones' : `${ubicacionInfo.icono} ${ubicacionInfo.nombre}`}
+                            </p>
+                        </div>
+                        <WeeklyReportButton
+                            onGenerate={handleWeeklyReport}
+                            onExportExcel={handleExportExcel}
+                            canGenerate={!!ultimoConteoCompletado}
+                        />
+                    </div>
+                </section>
 
-                {/* Quick Actions */}
+                {/* Accesos rápidos */}
                 <QuickActions ubicacionInfo={ubicacionInfo} />
 
-                {/* KPI Cards */}
+                {/* Indicadores */}
                 <KPICards
                     totalProductos={productosUbicacion.length}
                     alertasStock={alertasStock}
                     conteosHoy={conteosHoy}
                     diferenciasUltimoConteo={diferenciasUltimoConteo}
                     ubicacionInfo={ubicacionInfo}
+                    loading={loading}
                 />
 
-                {/* Report buttons */}
-                <WeeklyReportButton
-                    onGenerate={handleWeeklyReport}
-                    onExportExcel={handleExportExcel}
-                />
+                {/* Alertas + actividad */}
+                <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 items-start">
+                    <StockAlerts stockBajo={stockBajo} total={alertasStock} />
+                    <RecentActivity movimientos={movimientosRecientes} />
+                </div>
 
-                {/* Stock Alerts */}
-                <StockAlerts stockBajo={stockBajo} />
-
-                {/* Recent Activity */}
-                <RecentActivity movimientos={movimientosRecientes} />
-
-                {/* History link */}
                 <Link
                     href="/inventario?tab=historial"
-                    className="flex items-center justify-center gap-2 p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all text-slate-600 hover:text-brand-600"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-4 text-sm font-semibold text-slate-500 transition-colors hover:border-brand-300 hover:text-brand-600"
                 >
-                    <History size={20} />
-                    <span className="font-semibold">Ver historial completo de conteos</span>
+                    <History size={18} />
+                    Ver historial completo de conteos
                 </Link>
 
             </div>

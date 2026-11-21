@@ -9,74 +9,20 @@
 
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { HttpError, requireAdmin, handleApiError } from '@/lib/serverAuth';
+
+const handleError = (err) => handleApiError(err, '/api/admin/users');
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-class HttpError extends Error {
-    constructor(message, status) {
-        super(message);
-        this.status = status;
-    }
-}
-
-async function requireAdmin(request) {
-    const authHeader = request.headers.get('authorization') || '';
-    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!idToken) throw new HttpError('No autenticado', 401);
-
-    const decoded = await adminAuth().verifyIdToken(idToken).catch((err) => {
-        throw new HttpError(`Sesión inválida o expirada: ${err.message}`, 401);
-    });
-
-    // 1. Buscar primero directamente por uid (en LogINV el id del doc en usuarios es el UID de Auth)
-    let usuario = null;
-    const docSnap = await adminDb().collection('usuarios').doc(decoded.uid).get();
-    if (docSnap.exists) {
-        usuario = docSnap.data();
-    } else if (decoded.email) {
-        // Fallback por email en caso de ids generados previamente
-        const snap = await adminDb().collection('usuarios').where('email', '==', decoded.email).limit(1).get();
-        if (!snap.empty) {
-            usuario = snap.docs[0].data();
-        }
-    }
-
-    if (!usuario) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403);
-
-    if (usuario.rol !== 'admin' || usuario.activo === false) {
-        throw new HttpError('Requiere rol de administrador', 403);
-    }
-    return decoded;
-}
-
-function handleError(err) {
-    const status = err instanceof HttpError ? err.status : 500;
-    if (status === 500) console.error('[LogINV] /api/admin/users error:', err);
-    return NextResponse.json({ error: err.message || 'Error inesperado' }, { status });
-}
-
 // ─── Estado / Healthcheck de Firebase Admin en el servidor ─────────────────
-export async function GET() {
+export async function GET(request) {
     try {
-        const auth = adminAuth();
-        return NextResponse.json({
-            ok: true,
-            hasAuth: !!auth,
-            projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            hasClientEmail: !!(process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL),
-            hasPrivateKey: !!(process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY),
-        });
+        await requireAdmin(request);
+        return NextResponse.json({ ok: true });
     } catch (err) {
-        return NextResponse.json({
-            ok: false,
-            error: err.message,
-            envCheck: {
-                hasProjectId: !!(process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
-                hasClientEmail: !!(process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL),
-                hasPrivateKey: !!(process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY),
-            }
-        }, { status: 500 });
+        return handleError(err);
     }
 }
 
@@ -126,9 +72,12 @@ export async function POST(request) {
 // ─── Activar/desactivar, cambiar rol o restablecer contraseña ────────────
 export async function PATCH(request) {
     try {
-        await requireAdmin(request);
+        const me = await requireAdmin(request);
         const { id, activo, rol, password, nombre, telefono, departamento } = await request.json();
         if (!id) throw new HttpError('Falta el id de la cuenta', 400);
+        if (id === me.uid && (activo === false || (rol && rol !== 'admin'))) {
+            throw new HttpError('No puedes desactivar ni quitarte el rol de administrador a ti mismo', 400);
+        }
 
         const authUpdates = {};
         const docUpdates = {};
@@ -196,10 +145,11 @@ export async function PATCH(request) {
 // ─── Eliminar una cuenta de acceso ─────────────────────────────────────────
 export async function DELETE(request) {
     try {
-        await requireAdmin(request);
+        const me = await requireAdmin(request);
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
         if (!id) throw new HttpError('Falta el id de la cuenta', 400);
+        if (id === me.uid) throw new HttpError('No puedes eliminar tu propia cuenta', 400);
 
         await adminAuth().deleteUser(id).catch(() => {}); // ya pudo no existir en Auth
         await adminDb().collection('usuarios').doc(id).delete();

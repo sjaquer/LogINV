@@ -7,6 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { getLocationInfo } from '@/context/LocationContext';
+import { isLowStock } from '@/lib/stock';
 
 const BRAND = 'FF1E40AF';       // azul institucional (encabezados)
 const BRAND_LIGHT = 'FFEFF6FF'; // fondo suave para totales
@@ -95,7 +96,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
 
     const fechaTexto = new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
     const totalStock = productos.reduce((sum, p) => sum + (p.stock_actual || 0), 0);
-    const stockBajo = productos.filter(p => p.stock_actual <= (p.stock_minimo ?? 0));
+    const stockBajo = productos.filter(isLowStock);
 
     // ─── Hoja 1: Resumen ──────────────────────────────────────────────────
     const resumen = workbook.addWorksheet('Resumen', { properties: { tabColor: { argb: BRAND } } });
@@ -181,7 +182,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     }));
 
     productos.forEach(p => {
-        const bajoStock = p.stock_actual <= (p.stock_minimo ?? 0);
+        const bajoStock = isLowStock(p);
         const row = inv.addRow({
             foto: '',
             codigo: p.codigo_barras || '',

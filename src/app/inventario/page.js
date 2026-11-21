@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
-import { useProductos, useCategorias, useConteos, useCrearMovimiento } from '@/hooks/useFirestore';
+import { useProductos, useCategorias, useConteos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, getLocationInfo } from '@/context/LocationContext';
 import { useSidebar } from '@/context/SidebarContext';
@@ -35,7 +35,6 @@ function InventarioPageInner() {
     const { productos, loading: pLoading, updateStock } = useProductos();
     const { categorias } = useCategorias();
     const { conteos, loading: cLoading, crearConteo, actualizarConteo, finalizarConteo } = useConteos();
-    const crearMovimiento = useCrearMovimiento();
     const { user } = useAuth();
     const { ubicacion, setUbicacion, ubicacionInfo, isGeneral } = useLocation();
     const { setHideBottomNav } = useSidebar();
@@ -232,7 +231,9 @@ function InventarioPageInner() {
             await finalizarConteo(conteoActivo.id);
             for (const item of conteoItems) {
                 if (item.diferencia !== 0) {
-                    await updateStock(item.producto_id, item.conteo_fisico, userName);
+                    await updateStock(item.producto_id, item.conteo_fisico, userName, {
+                        motivo: 'Ajuste por conteo físico',
+                    });
                 }
             }
             setConteoActivo(null);
@@ -249,26 +250,22 @@ function InventarioPageInner() {
         if (!quickStockProduct) return;
         setSaving(true);
         try {
-            const newStock = quickStockTipo === 'INGRESO'
-                ? quickStockProduct.stock_actual + cantidad
-                : Math.max(0, quickStockProduct.stock_actual - cantidad);
-            await updateStock(quickStockProduct.id, newStock, userName);
-            await crearMovimiento({
-                producto_id: quickStockProduct.id,
-                producto_nombre: quickStockProduct.nombre,
-                tipo: quickStockTipo,
-                cantidad,
-                stock_anterior: quickStockProduct.stock_actual,
-                stock_nuevo: newStock,
-                usuario: userName,
-                ubicacion: quickStockProduct.ubicacion,
-                motivo: motivo || (quickStockTipo === 'INGRESO' ? 'Ingreso rápido' : 'Salida rápida'),
-            });
+            // Una sola operación atómica: actualiza el stock y registra el movimiento.
+            await updateStock(
+                quickStockProduct.id,
+                quickStockTipo === 'INGRESO' ? cantidad : -cantidad,
+                userName,
+                {
+                    modo: 'delta',
+                    tipo: quickStockTipo,
+                    motivo: motivo || (quickStockTipo === 'INGRESO' ? 'Ingreso rápido' : 'Salida rápida'),
+                },
+            );
             setQuickStockProduct(null);
         } finally {
             setSaving(false);
         }
-    }, [quickStockProduct, quickStockTipo, updateStock, crearMovimiento, userName]);
+    }, [quickStockProduct, quickStockTipo, updateStock, userName]);
 
     const handleRefresh = useCallback(() => {
         return new Promise(resolve => setTimeout(resolve, 600));

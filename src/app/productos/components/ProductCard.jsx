@@ -3,6 +3,7 @@ import { MapPin, Layers, Check, AlertTriangle } from 'lucide-react';
 import { getLocationInfo } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import ProductThumb from '@/components/ui/ProductThumb';
+import { isLowStock } from '@/lib/stock';
 
 const ESTADO_BADGE = {
     OPTIMO: 'bg-emerald-500/90 text-white border-emerald-400/40',
@@ -26,7 +27,12 @@ export default function ProductCard({
     catIcon,
 }) {
     const ubicInfo = getLocationInfo(producto.ubicacion);
-    const bajoStock = producto.stock_actual <= (producto.stock_minimo ?? 0);
+    const bajoStock = isLowStock(producto);
+    const hasImage = !!producto.imagen_url;
+    // Sin foto, los badges van en tono claro; con foto, oscuros para contrastar.
+    const chip = hasImage
+        ? 'bg-black/60 dark:bg-black/80 text-white border-white/15'
+        : 'bg-white/90 dark:bg-zinc-800/90 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700';
 
     const handleClick = () => {
         if (selectMode) {
@@ -47,7 +53,7 @@ export default function ProductCard({
                     handleClick();
                 }
             }}
-            className={`group cursor-pointer text-left bg-white dark:bg-[#0d0d10] border rounded-2xl transition-all duration-300 flex flex-col h-full overflow-hidden relative shadow-xs hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
+            className={`group cursor-pointer text-left bg-white dark:bg-[#0d0d10] border rounded-2xl transition-all duration-300 flex flex-col h-full overflow-hidden relative shadow-xs hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
                 selected
                     ? 'border-brand-500 ring-2 ring-brand-300 dark:ring-brand-700 shadow-md'
                     : bajoStock
@@ -60,15 +66,19 @@ export default function ProductCard({
                 <ProductThumb
                     url={producto.imagen_url}
                     size="card"
+                    icon={catIcon ? <span className="text-2xl" aria-hidden="true">{catIcon}</span> : undefined}
+                    alt={producto.nombre}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
-                {/* Sutil viñeta gradiente para legibilidad de los badges flotantes */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/35 pointer-events-none transition-opacity duration-300 group-hover:opacity-90" />
+                {/* Viñeta para legibilidad de los badges, solo sobre fotos */}
+                {hasImage && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/30 pointer-events-none" />
+                )}
 
                 {/* Badge Categoría (Top-Left) */}
-                <span className="absolute top-2.5 left-2.5 z-10 max-w-[62%] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-black/60 dark:bg-black/80 backdrop-blur-md text-white border border-white/15 shadow-xs truncate flex items-center gap-1">
-                    {catIcon && <span className="text-xs">{catIcon}</span>}
+                <span className={`absolute top-2.5 left-2.5 z-10 max-w-[62%] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-xs truncate flex items-center gap-1 ${chip}`}>
+                    {catIcon && hasImage && <span className="text-xs">{catIcon}</span>}
                     <span className="truncate">{producto.categoria}</span>
                 </span>
 

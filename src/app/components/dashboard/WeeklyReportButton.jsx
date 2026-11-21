@@ -2,51 +2,46 @@
 import { useState } from 'react';
 import { FileText, FileSpreadsheet } from 'lucide-react';
 
-export default function WeeklyReportButton({ onGenerate, onExportExcel }) {
+// Botones de reporte pensados para ir sobre la cabecera azul del panel.
+// Nota: `bg-[#fff]` (y no `bg-white`) para que el botón siga siendo blanco en
+// modo oscuro: globals.css remapea `bg-white` a negro en html.dark.
+export default function WeeklyReportButton({ onGenerate, onExportExcel, canGenerate = true }) {
     const [generating, setGenerating] = useState(false);
     const [exporting, setExporting] = useState(false);
 
-    async function handleGenerate() {
-        setGenerating(true);
+    async function run(setBusy, fn) {
+        setBusy(true);
         try {
-            await onGenerate();
+            await fn();
         } finally {
-            setGenerating(false);
-        }
-    }
-
-    async function handleExportExcel() {
-        setExporting(true);
-        try {
-            await onExportExcel();
-        } finally {
-            setExporting(false);
+            setBusy(false);
         }
     }
 
     return (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm flex-1 sm:flex-none justify-center"
+                type="button"
+                onClick={() => run(setGenerating, onGenerate)}
+                disabled={generating || !canGenerate}
+                title={canGenerate ? 'PDF del último conteo completado' : 'Aún no hay conteos completados en esta ubicación'}
+                className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-[#fff] px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-                {generating ? (
-                    <><span className="spinner border-white border-t-transparent w-5 h-5" /> Generando...</>
-                ) : (
-                    <><FileText size={18} /> Reporte semanal</>
-                )}
+                {generating
+                    ? <span className="spinner h-4 w-4" />
+                    : <FileText size={17} aria-hidden="true" />}
+                Reporte del último conteo
             </button>
             <button
-                onClick={handleExportExcel}
+                type="button"
+                onClick={() => run(setExporting, onExportExcel)}
                 disabled={exporting}
-                className="btn btn-ghost px-4 py-3 text-base font-semibold flex items-center gap-2 border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none justify-center disabled:opacity-60"
+                className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 active:scale-[0.98] disabled:opacity-60"
             >
-                {exporting ? (
-                    <><span className="spinner border-slate-400 border-t-transparent w-4 h-4" /> Generando...</>
-                ) : (
-                    <><FileSpreadsheet size={18} /> Exportar a Excel</>
-                )}
+                {exporting
+                    ? <span className="spinner h-4 w-4 border-white/30 border-t-white" />
+                    : <FileSpreadsheet size={17} aria-hidden="true" />}
+                Exportar a Excel
             </button>
         </div>
     );

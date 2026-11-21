@@ -4,6 +4,19 @@ import { Camera, Trash2, AlertTriangle, ImageOff, CheckCircle2 } from 'lucide-re
 import { useGoogleDrive } from '@/services/googleDrive';
 import { compressImage } from '@/lib/imageCompression';
 import ProductThumb from '@/components/ui/ProductThumb';
+import { authService } from '@/services/auth';
+
+// Cabecera de autorización para /api/drive-upload (requiere sesión activa).
+async function authHeaders() {
+    const token = await authService.getIdToken().catch(() => null);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function deleteFromDrive(id) {
+    authHeaders()
+        .then(headers => fetch(`/api/drive-upload?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers }))
+        .catch(() => {});
+}
 
 function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
@@ -49,6 +62,7 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
                 formData.append('file', compressed, file.name || 'image.jpg');
                 const res = await fetch('/api/drive-upload', {
                     method: 'POST',
+                    headers: await authHeaders(),
                     body: formData,
                 });
                 const data = await res.json();
@@ -71,7 +85,7 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
             }
 
             if (oldId) {
-                fetch(`/api/drive-upload?id=${encodeURIComponent(oldId)}`, { method: 'DELETE' }).catch(() => {});
+                deleteFromDrive(oldId);
                 remove(oldId);
             }
         } catch (err) {
@@ -88,7 +102,7 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
         setInfoMsg('');
         setLocalError('');
         if (oldId) {
-            fetch(`/api/drive-upload?id=${encodeURIComponent(oldId)}`, { method: 'DELETE' }).catch(() => {});
+            deleteFromDrive(oldId);
             remove(oldId);
         }
     }

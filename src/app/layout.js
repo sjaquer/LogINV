@@ -1,15 +1,25 @@
 import './globals.css';
+import { Space_Grotesk, Manrope } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { SidebarProvider } from '@/context/SidebarContext';
-import { ThemeProvider } from '@/context/ThemeContext';
+import { ThemeProvider, themeInitScript } from '@/context/ThemeContext';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import BottomNav from '@/components/layout/BottomNav';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
+// Fuentes autoalojadas por Next (sin petición bloqueante a Google Fonts).
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+
 export const metadata = {
-    title: 'LogINV – Control de Inventario Iglesia CNC',
+    title: {
+        default: 'LogINV – Control de Inventario Iglesia CNC',
+        template: '%s · LogINV',
+    },
+    applicationName: 'LogINV',
+    robots: { index: false, follow: false },
     description: 'Sistema interno de gestión de inventario para la Iglesia CNC. Control de stock, ubicaciones, préstamos, mantenimiento y reportes.',
     manifest: '/manifest.json',
     icons: {
@@ -39,15 +49,19 @@ export const metadata = {
 export const viewport = {
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
     viewportFit: 'cover',
-    themeColor: '#2563eb',
+    themeColor: [
+        { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+        { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    ],
 };
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="es">
+        <html lang="es" className={`${spaceGrotesk.variable} ${manrope.variable}`} suppressHydrationWarning>
+            <head>
+                <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+            </head>
             <body className="font-sans antialiased overscroll-none">
                 <AuthProvider>
                     <ThemeProvider>
