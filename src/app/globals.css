@@ -489,12 +489,12 @@ html.dark nav.fixed {
 /* ── Mapeos globales de utilidades de Tailwind a Negro Real ── */
 html.dark [class~="bg-white"] { background-color: #0d0d10 !important; }
 html.dark [class~="bg-slate-50"] { background-color: #050505 !important; }
-html.dark [class~="bg-slate-50\\/50"] { background-color: #000000 !important; }
-html.dark [class~="bg-slate-50\\/70"] { background-color: #09090b !important; }
+html.dark [class~="bg-slate-50/50"] { background-color: #000000 !important; }
+html.dark [class~="bg-slate-50/70"] { background-color: #09090b !important; }
 html.dark [class~="bg-slate-100"] { background-color: #151518 !important; }
-html.dark [class~="bg-white\\/80"] { background-color: rgba(13, 13, 16, 0.88) !important; }
-html.dark [class~="bg-white\\/95"] { background-color: rgba(13, 13, 16, 0.95) !important; }
-html.dark [class~="bg-white\\/10"] { background-color: rgba(255, 255, 255, 0.08) !important; }
+html.dark [class~="bg-white/80"] { background-color: rgba(13, 13, 16, 0.88) !important; }
+html.dark [class~="bg-white/95"] { background-color: rgba(13, 13, 16, 0.95) !important; }
+html.dark [class~="bg-white/10"] { background-color: rgba(255, 255, 255, 0.08) !important; }
 
 /* ── Tipografía de Alto Contraste ── */
 html.dark [class~="text-slate-900"] { color: #ffffff !important; }
@@ -507,7 +507,7 @@ html.dark [class~="text-slate-300"] { color: #3f3f46 !important; }
 
 /* ── Bordes en Negro Real (Zinc/Carbon) ── */
 html.dark [class~="border-slate-200"] { border-color: #222226 !important; }
-html.dark [class~="border-slate-200\\/60"] { border-color: rgba(34, 34, 38, 0.6) !important; }
+html.dark [class~="border-slate-200/60"] { border-color: rgba(34, 34, 38, 0.6) !important; }
 html.dark [class~="border-slate-100"] { border-color: #18181c !important; }
 html.dark [class~="border-slate-50"] { border-color: #141416 !important; }
 html.dark [class~="divide-slate-50"] > * + * { border-color: #141416 !important; }
@@ -527,7 +527,7 @@ html.dark [class~="bg-amber-100"] {
 }
 
 html.dark [class~="bg-emerald-50"],
-html.dark [class~="bg-emerald-50\\/80"] {
+html.dark [class~="bg-emerald-50/80"] {
     background-color: rgba(16, 185, 129, 0.1) !important;
     border-color: rgba(16, 185, 129, 0.25) !important;
 }
@@ -537,7 +537,7 @@ html.dark [class~="text-emerald-800"] {
 }
 
 html.dark [class~="bg-amber-50"],
-html.dark [class~="bg-amber-50\\/80"] {
+html.dark [class~="bg-amber-50/80"] {
     background-color: rgba(245, 158, 11, 0.1) !important;
     border-color: rgba(245, 158, 11, 0.25) !important;
 }
@@ -592,11 +592,11 @@ html.dark button.group.bg-white:hover {
     border-color: #2e2e34 !important;
 }
 
-html.dark [class~="hover\\:bg-slate-50"]:hover {
+html.dark [class~="hover:bg-slate-50"]:hover {
     background-color: #18181c !important;
 }
 
-html.dark [class~="hover\\:bg-slate-100"]:hover {
+html.dark [class~="hover:bg-slate-100"]:hover {
     background-color: #202024 !important;
 }
 
@@ -635,7 +635,7 @@ html.dark [class~="ring-amber-200"] {
 html.dark [class~="ring-brand-200"] {
     --tw-ring-color: rgba(59, 130, 246, 0.3) !important;
 }
-html.dark [class~="ring-brand-500\\/10"] {
+html.dark [class~="ring-brand-500/10"] {
     --tw-ring-color: rgba(59, 130, 246, 0.25) !important;
 }
 
@@ -651,7 +651,7 @@ html.dark [class~="ring-brand-500\\/10"] {
         background: #ffffff !important;
         color: #000000 !important;
     }
-    .print\\:hidden,
+    .print\:hidden,
     header,
     nav,
     aside,
