@@ -11,9 +11,8 @@ export function useBarcodeSvg(value) {
 
     useEffect(() => {
         let mounted = true;
-        setReady(false);
         (async () => {
-            if (!value || !svgRef.current) return;
+            if (!value || !svgRef.current) { if (mounted) setReady(false); return; }
             const JsBarcode = (await import('jsbarcode')).default;
             if (!mounted || !svgRef.current) return;
             try {
@@ -95,7 +94,7 @@ export default function BarcodeLabelModal({ producto, onClose }) {
                 <div className="p-6 flex flex-col items-center gap-2 bg-white dark:bg-[#0d0d10]">
                     <p className="text-base font-bold text-slate-900 dark:text-white text-center">{producto?.nombre}</p>
                     {producto?.ubicacion_nombre && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">{producto.ubicacion_nombre}</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{producto.ubicacion_nombre}</p>
                     )}
                     
                     <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs flex items-center justify-center min-h-[90px] w-full">
@@ -112,7 +111,7 @@ export default function BarcodeLabelModal({ producto, onClose }) {
 
                 {producto?.codigo_barras && (
                     <div className="flex items-center justify-end gap-3 p-4 border-t border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/40">
-                        <button onClick={handleDownload} className="btn btn-ghost px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-xl flex items-center gap-2">
+                        <button onClick={handleDownload} className="btn btn-ghost px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 border border-slate-200 dark:border-white/10 rounded-xl flex items-center gap-2">
                             <Download size={16} /> SVG
                         </button>
                         <button 
@@ -163,7 +162,7 @@ export function BulkBarcodeLabelsModal({ productos, onClose }) {
                 <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-white/10 flex-shrink-0">
                     <div>
                         <h3 className="font-bold text-slate-900 dark:text-white text-lg">Hoja de impresión de etiquetas</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-0.5">
                             {conCodigo.length} producto{conCodigo.length === 1 ? '' : 's'} seleccionado{conCodigo.length === 1 ? '' : 's'} · Todas en cuadrícula optimizada
                         </p>
                     </div>
@@ -177,7 +176,7 @@ export function BulkBarcodeLabelsModal({ productos, onClose }) {
                     {/* Control de copias */}
                     <div className="flex items-center gap-2">
                         <Copy size={16} className="text-slate-400" />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Copias por producto:</span>
+                        <span className="text-xs font-bold text-slate-700">Copias por producto:</span>
                         <div className="flex items-center gap-1">
                             {[1, 2, 3, 4].map(n => (
                                 <button
@@ -187,7 +186,7 @@ export function BulkBarcodeLabelsModal({ productos, onClose }) {
                                     className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
                                         copias === n
                                             ? 'bg-violet-600 text-white shadow-xs'
-                                            : 'bg-white dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-100'
+                                            : 'bg-white dark:bg-white/10 text-slate-700 border border-slate-200 dark:border-white/10 hover:bg-slate-100'
                                     }`}
                                 >
                                     {n}
@@ -197,14 +196,14 @@ export function BulkBarcodeLabelsModal({ productos, onClose }) {
                     </div>
 
                     {/* Resumen de hojas */}
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                         <CheckCircle2 size={15} className="text-emerald-500" />
                         <span>Total: <strong className="text-violet-600 dark:text-violet-400 font-bold">{totalEtiquetas}</strong> etiquetas (~{hojasEstimadas} hoja{hojasEstimadas > 1 ? 's' : ''})</span>
                     </div>
                 </div>
 
                 {sinCodigo > 0 && (
-                    <div className="mx-5 mt-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2 flex-shrink-0">
+                    <div className="mx-5 mt-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2 flex-shrink-0">
                         <AlertCircle size={16} className="flex-shrink-0" />
                         <span>{sinCodigo} producto{sinCodigo === 1 ? '' : 's'} seleccionado{sinCodigo === 1 ? '' : 's'} no tiene código de barras y no se incluirá{sinCodigo === 1 ? '' : 'n'}.</span>
                     </div>
@@ -237,7 +236,7 @@ export function BulkBarcodeLabelsModal({ productos, onClose }) {
                 {/* Footer */}
                 {conCodigo.length > 0 && (
                     <div className="flex items-center justify-between p-4 sm:p-5 border-t border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/40 flex-shrink-0">
-                        <button type="button" onClick={onClose} className="btn btn-ghost px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                        <button type="button" onClick={onClose} className="btn btn-ghost px-5 py-2.5 text-sm font-semibold text-slate-600">
                             Cerrar
                         </button>
                         <button

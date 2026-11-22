@@ -52,9 +52,9 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-surface max-w-md w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-surface flex-shrink-0">
                     <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-slate-900 text-lg">Nuevo mantenimiento</h3>
                         <p className="text-sm text-slate-500 mt-0.5">Programa un mantenimiento para un producto</p>
@@ -79,7 +79,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                         <select
                             value={form.producto_id}
                             onChange={e => handleChange('producto_id', e.target.value)}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         >
                             <option value="">— Selecciona un producto —</option>
@@ -102,7 +102,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                                             ? tipo.color === 'blue' 
                                                 ? 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-500/10'
                                                 : 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-500/10'
-                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            : 'bg-surface border-slate-200 text-slate-500 hover:bg-slate-50'
                                     }`}
                                 >
                                     {tipo.label}
@@ -118,7 +118,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                             value={form.descripcion}
                             onChange={e => handleChange('descripcion', e.target.value)}
                             placeholder="Describe el mantenimiento a realizar"
-                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp resize-none text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -130,7 +130,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                             value={form.fecha_programada}
                             onChange={e => handleChange('fecha_programada', e.target.value)}
                             min={new Date().toISOString().split('T')[0]}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -142,7 +142,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                             value={form.responsable}
                             onChange={e => handleChange('responsable', e.target.value)}
                             placeholder="Nombre del técnico responsable"
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -154,7 +154,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                             min="0"
                             value={form.costo}
                             onChange={e => handleChange('costo', e.target.value)}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
 
@@ -165,7 +165,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
                             value={form.notas}
                             onChange={e => handleChange('notas', e.target.value)}
                             placeholder="Notas adicionales"
-                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp resize-none text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
                 </form>

@@ -62,9 +62,9 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 dark:border-[#222226] shadow-2xl bg-white dark:bg-[#0d0d10] max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 dark:border-[#222226] shadow-2xl bg-surface dark:bg-[#0d0d10] max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-[#0d0d10] flex-shrink-0">
+                <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 dark:border-zinc-800/80 bg-surface dark:bg-[#0d0d10] flex-shrink-0">
                     <div className="flex items-start gap-3 min-w-0">
                         <ProductThumb url={producto.imagen_url} size="sm" fit="cover" />
                         <div className="min-w-0">
@@ -82,7 +82,7 @@ export default function ProductDetailModal({ producto, canManage, isGeneral, onC
                     {/* Foto principal destacada con vista completa sin recortes */}
                     <div
                         onClick={() => producto.imagen_url && setShowFullscreen(true)}
-                        className={`relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden bg-slate-950 dark:bg-black border border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-center group/hero shadow-inner select-none ${
+                        className={`relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden bg-ink-950 dark:bg-black border border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-center group/hero shadow-inner select-none ${
                             producto.imagen_url ? 'cursor-zoom-in' : ''
                         }`}
                         title={producto.imagen_url ? 'Haz clic para ver en pantalla completa' : undefined}

@@ -23,7 +23,7 @@ export default function QuickActions() {
                 <Link
                     key={href}
                     href={href}
-                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md active:scale-[0.98]"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-surface p-3 sm:p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md active:scale-[0.98]"
                 >
                     <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ring-1 ${tone}`}>
                         <Icon size={20} aria-hidden="true" />

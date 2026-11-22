@@ -3,7 +3,7 @@
 Aplicación web (PWA) para gestionar el inventario de la Iglesia CNC: artículos, stock,
 ubicaciones, conteos físicos, préstamos, mantenimiento y reportes.
 
-**Stack:** Next.js 14 (App Router) · React 18 · Firebase (Auth + Firestore) · Tailwind CSS ·
+**Stack:** Next.js 16 (App Router) · React 19 · Firebase 13 (Auth + Firestore) · Tailwind CSS ·
 Google Drive (fotos de productos) · ExcelJS (reportes).
 
 ## Módulos
@@ -19,6 +19,8 @@ Google Drive (fotos de productos) · ExcelJS (reportes).
 | Mantenimiento | `/maintenance` | admin, encargado |
 | Reportes | `/reports` | admin, encargado |
 | Usuarios | `/admin/users` | admin |
+| Auditoría (quién hizo qué y cuándo) | `/auditoria` | admin |
+| Ayuda y guía con capturas | `/ayuda` | todos |
 
 Los permisos de la UI están en `src/lib/routePermissions.js`; los del servidor, en
 `firestore.rules` y `src/lib/serverAuth.js`.
@@ -60,8 +62,9 @@ Primera cuenta de administrador: `npm run create-admin` (requiere las credencial
 | `npm run seed` | Importa el inventario desde Excel |
 | `npm run mock:generate` | Regenera `src/lib/mockDataStore.js` |
 | `npm run export:db` | Exporta la base completa a `exports/` |
+| `npm run guide:screenshots` | Regenera las capturas de la guía (ver `docs/GUIA_USUARIO.md`) |
 
-Documentación adicional en `docs/`.
+Documentación técnica en `docs/DOCUMENTACION.md`; guía de usuario dentro de la app (`/ayuda`).
 
 ## Licencia
 

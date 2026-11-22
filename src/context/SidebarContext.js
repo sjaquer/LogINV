@@ -1,28 +1,18 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { usePersistentState } from '@/hooks/usePersistentState';
 
 const SidebarContext = createContext(null);
-const STORAGE_KEY = 'loginv_sidebar_collapsed';
 
 export function SidebarProvider({ children }) {
-    const [collapsed, setCollapsedState] = useState(false);
+    // Recuerda si el usuario prefiere el menú lateral colapsado.
+    const [stored, setStored] = usePersistentState('loginv_sidebar_collapsed', '0');
+    const collapsed = stored === '1';
+    const setCollapsed = useCallback((value) => setStored(value ? '1' : '0'), [setStored]);
     const [hideBottomNav, setHideBottomNav] = useState(false);
 
-    // Recordar si el usuario prefiere el menú lateral colapsado.
-    useEffect(() => {
-        try { setCollapsedState(localStorage.getItem(STORAGE_KEY) === '1'); } catch (_) {}
-    }, []);
-
-    const setCollapsed = useCallback((value) => {
-        setCollapsedState(value);
-        try { localStorage.setItem(STORAGE_KEY, value ? '1' : '0'); } catch (_) {}
-    }, []);
-
-    return (
-        <SidebarContext.Provider value={{ collapsed, setCollapsed, hideBottomNav, setHideBottomNav }}>
-            {children}
-        </SidebarContext.Provider>
-    );
+    const value = useMemo(() => ({ collapsed, setCollapsed, hideBottomNav, setHideBottomNav }), [collapsed, setCollapsed, hideBottomNav]);
+    return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
 }
 
 export function useSidebar() {

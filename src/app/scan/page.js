@@ -9,6 +9,8 @@ import { getLocationInfo } from '@/context/LocationContext';
 import { StockBar } from '@/components/ui/SharedComponents';
 import { findProductByBarcode } from '@/lib/barcodeUtils';
 import RouteGuard from '@/components/ui/RouteGuard';
+import { useToast, useConfirm } from '@/components/ui/Feedback';
+import { useAuth } from '@/context/AuthContext';
 import { 
     ScanBarcode, CheckCircle2, XCircle, RotateCcw, 
     PlusCircle, Pencil, Link as LinkIcon, Search, X, Check 
@@ -17,6 +19,11 @@ import {
 export default function ScanPage() {
     const { productos, actualizarProducto } = useProductos();
     const router = useRouter();
+    const toast = useToast();
+    const confirm = useConfirm();
+    const { user } = useAuth();
+    const canManage = user?.rol === 'admin' || user?.rol === 'encargado';
+    const [manualCode, setManualCode] = useState('');
     const [showScanner, setShowScanner] = useState(false);
     const [scannedCode, setScannedCode] = useState('');
     const [result, setResult] = useState(undefined); // undefined = sin escanear aún
@@ -52,6 +59,15 @@ export default function ScanPage() {
 
     async function handleLinkProduct(prod) {
         if (!prod || !scannedCode) return;
+        if (prod.codigo_barras && prod.codigo_barras !== scannedCode) {
+            const ok = await confirm({
+                title: 'Reemplazar código',
+                message: `"${prod.nombre}" ya tiene el código ${prod.codigo_barras}. ¿Reemplazarlo por ${scannedCode}? Las etiquetas impresas con el código anterior dejarán de funcionar.`,
+                confirmLabel: 'Reemplazar',
+                danger: true,
+            });
+            if (!ok) return;
+        }
         setLinking(true);
         try {
             await actualizarProducto(prod.id, { codigo_barras: scannedCode });
@@ -60,7 +76,7 @@ export default function ScanPage() {
             setLinkSuccess(`Código asignado exitosamente a "${prod.nombre}"`);
             setTimeout(() => setLinkSuccess(''), 4000);
         } catch (err) {
-            alert('Error al vincular el código: ' + err.message);
+            toast.error('No se pudo asignar el código: ' + err.message);
         } finally {
             setLinking(false);
         }
@@ -80,11 +96,11 @@ export default function ScanPage() {
 
     return (
         <RouteGuard>
-        <div className="flex flex-col flex-1 bg-slate-50/50">
+        <div className="flex flex-col flex-1">
             <Header title="Escanear código" />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-lg mx-auto w-full">
 
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm text-center">
                     <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-3">
                         <ScanBarcode size={26} className="text-brand-600" />
                     </div>
@@ -102,14 +118,36 @@ export default function ScanPage() {
                 )}
 
                 {result === undefined ? (
-                    <button
-                        onClick={() => setShowScanner(true)}
-                        className="btn btn-primary w-full py-4 text-base font-bold flex items-center justify-center gap-2 shadow-sm rounded-xl"
-                    >
-                        <ScanBarcode size={20} /> Iniciar escaneo con cámara
-                    </button>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setShowScanner(true)}
+                            className="btn-primary w-full py-4 text-base font-bold rounded-xl"
+                        >
+                            <ScanBarcode size={20} /> Escanear con la cámara
+                        </button>
+                        <form
+                            className="glass-panel p-4"
+                            onSubmit={e => { e.preventDefault(); if (manualCode.trim()) { handleScan(manualCode); setManualCode(''); } }}
+                        >
+                            <label htmlFor="manual-code" className="field-label">¿Sin cámara? Escribe el código o usa un lector USB</label>
+                            <div className="flex gap-2">
+                                <input
+                                    id="manual-code"
+                                    value={manualCode}
+                                    onChange={e => setManualCode(e.target.value)}
+                                    placeholder="Ej: INSTB1 o 7751234567890"
+                                    className="inp font-mono"
+                                    autoComplete="off"
+                                    inputMode="text"
+                                />
+                                <button type="submit" disabled={!manualCode.trim()} className="btn-secondary px-4">
+                                    <Search size={16} /> Buscar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 ) : (
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 animate-fade-in">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 animate-fade-in">
                         <div>
                             <p className="text-[11px] text-slate-400 uppercase tracking-wider font-bold">Código escaneado</p>
                             <p className="font-mono text-base sm:text-lg font-bold text-slate-800 bg-slate-50 p-2.5 rounded-lg border border-slate-200 break-all mt-1">
@@ -127,13 +165,13 @@ export default function ScanPage() {
                                         url={result.imagen_url}
                                         icon="📦"
                                         size="md"
-                                        className="w-16 h-16 rounded-2xl flex-shrink-0 object-cover shadow-xs border border-emerald-200/80 bg-white"
+                                        className="w-16 h-16 rounded-2xl flex-shrink-0 object-cover shadow-xs border border-emerald-200/80 bg-surface"
                                     />
                                     <div className="min-w-0 flex-1">
                                         <p className="font-bold text-slate-900 text-base leading-snug">{result.nombre}</p>
                                         <p className="text-xs text-brand-600 font-semibold uppercase mt-0.5">{result.categoria}</p>
                                         {ubicInfo && (
-                                            <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-white border border-emerald-200 text-emerald-800 shadow-xs">
+                                            <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-surface border border-emerald-200 text-emerald-800 shadow-xs">
                                                 <span>{ubicInfo.icono}</span>
                                                 <span>{ubicInfo.nombre}</span>
                                             </span>
@@ -165,15 +203,15 @@ export default function ScanPage() {
                                 </p>
                                 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                                    <button
+                                    {canManage && <button
                                         onClick={goToCreate}
                                         className="btn btn-primary py-2.5 px-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 rounded-lg"
                                     >
                                         <PlusCircle size={16} /> Crear producto
-                                    </button>
+                                    </button>}
                                     <button
                                         onClick={() => setShowLinkModal(true)}
-                                        className="btn btn-ghost bg-white border border-amber-300 text-amber-900 hover:bg-amber-100/50 py-2.5 px-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 rounded-lg"
+                                        className="btn btn-ghost bg-surface border border-amber-300 text-amber-900 hover:bg-amber-100/50 py-2.5 px-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 rounded-lg"
                                     >
                                         <LinkIcon size={16} /> Asignar a existente
                                     </button>
@@ -193,8 +231,8 @@ export default function ScanPage() {
 
             {/* Modal para vincular a un producto existente */}
             {showLinkModal && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowLinkModal(false)}>
-                    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[85vh] flex flex-col animate-slide-up" onClick={e => e.stopPropagation()}>
+                <div className="modal-overlay animate-fade-in" onClick={() => setShowLinkModal(false)}>
+                    <div className="modal-box max-w-md overflow-hidden flex flex-col animate-slide-up" onClick={e => e.stopPropagation()}>
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                             <div>
                                 <h3 className="font-bold text-slate-900 text-base">Asignar código a producto</h3>
@@ -213,7 +251,7 @@ export default function ScanPage() {
                                     value={linkSearch}
                                     onChange={e => setLinkSearch(e.target.value)}
                                     placeholder="Buscar producto por nombre..."
-                                    className="inp pl-9 py-2 text-sm bg-white"
+                                    className="inp pl-9 py-2 text-sm bg-surface"
                                     autoFocus
                                 />
                             </div>

@@ -32,7 +32,7 @@ export default function ProductCard({
     // Sin foto, los badges van en tono claro; con foto, oscuros para contrastar.
     const chip = hasImage
         ? 'bg-black/60 dark:bg-black/80 text-white border-white/15'
-        : 'bg-white/90 dark:bg-zinc-800/90 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700';
+        : 'bg-surface/90 dark:bg-zinc-800/90 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700';
 
     const handleClick = () => {
         if (selectMode) {
@@ -53,11 +53,11 @@ export default function ProductCard({
                     handleClick();
                 }
             }}
-            className={`group cursor-pointer text-left bg-white dark:bg-[#0d0d10] border rounded-2xl transition-all duration-300 flex flex-col h-full overflow-hidden relative shadow-xs hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
+            className={`group cursor-pointer text-left bg-surface dark:bg-[#0d0d10] border rounded-2xl transition-all duration-300 flex flex-col h-full overflow-hidden relative shadow-xs hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
                 selected
                     ? 'border-brand-500 ring-2 ring-brand-300 dark:ring-brand-700 shadow-md'
                     : bajoStock
-                        ? 'border-amber-300/80 dark:border-amber-700/60 hover:border-amber-400'
+                        ? 'border-amber-300/80 hover:border-amber-400'
                         : 'border-slate-200/90 dark:border-[#222226] hover:border-slate-300 dark:hover:border-zinc-700'
             }`}
         >

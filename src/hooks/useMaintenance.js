@@ -1,205 +1,88 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { 
-    USE_MOCK, mockTimestamp, listeners, notify, 
-    getFirestore, firebaseError 
-} from './useFirestoreQuery';
+import { useCallback, useMemo } from 'react';
+import { useCollection } from './useCollection';
+import { registerMock, mockTimestamp, DAY } from '@/lib/mockStore';
+import { addDocument, updateDocument, deleteDocument, nowValue } from '@/lib/dataOps';
+import { audited } from '@/lib/auditLog';
 import { toValidDate } from '@/lib/utils';
 
-// Mock data for maintenance
-let mockMantenimientos = [
+const ago = (days) => mockTimestamp(new Date(Date.now() - days * DAY));
+
+registerMock('mantenimiento', () => [
     {
-        id: 'maint_1',
-        producto_id: 'p_2',
-        producto_nombre: 'Tequila José Cuervo 750ml',
-        tipo: 'preventivo',
-        descripcion: 'Revisión de almacenamiento y temperatura',
-        estado: 'programado',
-        fecha_programada: mockTimestamp(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-        fecha_inicio: null,
-        fecha_fin: null,
-        costo: 0,
-        responsable: 'Juan Técnico',
-        notas: 'Verificar temperatura del almacén',
-        created_at: mockTimestamp(),
+        id: 'maint_1', producto_id: 'p8', producto_nombre: 'Consola de sonido',
+        tipo: 'preventivo', descripcion: 'Limpieza de faders y revisión de canales',
+        estado: 'programado', fecha_programada: ago(-7), fecha_inicio: null, fecha_fin: null,
+        costo: 0, responsable: 'Equipo de Sonido', notas: 'Antes del aniversario', created_at: ago(1),
     },
     {
-        id: 'maint_2',
-        producto_id: 'p_8',
-        producto_nombre: 'Equipo de Sonido',
-        tipo: 'correctivo',
-        descripcion: 'Reparación de parlante dañado',
-        estado: 'completado',
-        fecha_programada: mockTimestamp(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
-        fecha_inicio: mockTimestamp(new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)),
-        fecha_fin: mockTimestamp(new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)),
-        costo: 150,
-        responsable: 'María Técnico',
-        notas: 'Parlante reparado correctamente',
-        created_at: mockTimestamp(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
+        id: 'maint_3', producto_id: 'p9', producto_nombre: 'Aire acondicionado Templo',
+        tipo: 'preventivo', descripcion: 'Cambio de filtros',
+        estado: 'programado', fecha_programada: ago(3), fecha_inicio: null, fecha_fin: null,
+        costo: 0, responsable: 'Mantenimiento', notas: '', created_at: ago(20),
     },
-];
-
-const mantenimientoListeners = new Set();
-
-function notifyMantenimientos() {
-    mantenimientoListeners.forEach(fn => fn([...mockMantenimientos]));
-}
+    {
+        id: 'maint_2', producto_id: 'p10', producto_nombre: 'Parlante principal',
+        tipo: 'correctivo', descripcion: 'Reparación de parlante dañado',
+        estado: 'completado', fecha_programada: ago(14), fecha_inicio: ago(12), fecha_fin: ago(10),
+        costo: 150, responsable: 'Técnico externo', notas: 'Parlante reparado correctamente', created_at: ago(14),
+    },
+]);
 
 export function useMaintenance() {
-    const [mantenimientos, setMantenimientos] = useState(USE_MOCK ? mockMantenimientos : []);
-    const [loading, setLoading] = useState(!USE_MOCK);
-    const [error, setError] = useState(null);
+    const { data: mantenimientos, loading, error } = useCollection('mantenimiento', { orderByField: 'created_at', direction: 'desc' });
 
-    useEffect(() => {
-        if (USE_MOCK) {
-            setMantenimientos([...mockMantenimientos]);
-            mantenimientoListeners.add(setMantenimientos);
-            return () => mantenimientoListeners.delete(setMantenimientos);
-        }
-        let unsub;
-        (async () => {
-            try {
-                const { fs, db } = await getFirestore();
-                const q = fs.query(fs.collection(db, 'mantenimiento'), fs.orderBy('created_at', 'desc'));
-                unsub = fs.onSnapshot(q,
-                    (snap) => {
-                        setMantenimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                        setLoading(false);
-                        setError(null);
-                    },
-                    (err) => {
-                        console.error('[LogINV] Error listener mantenimiento:', err.code, err.message);
-                        setLoading(false);
-                        setError(err.message);
-                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            const qSimple = fs.collection(db, 'mantenimiento');
-                            unsub = fs.onSnapshot(qSimple,
-                                (snap) => {
-                                    setMantenimientos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                                    setLoading(false);
-                                    setError(null);
-                                },
-                                (fallbackErr) => {
-                                    console.error('[LogINV] Error fallback mantenimiento:', fallbackErr);
-                                    setLoading(false);
-                                }
-                            );
-                        }
-                    }
-                );
-            } catch (err) {
-                console.error('[LogINV] Error setup mantenimiento:', err);
-                setLoading(false);
-                setError(err.message);
-            }
-        })();
-        return () => unsub?.();
-    }, []);
+    const crearMantenimiento = useCallback((data) => addDocument('mantenimiento', {
+        ...data,
+        estado: data.estado || 'programado',
+        fecha_inicio: null,
+        fecha_fin: null,
+        created_at: nowValue(),
+    }, { prefix: 'maint' }), []);
 
-    const crearMantenimiento = useCallback(async (data) => {
-        if (USE_MOCK) {
-            const newMaint = {
-                id: 'maint_' + Date.now(),
-                ...data,
-                estado: 'programado',
-                fecha_inicio: null,
-                fecha_fin: null,
-                created_at: mockTimestamp(),
-            };
-            mockMantenimientos = [newMaint, ...mockMantenimientos];
-            notifyMantenimientos();
-            return newMaint.id;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            const nowIso = new Date().toISOString();
-            const ref = await fs.addDoc(fs.collection(db, 'mantenimiento'), {
-                ...data,
-                estado: data.estado || 'programado',
-                fecha_inicio: null,
-                fecha_fin: null,
-                created_at: nowIso,
-            });
-            return ref.id;
-        } catch (err) {
-            firebaseError('crearMantenimiento', err);
-        }
-    }, []);
+    const actualizarMantenimiento = useCallback((id, data) => updateDocument('mantenimiento', id, data), []);
 
-    const actualizarMantenimiento = useCallback(async (id, data) => {
-        if (USE_MOCK) {
-            mockMantenimientos = mockMantenimientos.map(m => m.id === id ? { ...m, ...data } : m);
-            notifyMantenimientos();
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'mantenimiento', id), data);
-        } catch (err) {
-            firebaseError('actualizarMantenimiento', err);
-        }
-    }, []);
+    const iniciarMantenimiento = useCallback((id) => updateDocument('mantenimiento', id, {
+        estado: 'en_progreso',
+        fecha_inicio: nowValue(),
+    }), []);
 
-    const iniciarMantenimiento = useCallback(async (id) => {
-        const dateVal = USE_MOCK ? mockTimestamp() : new Date().toISOString();
-        return actualizarMantenimiento(id, {
-            estado: 'en_progreso',
-            fecha_inicio: dateVal,
-        });
-    }, [actualizarMantenimiento]);
+    const completarMantenimiento = useCallback((id, costo = 0, notas = '') => updateDocument('mantenimiento', id, {
+        estado: 'completado',
+        fecha_fin: nowValue(),
+        costo: Number(costo) || 0,
+        ...(notas ? { notas } : {}),
+    }), []);
 
-    const completarMantenimiento = useCallback(async (id, costo = 0, notas = '') => {
-        const dateVal = USE_MOCK ? mockTimestamp() : new Date().toISOString();
-        return actualizarMantenimiento(id, {
-            estado: 'completado',
-            fecha_fin: dateVal,
-            costo,
-            notas: notas || undefined,
-        });
-    }, [actualizarMantenimiento]);
+    const eliminarMantenimiento = useCallback((id) => deleteDocument('mantenimiento', id), []);
 
-    const eliminarMantenimiento = useCallback(async (id) => {
-        if (USE_MOCK) {
-            mockMantenimientos = mockMantenimientos.filter(m => m.id !== id);
-            notifyMantenimientos();
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.deleteDoc(fs.doc(db, 'mantenimiento', id));
-        } catch (err) {
-            firebaseError('eliminarMantenimiento', err);
-        }
-    }, []);
+    const grupos = useMemo(() => {
+        const programados = mantenimientos.filter(m => m.estado === 'programado');
+        return {
+            programados,
+            enProgreso: mantenimientos.filter(m => m.estado === 'en_progreso'),
+            completados: mantenimientos.filter(m => m.estado === 'completado'),
+            vencidos: programados.filter(m => {
+                const f = toValidDate(m.fecha_programada);
+                return f ? f < new Date() : false;
+            }),
+        };
+    }, [mantenimientos]);
 
-    // Get scheduled maintenance
-    const mantenimientosProgramados = mantenimientos.filter(m => m.estado === 'programado');
-    
-    // Get in-progress maintenance
-    const mantenimientosEnProgreso = mantenimientos.filter(m => m.estado === 'en_progreso');
-    
-    // Get completed maintenance
-    const mantenimientosCompletados = mantenimientos.filter(m => m.estado === 'completado');
+    const desc = (id) => mantenimientos.find(m => m.id === id)?.producto_nombre || id;
 
-    // Get overdue maintenance
-    const mantenimientosVencidos = mantenimientosProgramados.filter(m => {
-        const fechaProgramada = toValidDate(m.fecha_programada);
-        return fechaProgramada ? fechaProgramada < new Date() : false;
-    });
-
-    return { 
-        mantenimientos, 
-        mantenimientosProgramados,
-        mantenimientosEnProgreso,
-        mantenimientosCompletados,
-        mantenimientosVencidos,
-        loading, 
-        error, 
-        crearMantenimiento, 
-        actualizarMantenimiento,
-        iniciarMantenimiento,
-        completarMantenimiento,
-        eliminarMantenimiento
+    return {
+        mantenimientos,
+        mantenimientosProgramados: grupos.programados,
+        mantenimientosEnProgreso: grupos.enProgreso,
+        mantenimientosCompletados: grupos.completados,
+        mantenimientosVencidos: grupos.vencidos,
+        loading,
+        error,
+        crearMantenimiento: audited(crearMantenimiento, ([d], id) => ({ accion: 'crear', entidad: 'mantenimiento', id, descripcion: `${d.producto_nombre} · ${d.tipo || ''}` })),
+        actualizarMantenimiento: audited(actualizarMantenimiento, ([id]) => ({ accion: 'editar', entidad: 'mantenimiento', id, descripcion: desc(id) })),
+        iniciarMantenimiento: audited(iniciarMantenimiento, ([id]) => ({ accion: 'mantenimiento', entidad: 'mantenimiento', id, descripcion: `${desc(id)} · iniciado` })),
+        completarMantenimiento: audited(completarMantenimiento, ([id, costo]) => ({ accion: 'mantenimiento', entidad: 'mantenimiento', id, descripcion: `${desc(id)} · completado${costo ? ` (S/ ${costo})` : ''}` })),
+        eliminarMantenimiento: audited(eliminarMantenimiento, ([id]) => ({ accion: 'eliminar', entidad: 'mantenimiento', id, descripcion: desc(id) })),
     };
 }

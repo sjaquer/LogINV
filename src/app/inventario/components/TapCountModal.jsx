@@ -28,7 +28,7 @@ export default function TapCountModal({ producto, currentCount, onConfirm, onDis
     const diff = count - producto.stock_actual;
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-900/95 flex flex-col animate-fade-in select-none" style={{ WebkitTapHighlightColor: 'transparent' }}>
+        <div className="fixed inset-0 z-50 bg-ink-900/95 flex flex-col animate-fade-in select-none" style={{ WebkitTapHighlightColor: 'transparent' }}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 flex-shrink-0">
                 <button onClick={onClose} className="p-3 rounded-2xl bg-white/10 text-white/80 hover:bg-white/20 active:scale-95 transition-all">

@@ -3,17 +3,20 @@ import { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useProductos, useCategorias, useConteos, useMovimientos } from '@/hooks/useFirestore';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation, UBICACIONES } from '@/context/LocationContext';
+import { useLocation } from '@/context/LocationContext';
 import Header from '@/components/layout/Header';
-import PullToRefresh from '@/components/ui/PullToRefresh';
 import {
     KPICards,
     RecentActivity,
     StockAlerts,
     WeeklyReportButton,
     QuickActions,
+    AttentionPanel,
+    WelcomeTip,
     generatePDFReport,
 } from './components/dashboard';
+import { useLoans } from '@/hooks/useLoans';
+import { useMaintenance } from '@/hooks/useMaintenance';
 import { exportInventoryExcel } from '@/lib/excelExport';
 import { History } from 'lucide-react';
 import { isLowStock } from '@/lib/stock';
@@ -23,6 +26,8 @@ export default function DashboardPage() {
     const { categorias } = useCategorias();
     const { conteos, loading: cLoading } = useConteos();
     const { movimientos, loading: mLoading } = useMovimientos();
+    const { prestamosActivos, prestamosVencidos } = useLoans();
+    const { mantenimientosProgramados, mantenimientosVencidos } = useMaintenance();
     const { user } = useAuth();
     const { ubicacion, ubicacionInfo, isGeneral } = useLocation();
 
@@ -98,10 +103,6 @@ export default function DashboardPage() {
         return exportInventoryExcel(productosUbicacion, categorias, ubicacionInfo.nombre);
     }, [productosUbicacion, categorias, ubicacionInfo.nombre]);
 
-    const handleRefresh = useCallback(() => {
-        return new Promise(resolve => setTimeout(resolve, 600));
-    }, []);
-
     const hoyLabel = useMemo(
         () => new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }),
         []
@@ -110,7 +111,6 @@ export default function DashboardPage() {
     return (
         <div className="flex flex-col flex-1">
             <Header title="Panel de control" />
-            <PullToRefresh onRefresh={handleRefresh}>
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 animate-fade-in max-w-6xl mx-auto w-full pb-4">
 
                 {/* Saludo + acciones de reporte */}
@@ -134,6 +134,8 @@ export default function DashboardPage() {
                     </div>
                 </section>
 
+                <WelcomeTip userId={user?.id} />
+
                 {/* Accesos rápidos */}
                 <QuickActions ubicacionInfo={ubicacionInfo} />
 
@@ -147,9 +149,20 @@ export default function DashboardPage() {
                     loading={loading}
                 />
 
-                {/* Alertas + actividad */}
+                {/* Pendientes + alertas + actividad */}
                 <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 items-start">
-                    <StockAlerts stockBajo={stockBajo} total={alertasStock} />
+                    <div className="space-y-5 sm:space-y-6">
+                        <AttentionPanel
+                            role={user?.rol}
+                            prestamosVencidos={prestamosVencidos.length}
+                            prestamosActivos={prestamosActivos.length}
+                            mantVencidos={mantenimientosVencidos.length}
+                            mantPendientes={mantenimientosProgramados.length}
+                            conteosAbiertos={conteos.filter(c => c.estado === 'EN_PROGRESO' && (isGeneral || c.ubicacion === ubicacion)).length}
+                            bajoMinimo={alertasStock}
+                        />
+                        <StockAlerts stockBajo={stockBajo} total={alertasStock} />
+                    </div>
                     <RecentActivity movimientos={movimientosRecientes} />
                 </div>
 
@@ -162,7 +175,6 @@ export default function DashboardPage() {
                 </Link>
 
             </div>
-            </PullToRefresh>
         </div>
     );
 }

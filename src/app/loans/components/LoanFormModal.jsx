@@ -49,9 +49,9 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-surface max-w-md w-full max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-surface flex-shrink-0">
                     <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-slate-900 text-lg">Nuevo préstamo</h3>
                         <p className="text-sm text-slate-500 mt-0.5">Registra un préstamo de producto</p>
@@ -76,7 +76,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
                         <select
                             value={form.producto_id}
                             onChange={e => handleChange('producto_id', e.target.value)}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         >
                             <option value="">— Selecciona un producto —</option>
@@ -93,7 +93,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
                             value={form.prestado_a}
                             onChange={e => handleChange('prestado_a', e.target.value)}
                             placeholder="Nombre de quien recibe"
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -105,7 +105,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
                             value={form.contacto}
                             onChange={e => handleChange('contacto', e.target.value)}
                             placeholder="Teléfono o email"
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
 
@@ -116,7 +116,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
                             value={form.fecha_devolucion_esperada}
                             onChange={e => handleChange('fecha_devolucion_esperada', e.target.value)}
                             min={new Date().toISOString().split('T')[0]}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -128,7 +128,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
                             value={form.notas}
                             onChange={e => handleChange('notas', e.target.value)}
                             placeholder="Motivo del préstamo"
-                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp resize-none text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
                 </form>

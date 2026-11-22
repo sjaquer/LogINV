@@ -68,7 +68,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface rounded-2xl overflow-hidden max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-4 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                         <Camera size={20} className="text-brand-600" />
@@ -81,7 +81,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
                 <div className="relative bg-black">
                     <div id={scannerId} ref={containerRef} className="w-full" />
                     {error && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-6 text-center">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink-900/90 text-white p-6 text-center">
                             <CameraOff size={40} className="text-slate-400 mb-3" />
                             <p className="text-base font-medium">Cámara no disponible</p>
                             <p className="text-sm text-slate-400 mt-2">Permite el acceso a la cámara para escanear</p>

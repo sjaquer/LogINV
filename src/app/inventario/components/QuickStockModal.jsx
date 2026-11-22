@@ -6,6 +6,18 @@ import { useEscapeKey } from '@/hooks/useEscapeKey';
 export default function QuickStockModal({ producto, tipo, onConfirm, onClose }) {
     const [cantidad, setCantidad] = useState(1);
     const [motivo, setMotivo] = useState('');
+    const [busy, setBusy] = useState(false);
+
+    // Evita registrar dos veces el mismo movimiento por doble toque.
+    async function confirmar() {
+        if (busy) return;
+        setBusy(true);
+        try {
+            await onConfirm(cantidad, motivo);
+        } finally {
+            setBusy(false);
+        }
+    }
 
     useEscapeKey(onClose);
 
@@ -13,7 +25,7 @@ export default function QuickStockModal({ producto, tipo, onConfirm, onClose }) 
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-white max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-surface max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex flex-col items-center text-center">
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${isIngreso ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'}`}>
                         {isIngreso ? <ArrowDownCircle size={28} className="text-emerald-600" /> : <ArrowUpCircle size={28} className="text-amber-600" />}
@@ -35,7 +47,7 @@ export default function QuickStockModal({ producto, tipo, onConfirm, onClose }) 
                                 min="1"
                                 value={cantidad}
                                 onChange={e => setCantidad(Math.max(1, Number(e.target.value) || 1))}
-                                className="inp text-center text-2xl font-bold py-3 flex-1 bg-white border-slate-200 text-slate-900"
+                                className="inp text-center text-2xl font-bold py-3 flex-1 bg-surface border-slate-200 text-slate-900"
                             />
                             <button onClick={() => setCantidad(c => c + 1)} className="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
                                 <Plus size={18} />
@@ -52,7 +64,7 @@ export default function QuickStockModal({ producto, tipo, onConfirm, onClose }) 
                             value={motivo}
                             onChange={e => setMotivo(e.target.value)}
                             placeholder={isIngreso ? 'Ej: Recepción de pedido' : 'Ej: Consumo diario'}
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900 w-full"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900 w-full"
                         />
                     </div>
                 </div>
@@ -62,11 +74,11 @@ export default function QuickStockModal({ producto, tipo, onConfirm, onClose }) 
                         Cancelar
                     </button>
                     <button
-                        onClick={() => onConfirm(cantidad, motivo)}
-                        disabled={!isIngreso && cantidad > producto.stock_actual}
+                        onClick={confirmar}
+                        disabled={busy || cantidad < 1 || (!isIngreso && cantidad > producto.stock_actual)}
                         className={`btn flex-1 py-3 text-base font-bold flex items-center justify-center gap-2 ${isIngreso ? 'btn-primary' : 'bg-amber-500 hover:bg-amber-600 text-white rounded-xl'} disabled:opacity-50`}
                     >
-                        {isIngreso ? <ArrowDownCircle size={18} /> : <ArrowUpCircle size={18} />}
+                        {busy ? <span className="spinner h-4 w-4 border-white/40 border-t-white" /> : isIngreso ? <ArrowDownCircle size={18} /> : <ArrowUpCircle size={18} />}
                         Confirmar
                     </button>
                 </div>

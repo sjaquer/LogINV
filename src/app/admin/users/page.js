@@ -1,90 +1,116 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import {
+    Users, Plus, X, Save, Pencil, Trash2, KeyRound, ShieldCheck, ShieldAlert, Wand2,
+    Copy, Check, UserCheck, UserX, Eye, EyeOff, LifeBuoy,
+} from 'lucide-react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
+import RouteGuard from '@/components/ui/RouteGuard';
+import { PageBody, SearchInput, SegmentedTabs } from '@/components/ui/Page';
+import { EmptyState } from '@/components/ui/SharedComponents';
+import { useToast, useConfirm } from '@/components/ui/Feedback';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { EmptyState } from '@/components/ui/SharedComponents';
-import { ROLES } from '@/lib/constants';
 import { authService } from '@/services/auth';
 import { USE_MOCK } from '@/hooks/useFirestoreQuery';
-import RouteGuard from '@/components/ui/RouteGuard';
-import {
-    Users, Plus, X, Save, Pencil, Trash2, ShieldCheck, ToggleLeft, ToggleRight, KeyRound,
-} from 'lucide-react';
+import { audit } from '@/lib/auditLog';
+import { cn } from '@/lib/utils';
 
-const ROL_OPTIONS = Object.values(ROLES).map(r => ({ id: r.id, label: r.label }));
+const ROLE_INFO = {
+    admin: {
+        label: 'Administrador',
+        tone: 'bg-violet-50 text-violet-700 ring-violet-200',
+        desc: 'Acceso total: además de todo lo del encargado, gestiona cuentas de usuario y ve la auditoría.',
+    },
+    encargado: {
+        label: 'Encargado',
+        tone: 'bg-brand-50 text-brand-700 ring-brand-200',
+        desc: 'Gestiona productos, ubicaciones, inventario, mantenimiento y reportes.',
+    },
+    voluntario: {
+        label: 'Voluntario',
+        tone: 'bg-slate-100 text-slate-600 ring-slate-200',
+        desc: 'Consulta productos, escanea códigos y registra préstamos.',
+    },
+};
 
-// Llama a /api/admin/users (protegida por el ID token del admin actual).
-// Crea/edita/elimina la cuenta de acceso (Firebase Auth) y su perfil
-// (Firestore `usuarios`) al mismo tiempo, para que nunca queden desincronizados.
-async function callAdminUsersApi(method, body, query = '') {
+// ─── API de administración (/api/admin/users, protegida por el ID token) ───
+async function callAdminApi(method, body, query = '') {
     const idToken = await authService.getIdToken();
-    if (!idToken) throw new Error('Sesión expirada, vuelve a iniciar sesión');
-
+    if (!idToken) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
     const res = await fetch(`/api/admin/users${query}`, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: body ? JSON.stringify(body) : undefined,
     });
-    const text = await res.text();
     let data = null;
-    try {
-        data = JSON.parse(text);
-    } catch {
-        // La respuesta no fue JSON (ej. 500 HTML de Vercel)
-    }
-
+    try { data = await res.json(); } catch { /* respuesta no JSON */ }
     if (!res.ok) {
-        const errorMsg = data?.error || data?.message || (res.status === 500
-            ? 'Error interno del servidor (500). Verifica las credenciales FIREBASE_ADMIN en Vercel.'
-            : `Error en la solicitud (${res.status})`);
-        throw new Error(errorMsg);
+        const err = new Error(data?.error || `Error del servidor (${res.status})`);
+        err.status = res.status;
+        throw err;
     }
     return data;
 }
 
-// Fallback cliente: Si la API del servidor falla (ej. credenciales FIREBASE_ADMIN no configuradas en Vercel),
-// crea la cuenta de acceso usando una instancia secundaria de Firebase Auth en el navegador
-// sin cerrar la sesión del administrador actual.
-async function crearUsuarioResiliente(form) {
+// Respaldo si el servidor no tiene credenciales de administración: crea la
+// cuenta con una instancia secundaria de Firebase Auth (sin cerrar la sesión
+// del administrador) y escribe su perfil con la sesión del admin.
+async function crearCuentaDesdeNavegador(form) {
     const { initializeApp, deleteApp } = await import('firebase/app');
     const { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } = await import('firebase/auth');
-    const { firebaseConfig } = await import('@/lib/firebase');
-    const { getFirestore } = await import('@/hooks/useFirestoreQuery');
+    const { firebaseConfig } = await import('@/lib/firebaseConfig');
+    const { setDocument } = await import('@/lib/dataOps');
 
-    const appName = `UserCreator_${Date.now()}`;
-    const secondaryApp = initializeApp(firebaseConfig, appName);
+    const secondaryApp = initializeApp(firebaseConfig, `UserCreator_${Date.now()}`);
     try {
         const secondaryAuth = getAuth(secondaryApp);
-        const cred = await createUserWithEmailAndPassword(secondaryAuth, form.email.trim(), form.password);
-        if (form.nombre?.trim()) {
-            await updateProfile(cred.user, { displayName: form.nombre.trim() }).catch(() => {});
-        }
-        const uid = cred.user.uid;
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, form.email, form.password);
+        await updateProfile(cred.user, { displayName: form.nombre }).catch(() => {});
         await signOut(secondaryAuth);
-
-        // Guardar documento en Firestore con la sesión del admin actual
-        const { fs, db } = await getFirestore();
-        await fs.setDoc(fs.doc(db, 'usuarios', uid), {
-            nombre: form.nombre.trim(),
-            email: form.email.trim(),
-            rol: form.rol || 'voluntario',
+        await setDocument('usuarios', cred.user.uid, {
+            nombre: form.nombre,
+            email: form.email,
+            rol: form.rol,
             activo: true,
             telefono: form.telefono || '',
             departamento: form.departamento || '',
             fecha_creacion: new Date().toISOString(),
         });
-        return { id: uid };
+        return cred.user.uid;
     } finally {
         await deleteApp(secondaryApp).catch(() => {});
     }
 }
 
-function UsuarioFormModal({ usuario, onClose, onSave }) {
+function generarPassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const arr = new Uint32Array(10);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, n => chars[n % chars.length]).join('');
+}
+
+function useServerStatus() {
+    const [status, setStatus] = useState(USE_MOCK ? 'demo' : 'checking');
+    useEffect(() => {
+        if (USE_MOCK) return undefined;
+        let alive = true;
+        callAdminApi('GET')
+            .then(() => alive && setStatus('ok'))
+            .catch(err => alive && setStatus(err.status === 401 || err.status === 403 ? 'ok' : 'unavailable'));
+        return () => { alive = false; };
+    }, []);
+    return status;
+}
+
+// ─── Formulario ────────────────────────────────────────────────────────────
+function UsuarioFormModal({ usuario, isSelf, onClose, onSave }) {
     const isEdit = !!usuario?.id;
-    const [cambiarPassword, setCambiarPassword] = useState(false);
+    const [cambiarPassword, setCambiarPassword] = useState(!isEdit);
+    const [showPass, setShowPass] = useState(false);
     const [form, setForm] = useState({
         nombre: usuario?.nombre || '',
         email: usuario?.email || '',
@@ -97,28 +123,22 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
     const [error, setError] = useState('');
     useEscapeKey(onClose);
 
-    function handleChange(key, value) {
-        setForm(prev => ({ ...prev, [key]: value }));
-    }
+    const set = (key, value) => { setForm(prev => ({ ...prev, [key]: value })); setError(''); };
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return; }
-        if (!isEdit && !form.email.trim()) { setError('El correo es obligatorio'); return; }
-        if (!isEdit && form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-        if (isEdit && cambiarPassword && form.password.length < 6) { setError('La nueva contraseña debe tener al menos 6 caracteres'); return; }
+        const nombre = form.nombre.trim();
+        const email = form.email.trim().toLowerCase();
+        if (!nombre) return setError('El nombre es obligatorio.');
+        if (!isEdit && !/^\S+@\S+\.\S+$/.test(email)) return setError('Ingresa un correo válido.');
+        if (cambiarPassword && form.password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres.');
 
         setSaving(true);
-        setError('');
         try {
-            const payload = {
-                ...form,
-                password: isEdit && !cambiarPassword ? '' : form.password,
-            };
-            await onSave(payload, isEdit ? usuario.id : null);
+            await onSave({ ...form, nombre, email, password: cambiarPassword ? form.password : '' }, usuario);
             onClose();
         } catch (err) {
-            setError(err.message || 'Error al guardar');
+            setError(err.message || 'No se pudo guardar.');
         } finally {
             setSaving(false);
         }
@@ -126,101 +146,99 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-md w-full" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                    <h3 className="font-bold text-slate-900 text-lg">{isEdit ? 'Editar cuenta' : 'Nueva cuenta de acceso'}</h3>
-                    <button onClick={onClose} className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={20} />
-                    </button>
+            <div className="modal-box animate-slide-up max-w-lg" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="user-form-title">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-surface px-5 py-4">
+                    <h2 id="user-form-title" className="text-lg font-bold text-slate-900">{isEdit ? 'Editar cuenta' : 'Nueva cuenta de acceso'}</h2>
+                    <button type="button" onClick={onClose} className="icon-btn" aria-label="Cerrar"><X size={20} /></button>
                 </div>
-                {error && (
-                    <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
-                )}
-                <form onSubmit={handleSubmit} className="p-5 space-y-4">
+
+                <form onSubmit={handleSubmit} className="space-y-4 p-5">
+                    {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" role="alert">{error}</div>}
+
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Nombre *</label>
-                        <input type="text" value={form.nombre} onChange={e => handleChange('nombre', e.target.value)} className="inp py-3 bg-white border-slate-200 text-slate-900" required />
+                        <label className="field-label" htmlFor="u-nombre">Nombre completo *</label>
+                        <input id="u-nombre" type="text" value={form.nombre} onChange={e => set('nombre', e.target.value)} className="inp py-3" autoComplete="off" required />
                     </div>
+
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Correo {!isEdit && '*'}</label>
+                        <label className="field-label" htmlFor="u-email">Correo {isEdit ? '' : '*'}</label>
                         <input
-                            type="email" value={form.email}
-                            onChange={e => handleChange('email', e.target.value)}
-                            className="inp py-3 bg-white border-slate-200 text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
-                            placeholder="nombre@iglesia.com"
-                            disabled={isEdit}
-                            required={!isEdit}
+                            id="u-email" type="email" value={form.email} onChange={e => set('email', e.target.value)}
+                            className="inp py-3" placeholder="nombre@correo.com" disabled={isEdit} required={!isEdit} autoComplete="off"
                         />
-                        {isEdit && <p className="text-xs text-slate-400 mt-1">El correo no se puede cambiar una vez creada la cuenta.</p>}
+                        {isEdit && <p className="mt-1 text-xs text-slate-400">El correo no se puede cambiar. Si es necesario, crea una cuenta nueva.</p>}
                     </div>
-                    {isEdit ? (
-                        <div className="pt-1">
-                            {!cambiarPassword ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setCambiarPassword(true)}
-                                    className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 p-2 rounded-lg hover:bg-brand-50/60 transition-colors"
-                                >
-                                    <KeyRound size={14} /> Cambiar contraseña de esta cuenta
-                                </button>
-                            ) : (
-                                <div className="space-y-1.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 animate-fade-in">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-xs font-bold text-slate-700">Nueva contraseña</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setCambiarPassword(false); handleChange('password', ''); }}
-                                            className="text-xs text-slate-400 hover:text-slate-600"
-                                        >
-                                            Cancelar cambio
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="password"
-                                        value={form.password}
-                                        onChange={e => handleChange('password', e.target.value)}
-                                        className="inp py-2.5 bg-white border-slate-200 text-slate-900 text-sm"
-                                        placeholder="Mínimo 6 caracteres"
-                                        autoComplete="new-password"
-                                        required
-                                    />
-                                </div>
-                            )}
-                        </div>
+
+                    {isEdit && !cambiarPassword ? (
+                        <button type="button" onClick={() => setCambiarPassword(true)} className="btn-secondary btn-sm">
+                            <KeyRound size={14} /> Restablecer contraseña
+                        </button>
                     ) : (
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña *</label>
-                            <input
-                                type="password"
-                                value={form.password}
-                                onChange={e => handleChange('password', e.target.value)}
-                                className="inp py-3 bg-white border-slate-200 text-slate-900"
-                                placeholder="Mínimo 6 caracteres"
-                                autoComplete="new-password"
-                                required
-                            />
+                            <div className="flex items-center justify-between">
+                                <label className="field-label" htmlFor="u-pass">{isEdit ? 'Nueva contraseña' : 'Contraseña inicial *'}</label>
+                                {isEdit && (
+                                    <button type="button" className="text-xs text-slate-400 hover:text-slate-600" onClick={() => { setCambiarPassword(false); set('password', ''); }}>
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        id="u-pass" type={showPass ? 'text' : 'password'} value={form.password}
+                                        onChange={e => set('password', e.target.value)} className="inp py-3 pr-10"
+                                        placeholder="Mínimo 6 caracteres" autoComplete="new-password" required
+                                    />
+                                    <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600" aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                <button type="button" className="btn-secondary px-3" onClick={() => { set('password', generarPassword()); setShowPass(true); }} title="Generar contraseña segura" aria-label="Generar contraseña segura">
+                                    <Wand2 size={16} /> <span className="hidden sm:inline">Generar</span>
+                                </button>
+                            </div>
                         </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
+
+                    <fieldset>
+                        <legend className="field-label">Rol</legend>
+                        {isSelf && <p className="mb-2 text-xs text-amber-700">No puedes cambiar tu propio rol.</p>}
+                        <div className="grid gap-2">
+                            {Object.entries(ROLE_INFO).map(([id, info]) => (
+                                <label
+                                    key={id}
+                                    className={cn(
+                                        'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition',
+                                        form.rol === id ? 'border-brand-300 bg-brand-50' : 'border-slate-200 hover:border-slate-300',
+                                        isSelf && 'cursor-not-allowed opacity-60',
+                                    )}
+                                >
+                                    <input type="radio" name="rol" value={id} checked={form.rol === id} disabled={isSelf} onChange={() => set('rol', id)} className="mt-1 accent-brand-600" />
+                                    <span>
+                                        <span className="block text-sm font-semibold text-slate-800">{info.label}</span>
+                                        <span className="block text-xs text-slate-500">{info.desc}</span>
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Rol</label>
-                            <select value={form.rol} onChange={e => handleChange('rol', e.target.value)} className="inp py-3 bg-white border-slate-200 text-slate-900">
-                                {ROL_OPTIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                            </select>
+                            <label className="field-label" htmlFor="u-tel">Teléfono</label>
+                            <input id="u-tel" type="tel" value={form.telefono} onChange={e => set('telefono', e.target.value)} className="inp py-3" />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Teléfono</label>
-                            <input type="text" value={form.telefono} onChange={e => handleChange('telefono', e.target.value)} className="inp py-3 bg-white border-slate-200 text-slate-900" />
+                            <label className="field-label" htmlFor="u-dep">Área / Ministerio</label>
+                            <input id="u-dep" type="text" value={form.departamento} onChange={e => set('departamento', e.target.value)} className="inp py-3" placeholder="Ej: Adoración" />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Área / Ministerio</label>
-                        <input type="text" value={form.departamento} onChange={e => handleChange('departamento', e.target.value)} className="inp py-3 bg-white border-slate-200 text-slate-900" placeholder="Ej: Ministerio de Adoración" />
-                    </div>
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="btn btn-ghost px-5 py-2.5 text-sm font-semibold text-slate-600">Cancelar</button>
-                        <button type="submit" disabled={saving} className="btn btn-primary px-5 py-2.5 text-sm font-bold flex items-center gap-2">
-                            {saving ? <span className="spinner border-white border-t-transparent w-4 h-4" /> : <Save size={16} />}
+
+                    <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                        <button type="button" onClick={onClose} className="btn-secondary py-2.5 text-sm">Cancelar</button>
+                        <button type="submit" disabled={saving} className="btn-primary py-2.5 text-sm">
+                            {saving ? <span className="spinner h-4 w-4 border-white/40 border-t-white" /> : <Save size={16} />}
                             {isEdit ? 'Guardar cambios' : 'Crear cuenta'}
                         </button>
                     </div>
@@ -230,220 +248,300 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
     );
 }
 
+// ─── Tarjeta con datos de acceso para entregar al nuevo usuario ───────────
+function CredencialesCard({ cred, onClose }) {
+    const [copied, setCopied] = useState(false);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const texto = `Hola ${cred.nombre}, ya tienes acceso a LogINV (inventario de la iglesia).\n\nEntra en: ${origin}\nCorreo: ${cred.email}\nContraseña: ${cred.password}\n\nAl ingresar, abre "Ayuda y guía" desde el menú para aprender a usar la app.`;
+    async function copiar() {
+        try {
+            await navigator.clipboard.writeText(texto);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch { /* sin permiso de portapapeles */ }
+    }
+    return (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5 animate-fade-in">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <h3 className="flex items-center gap-2 font-bold text-emerald-800"><UserCheck size={18} /> Cuenta creada para {cred.nombre}</h3>
+                    <p className="mt-1 text-sm text-emerald-700">Entrega estos datos a la persona. La contraseña no se volverá a mostrar.</p>
+                </div>
+                <button type="button" onClick={onClose} className="icon-btn" aria-label="Cerrar"><X size={18} /></button>
+            </div>
+            <dl className="mt-3 grid gap-2 rounded-xl bg-surface p-3 text-sm sm:grid-cols-2">
+                <div><dt className="text-xs text-slate-400">Correo</dt><dd className="font-semibold text-slate-800 break-all">{cred.email}</dd></div>
+                <div><dt className="text-xs text-slate-400">Contraseña</dt><dd className="font-mono font-semibold text-slate-800">{cred.password}</dd></div>
+            </dl>
+            <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={copiar} className="btn-primary btn-sm">
+                    {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copiado' : 'Copiar mensaje de bienvenida'}
+                </button>
+                <Link href="/ayuda#primeros-pasos" className="btn-secondary btn-sm"><LifeBuoy size={14} /> Ver guía para nuevos</Link>
+            </div>
+        </div>
+    );
+}
+
+// ─── Página ────────────────────────────────────────────────────────────────
 export default function AdminUsersPage() {
-    const { usuarios, loading, crearUsuario, actualizarUsuario, eliminarUsuario, toggleUsuario } = useUsuarios();
+    const { usuarios, loading, error, crearUsuario, actualizarUsuario, eliminarUsuario, toggleUsuario } = useUsuarios();
     const { user } = useAuth();
     const { setHideBottomNav } = useSidebar();
-    const role = user?.rol || 'voluntario';
-    const canManage = role === 'admin';
+    const toast = useToast();
+    const confirm = useConfirm();
+    const serverStatus = useServerStatus();
 
-    const [showForm, setShowForm] = useState(false);
-    const [editing, setEditing] = useState(null);
+    const [modal, setModal] = useState(null); // { usuario } — usuario null = nueva cuenta
     const [busyId, setBusyId] = useState(null);
-    const [listError, setListError] = useState('');
+    const [credenciales, setCredenciales] = useState(null);
+    const [q, setQ] = useState('');
+    const [filtroRol, setFiltroRol] = useState('todos');
 
     useEffect(() => {
-        setHideBottomNav(!!showForm);
+        setHideBottomNav(!!modal);
         return () => setHideBottomNav(false);
-    }, [showForm, setHideBottomNav]);
+    }, [modal, setHideBottomNav]);
 
-    const handleSave = useCallback(async (form, id) => {
-        if (USE_MOCK) {
-            // Modo demo: sin Firebase Auth real, solo se simula el perfil.
-            if (id) await actualizarUsuario(id, { nombre: form.nombre, rol: form.rol, telefono: form.telefono, departamento: form.departamento });
-            else await crearUsuario({ nombre: form.nombre, email: form.email, rol: form.rol, telefono: form.telefono, departamento: form.departamento });
-            return;
-        }
-        if (id) {
-            try {
-                await callAdminUsersApi('PATCH', {
-                    id,
-                    nombre: form.nombre,
-                    rol: form.rol,
-                    telefono: form.telefono,
-                    departamento: form.departamento,
-                    ...(form.password ? { password: form.password } : {}),
-                });
-            } catch (apiErr) {
-                console.warn('[LogINV] API admin falló, aplicando cambios directamente a Firestore:', apiErr.message);
-                await actualizarUsuario(id, {
-                    nombre: form.nombre,
-                    rol: form.rol,
-                    telefono: form.telefono,
-                    departamento: form.departamento,
-                });
-                if (form.password) {
-                    try {
-                        await authService.resetPassword(form.email);
-                    } catch (resetErr) {
-                        console.warn('[LogINV] Error enviando correo de reset:', resetErr);
+    const stats = useMemo(() => ({
+        total: usuarios.length,
+        activos: usuarios.filter(u => u.activo !== false).length,
+        porRol: Object.fromEntries(Object.keys(ROLE_INFO).map(r => [r, usuarios.filter(u => u.rol === r).length])),
+    }), [usuarios]);
+
+    const lista = useMemo(() => {
+        const term = q.trim().toLowerCase();
+        return usuarios
+            .filter(u => filtroRol === 'todos' || (filtroRol === 'inactivos' ? u.activo === false : u.rol === filtroRol))
+            .filter(u => !term || `${u.nombre} ${u.email} ${u.departamento}`.toLowerCase().includes(term))
+            .sort((a, b) => (a.id === user?.id ? -1 : b.id === user?.id ? 1 : (a.nombre || '').localeCompare(b.nombre || '', 'es')));
+    }, [usuarios, q, filtroRol, user?.id]);
+
+    const handleSave = useCallback(async (form, existing) => {
+        const perfil = { nombre: form.nombre, rol: form.rol, telefono: form.telefono, departamento: form.departamento };
+
+        if (existing) {
+            if (USE_MOCK) {
+                await actualizarUsuario(existing.id, perfil);
+            } else {
+                try {
+                    await callAdminApi('PATCH', { id: existing.id, ...perfil, ...(form.password ? { password: form.password } : {}) });
+                } catch (apiErr) {
+                    if (apiErr.status && apiErr.status < 500) throw apiErr; // error de validación real
+                    await actualizarUsuario(existing.id, perfil);
+                    if (form.password) {
+                        await authService.resetPassword(existing.email);
+                        toast.warning(`El servidor no pudo cambiar la contraseña. Se envió a ${existing.email} un correo para que la restablezca.`, { duration: 9000 });
                     }
                 }
-                return;
             }
+            audit('editar', 'usuario', existing.id, `${form.nombre}${existing.rol !== form.rol ? ` · rol ${existing.rol} → ${form.rol}` : ''}${form.password ? ' · contraseña restablecida' : ''}`);
+            toast.success('Cuenta actualizada');
+            return;
+        }
+
+        let id;
+        if (USE_MOCK) {
+            id = await crearUsuario({ ...perfil, email: form.email });
         } else {
             try {
-                await callAdminUsersApi('POST', form);
+                ({ id } = await callAdminApi('POST', { ...perfil, email: form.email, password: form.password }));
             } catch (apiErr) {
-                console.warn('[LogINV] API /api/admin/users falló en creación, usando fallback directo de cliente:', apiErr.message);
-                try {
-                    await crearUsuarioResiliente(form);
-                } catch (clientErr) {
-                    console.error('[LogINV] Fallback de creación cliente también falló:', clientErr);
-                    throw new Error(clientErr.message || apiErr.message);
-                }
+                if (apiErr.status && apiErr.status < 500) throw apiErr;
+                console.warn('[LogINV] API de usuarios no disponible, creando desde el navegador:', apiErr.message);
+                id = await crearCuentaDesdeNavegador({ ...perfil, email: form.email, password: form.password });
             }
         }
-    }, [crearUsuario, actualizarUsuario]);
-
-    const handleEdit = useCallback((usuario) => {
-        setEditing(usuario);
-        setShowForm(true);
-    }, []);
+        audit('crear', 'usuario', id, `${form.nombre} (${ROLE_INFO[form.rol]?.label || form.rol})`);
+        setCredenciales({ nombre: form.nombre, email: form.email, password: form.password });
+        toast.success('Cuenta creada');
+    }, [actualizarUsuario, crearUsuario, toast]);
 
     const handleToggle = useCallback(async (u) => {
+        const activar = u.activo === false;
+        if (!activar && !(await confirm({
+            title: `¿Desactivar a ${u.nombre}?`,
+            message: 'No podrá iniciar sesión hasta que reactives su cuenta. Sus registros se conservan.',
+            confirmLabel: 'Desactivar',
+            danger: true,
+        }))) return;
+
         setBusyId(u.id);
-        setListError('');
-        const nuevoActivo = !(u.activo !== false);
         try {
-            if (USE_MOCK) {
-                await toggleUsuario(u.id, nuevoActivo);
-            } else {
+            if (USE_MOCK) await toggleUsuario(u.id, activar);
+            else {
                 try {
-                    await callAdminUsersApi('PATCH', { id: u.id, activo: nuevoActivo });
+                    await callAdminApi('PATCH', { id: u.id, activo: activar });
                 } catch (apiErr) {
-                    console.warn('[LogINV] API admin falló para toggle, aplicando directo en Firestore:', apiErr.message);
-                    await toggleUsuario(u.id, nuevoActivo);
+                    if (apiErr.status && apiErr.status < 500) throw apiErr;
+                    await toggleUsuario(u.id, activar);
                 }
             }
+            audit(activar ? 'activar' : 'desactivar', 'usuario', u.id, u.nombre);
+            toast.success(activar ? `${u.nombre} puede volver a ingresar` : `${u.nombre} fue desactivado`);
         } catch (err) {
-            setListError(err.message);
+            toast.error(err.message);
         } finally {
             setBusyId(null);
         }
-    }, [toggleUsuario]);
+    }, [confirm, toggleUsuario, toast]);
 
     const handleDelete = useCallback(async (u) => {
-        if (!confirm(`¿Eliminar la cuenta de ${u.nombre}? Ya no podrá iniciar sesión.`)) return;
+        if (!(await confirm({
+            title: `¿Eliminar la cuenta de ${u.nombre}?`,
+            message: 'Perderá el acceso de forma permanente. Si solo quieres bloquearla por un tiempo, desactívala.',
+            confirmLabel: 'Eliminar cuenta',
+            danger: true,
+        }))) return;
+
         setBusyId(u.id);
-        setListError('');
         try {
-            if (USE_MOCK) {
-                await eliminarUsuario(u.id);
-            } else {
+            if (USE_MOCK) await eliminarUsuario(u.id);
+            else {
                 try {
-                    await callAdminUsersApi('DELETE', null, `?id=${encodeURIComponent(u.id)}`);
+                    await callAdminApi('DELETE', null, `?id=${encodeURIComponent(u.id)}`);
                 } catch (apiErr) {
-                    console.warn('[LogINV] API admin falló para delete, eliminando directo de Firestore:', apiErr.message);
+                    if (apiErr.status && apiErr.status < 500) throw apiErr;
                     await eliminarUsuario(u.id);
+                    toast.warning('Se eliminó el perfil, pero el servidor no pudo borrar las credenciales. La persona ya no tiene acceso a ningún dato.', { duration: 9000 });
                 }
             }
+            audit('eliminar', 'usuario', u.id, `${u.nombre} (${u.email})`);
+            toast.success('Cuenta eliminada');
         } catch (err) {
-            setListError(err.message);
+            toast.error(err.message);
         } finally {
             setBusyId(null);
         }
-    }, [eliminarUsuario]);
+    }, [confirm, eliminarUsuario, toast]);
+
+    const tabs = [
+        { id: 'todos', label: 'Todos', count: stats.total },
+        { id: 'admin', label: 'Admins', count: stats.porRol.admin },
+        { id: 'encargado', label: 'Encargados', count: stats.porRol.encargado },
+        { id: 'voluntario', label: 'Voluntarios', count: stats.porRol.voluntario },
+        { id: 'inactivos', label: 'Inactivos', count: stats.total - stats.activos },
+    ];
 
     return (
         <RouteGuard>
-        <div className="flex flex-col flex-1 bg-slate-50/50">
-            <Header title="Usuarios y Roles" />
-            <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-4xl mx-auto w-full pb-8">
-
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-1">
-                        <Users size={18} className="text-brand-500" /> Cuentas de acceso al sistema
-                    </h3>
-                    <p className="text-xs text-slate-500">Aquí se crean las cuentas (correo y contraseña) con las que cada persona entra a LogINV, y se asigna su rol.</p>
-                </div>
-
-                {!canManage && (
-                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-                        <ShieldCheck size={16} className="flex-shrink-0" /> Solo un administrador puede crear o editar cuentas.
+            <div className="flex flex-col flex-1">
+                <Header title="Usuarios y roles" />
+                <PageBody width="max-w-4xl">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-sm text-slate-500 max-w-xl">
+                                Crea las cuentas con las que cada persona entra a LogINV y define qué puede hacer.
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">{stats.activos} activas de {stats.total}</p>
+                        </div>
+                        <button type="button" onClick={() => setModal({ usuario: null })} className="btn-primary py-2.5 text-sm">
+                            <Plus size={18} /> Nueva cuenta
+                        </button>
                     </div>
-                )}
 
-                {listError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{listError}</div>
-                )}
+                    {serverStatus === 'unavailable' && (
+                        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
+                            <ShieldAlert size={18} className="mt-0.5 flex-shrink-0" />
+                            <p>
+                                El servidor no tiene configuradas las credenciales de administración (FIREBASE_ADMIN_*).
+                                Puedes crear y editar cuentas, pero cambiar contraseñas enviará un correo de restablecimiento
+                                y eliminar una cuenta no borrará sus credenciales.
+                            </p>
+                        </div>
+                    )}
 
-                {canManage && (
-                    <button
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="btn btn-primary px-5 py-3 text-base font-bold flex items-center gap-2 shadow-sm"
-                    >
-                        <Plus size={20} /> Nueva cuenta
-                    </button>
-                )}
+                    {credenciales && <CredencialesCard cred={credenciales} onClose={() => setCredenciales(null)} />}
 
-                {loading ? (
                     <div className="space-y-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 rounded-xl h-20 animate-pulse shadow-sm" />
-                        ))}
+                        <SearchInput value={q} onChange={setQ} placeholder="Buscar por nombre, correo o área…" />
+                        <SegmentedTabs tabs={tabs} value={filtroRol} onChange={setFiltroRol} />
                     </div>
-                ) : usuarios.length === 0 ? (
-                    <EmptyState icon={Users} title="Sin cuentas registradas" subtitle="Crea la primera cuenta de acceso" />
-                ) : (
-                    <div className="space-y-3">
-                        {usuarios.map(u => (
-                            <div key={u.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">
-                                    {u.nombre?.[0]?.toUpperCase() || '?'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-slate-900 truncate">{u.nombre}</p>
-                                    <p className="text-xs text-slate-500 truncate">{u.departamento || '—'} {u.email ? `· ${u.email}` : ''}</p>
-                                    <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">
-                                        {ROLES[u.rol?.toUpperCase()]?.label || u.rol}
-                                    </span>
-                                </div>
-                                {canManage && (
-                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                        {busyId === u.id ? (
-                                            <span className="spinner border-slate-300 border-t-transparent w-4 h-4 mx-2" />
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={() => handleToggle(u)}
-                                                    className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                                    aria-label={u.activo !== false ? 'Desactivar' : 'Activar'}
-                                                    title={u.activo !== false ? 'Cuenta activa (puede iniciar sesión)' : 'Cuenta desactivada'}
-                                                >
-                                                    {u.activo !== false ? <ToggleRight size={20} className="text-emerald-500" /> : <ToggleLeft size={20} />}
-                                                </button>
-                                                <button onClick={() => handleEdit(u)} className="p-2 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors" aria-label="Editar" title="Editar / restablecer contraseña">
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button onClick={() => handleDelete(u)} className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" aria-label="Eliminar" title="Eliminar cuenta">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
 
-                {canManage && (
-                    <div className="flex items-start gap-2 p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500">
-                        <KeyRound size={14} className="flex-shrink-0 mt-0.5" />
-                        Para restablecer la contraseña de alguien, edita su cuenta e ingresa una nueva en &quot;Nueva contraseña&quot;.
-                    </div>
+                    {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
+
+                    {loading ? (
+                        <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-[76px] rounded-xl bg-slate-100 animate-pulse" />)}</div>
+                    ) : lista.length === 0 ? (
+                        <EmptyState icon={Users} title="Sin resultados" subtitle={usuarios.length ? 'Prueba con otra búsqueda o filtro.' : 'Crea la primera cuenta de acceso.'} />
+                    ) : (
+                        <ul className="glass-panel divide-y divide-slate-100">
+                            {lista.map(u => {
+                                const isSelf = u.id === user?.id;
+                                const inactive = u.activo === false;
+                                const info = ROLE_INFO[u.rol] || { label: u.rol, tone: ROLE_INFO.voluntario.tone };
+                                return (
+                                    <li key={u.id} className={cn('flex items-center gap-3 px-4 py-3.5 sm:px-5', inactive && 'opacity-60')}>
+                                        <span className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold', inactive ? 'bg-slate-100 text-slate-400' : 'bg-brand-600 text-white')}>
+                                            {(u.nombre || '?').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="flex items-center gap-2 font-semibold text-slate-900">
+                                                <span className="truncate">{u.nombre}</span>
+                                                {isSelf && <span className="rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white">Tú</span>}
+                                            </p>
+                                            <p className="truncate text-xs text-slate-500">{u.email}{u.departamento ? ` · ${u.departamento}` : ''}</p>
+                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1', info.tone)}>{info.label}</span>
+                                                {inactive && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700 ring-1 ring-rose-200">Desactivada</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-shrink-0 items-center gap-0.5">
+                                            {busyId === u.id ? (
+                                                <span className="spinner mx-3 h-5 w-5" />
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button" onClick={() => handleToggle(u)} disabled={isSelf}
+                                                        className={cn('icon-btn', inactive ? 'hover:text-emerald-600' : 'hover:text-amber-600')}
+                                                        aria-label={inactive ? `Activar a ${u.nombre}` : `Desactivar a ${u.nombre}`}
+                                                        title={isSelf ? 'No puedes desactivar tu propia cuenta' : inactive ? 'Activar cuenta' : 'Desactivar cuenta'}
+                                                    >
+                                                        {inactive ? <UserCheck size={18} /> : <UserX size={18} />}
+                                                    </button>
+                                                    <button type="button" onClick={() => setModal({ usuario: u })} className="icon-btn hover:text-brand-600" aria-label={`Editar a ${u.nombre}`} title="Editar o restablecer contraseña">
+                                                        <Pencil size={17} />
+                                                    </button>
+                                                    <button
+                                                        type="button" onClick={() => handleDelete(u)} disabled={isSelf}
+                                                        className="icon-btn hover:text-rose-600" aria-label={`Eliminar a ${u.nombre}`}
+                                                        title={isSelf ? 'No puedes eliminar tu propia cuenta' : 'Eliminar cuenta'}
+                                                    >
+                                                        <Trash2 size={17} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+
+                    <details className="glass-panel">
+                        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 sm:px-5">
+                            <ShieldCheck size={16} className="text-brand-500" /> ¿Qué puede hacer cada rol?
+                        </summary>
+                        <dl className="space-y-3 border-t border-slate-100 px-4 py-3 text-sm sm:px-5">
+                            {Object.values(ROLE_INFO).map(r => (
+                                <div key={r.label}>
+                                    <dt className="font-semibold text-slate-800">{r.label}</dt>
+                                    <dd className="text-slate-500">{r.desc}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </details>
+                </PageBody>
+
+                {modal && (
+                    <UsuarioFormModal
+                        usuario={modal.usuario}
+                        isSelf={modal.usuario?.id === user?.id}
+                        onClose={() => setModal(null)}
+                        onSave={handleSave}
+                    />
                 )}
             </div>
-
-            {showForm && (
-                <UsuarioFormModal
-                    usuario={editing}
-                    onClose={() => { setShowForm(false); setEditing(null); }}
-                    onSave={handleSave}
-                />
-            )}
-        </div>
         </RouteGuard>
     );
 }

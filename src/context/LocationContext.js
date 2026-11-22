@@ -1,6 +1,7 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { getFirestore, USE_MOCK } from '@/hooks/useFirestoreQuery';
+import { createContext, useContext, useMemo, useCallback } from 'react';
+import { useLocations } from '@/hooks/useLocations';
+import { usePersistentState } from '@/hooks/usePersistentState';
 
 // Ubicaciones reales y base del inventario IACYM CNC
 export const UBICACIONES_DEFAULT = [
@@ -74,74 +75,32 @@ const LocationContext = createContext({
 });
 
 export function LocationProvider({ children }) {
-    const [ubicacionesList, setUbicacionesList] = useState(UBICACIONES_DEFAULT);
-    const [ubicacion, setUbicacion] = useState('GENERAL');
+    const { ubicaciones: dbUbicaciones, loading } = useLocations();
+    // Ubicación elegida por el usuario (persistida entre sesiones).
+    const [selected, setSelected] = usePersistentState('loginv_ubicacion', 'GENERAL');
 
-    // Sincronización en tiempo real con la colección 'ubicaciones' de Firestore
-    useEffect(() => {
-        if (USE_MOCK) return;
-        let unsub;
-        (async () => {
-            try {
-                const { fs, db } = await getFirestore();
-                const colRef = fs.collection(db, 'ubicaciones');
-                unsub = fs.onSnapshot(colRef,
-                    (snap) => {
-                        if (!snap.empty) {
-                            const dbList = snap.docs.map(d => ({
-                                id: d.id,
-                                ...d.data(),
-                            }));
-                            dbList.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
-                            const fullList = [GENERAL_DEFAULT, ...dbList];
-                            liveLocationsCache = fullList;
-                            setUbicacionesList(fullList);
-                        }
-                    },
-                    (err) => {
-                        console.warn('[LocationContext] Realtime listener notice:', err.message);
-                    }
-                );
-            } catch (err) {
-                console.warn('[LocationContext] Error setting up listener:', err);
-            }
-        })();
-        return () => unsub?.();
-    }, []);
-
-    // Restaurar desde localStorage o validar ubicación existente
-    useEffect(() => {
-        try {
-            const stored = localStorage.getItem('loginv_ubicacion');
-            if (stored && stored !== 'GENERAL') {
-                const exists = ubicacionesList.some(u => u.id === stored);
-                if (exists) {
-                    setUbicacion(stored);
-                } else if (ubicacionesList.length > 1) {
-                    // Si la ubicación guardada ya no existe en Firestore, auto-sanar a GENERAL
-                    setUbicacion('GENERAL');
-                    localStorage.setItem('loginv_ubicacion', 'GENERAL');
-                }
-            }
-        } catch (_) {}
-    }, [ubicacionesList]);
-
-    // Auto-sanar si la ubicación actual seleccionada fue eliminada
-    useEffect(() => {
-        if (ubicacion !== 'GENERAL') {
-            const exists = ubicacionesList.some(u => u.id === ubicacion);
-            if (!exists && ubicacionesList.length > 1) {
-                setUbicacion('GENERAL');
-                try { localStorage.setItem('loginv_ubicacion', 'GENERAL'); } catch (_) {}
-            }
+    // Lista: la de Firestore (ordenada) o la predeterminada si aún no hay datos.
+    // La caché de getLocationInfo() se actualiza aquí mismo (no en un efecto)
+    // para que los hijos que se renderizan a continuación ya la vean.
+    const ubicacionesList = useMemo(() => {
+        let list = UBICACIONES_DEFAULT;
+        if (dbUbicaciones.length) {
+            const sorted = [...dbUbicaciones].sort((a, b) =>
+                (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+            list = [GENERAL_DEFAULT, ...sorted];
         }
-    }, [ubicacionesList, ubicacion]);
+        // eslint-disable-next-line react-hooks/globals -- caché de lectura para getLocationInfo() fuera de React
+        liveLocationsCache = list;
+        return list;
+    }, [dbUbicaciones]);
 
-    function handleSetUbicacion(id) {
-        const targetId = id || 'GENERAL';
-        setUbicacion(targetId);
-        try { localStorage.setItem('loginv_ubicacion', targetId); } catch (_) {}
-    }
+    // Si la ubicación elegida ya no existe (fue eliminada), se usa la vista general.
+    const ubicacion = useMemo(() => {
+        if (selected === 'GENERAL' || loading) return selected;
+        return ubicacionesList.some(u => u.id === selected) ? selected : 'GENERAL';
+    }, [selected, ubicacionesList, loading]);
+
+    const handleSetUbicacion = useCallback((id) => setSelected(id || 'GENERAL'), [setSelected]);
 
     const ubicacionInfo = useMemo(() => {
         return ubicacionesList.find(u => u.id === ubicacion) || GENERAL_DEFAULT;

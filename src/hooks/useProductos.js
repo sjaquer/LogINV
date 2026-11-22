@@ -1,222 +1,102 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { 
-    USE_MOCK, mockTimestamp, mockProductos, mockMovimientos, 
-    listeners, notify, getFirestore, firebaseError, 
-    setMockProductos, setMockMovimientos 
-} from './useFirestoreQuery';
+import { useCallback, useMemo } from 'react';
+import { USE_MOCK, getFirestore, firebaseError } from './useFirestoreQuery';
+import { useCollection } from './useCollection';
+import { MOCK_PRODUCTOS } from '@/lib/mockDataStore';
+import { registerMock, getMock, setMock, mockId } from '@/lib/mockStore';
+import { addDocument, updateDocument, deleteDocument, clean, nowValue } from '@/lib/dataOps';
+import { audited } from '@/lib/auditLog';
+
+registerMock('productos', () => [...MOCK_PRODUCTOS]);
+
+const toNum = (v) => Number(v) || 0;
 
 export function useProductos() {
-    const [productos, setProductos] = useState(USE_MOCK ? mockProductos : []);
-    const [loading, setLoading] = useState(!USE_MOCK);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (USE_MOCK) {
-            setProductos([...mockProductos]);
-            listeners.productos.add(setProductos);
-            return () => listeners.productos.delete(setProductos);
-        }
-        let unsub;
-        (async () => {
-            try {
-                const { fs, db } = await getFirestore();
-                const q = fs.query(fs.collection(db, 'productos'), fs.orderBy('nombre'));
-                unsub = fs.onSnapshot(q,
-                    (snap) => {
-                        setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                        setLoading(false);
-                        setError(null);
-                    },
-                    (err) => {
-                        console.error('[LogINV] Error listener productos:', err.code, err.message);
-                        setLoading(false);
-                        setError(err.message);
-                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            const qSimple = fs.collection(db, 'productos');
-                            unsub = fs.onSnapshot(qSimple,
-                                (snap) => {
-                                    setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                                    setLoading(false);
-                                    setError(null);
-                                },
-                                (fallbackErr) => {
-                                    console.error('[LogINV] Error fallback productos:', fallbackErr);
-                                    setLoading(false);
-                                }
-                            );
-                        }
-                    }
-                );
-            } catch (err) {
-                console.error('[LogINV] Error setup productos:', err);
-                setLoading(false);
-                setError(err.message);
-            }
-        })();
-        return () => unsub?.();
-    }, []);
+    const { data: productos, loading, error } = useCollection('productos', { orderByField: 'nombre' });
 
     const crearProducto = useCallback(async (data) => {
-        const stockActual = Number(data.stock_actual) || 0;
-        const stockMinimo = Number(data.stock_minimo) || 0;
-        const usuario = data._usuario || 'Sistema';
+        const { _usuario: usuario = 'Sistema', ...rest } = data;
+        const stockActual = toNum(rest.stock_actual);
+        const ahora = nowValue();
+        const id = await addDocument('productos', {
+            ...rest,
+            stock_actual: stockActual,
+            stock_minimo: toNum(rest.stock_minimo),
+            ultima_actualizacion: ahora,
+            fecha_creacion: ahora,
+            activo: true,
+        }, { prefix: 'p', prepend: false });
 
-        if (USE_MOCK) {
-            const newProd = {
-                id: 'p_' + Date.now(),
-                ...data,
-                stock_actual: stockActual,
-                stock_minimo: stockMinimo,
-                ultima_actualizacion: mockTimestamp(),
-                fecha_creacion: mockTimestamp(),
-                activo: true,
-            };
-            delete newProd._usuario;
-            setMockProductos([...mockProductos, newProd]);
-            notify('productos');
-            if (stockActual > 0) {
-                const mov = {
-                    id: 'mv_' + Date.now(),
-                    producto_id: newProd.id,
-                    nombre_producto: data.nombre,
-                    producto_nombre: data.nombre,
-                    tipo: 'INGRESO',
-                    cantidad: stockActual,
-                    usuario,
-                    ubicacion: data.ubicacion || '',
-                    fecha: mockTimestamp(),
-                    motivo: 'Stock inicial al crear producto',
-                    notas: 'Stock inicial al crear producto',
-                    stock_anterior: 0,
-                    stock_nuevo: stockActual,
-                };
-                setMockMovimientos([mov, ...mockMovimientos]);
-                notify('movimientos');
-            }
-            return newProd.id;
+        if (stockActual > 0) {
+            await addDocument('movimientos', {
+                producto_id: id,
+                nombre_producto: rest.nombre,
+                producto_nombre: rest.nombre,
+                tipo: 'INGRESO',
+                cantidad: stockActual,
+                usuario,
+                ubicacion: rest.ubicacion || '',
+                fecha: ahora,
+                motivo: 'Stock inicial al crear producto',
+                notas: 'Stock inicial al crear producto',
+                stock_anterior: 0,
+                stock_nuevo: stockActual,
+            }, { prefix: 'mv' });
         }
-        try {
-            const { fs, db } = await getFirestore();
-            const nowIso = new Date().toISOString();
-            const docData = {
-                ...data,
-                stock_actual: stockActual,
-                stock_minimo: stockMinimo,
-                ultima_actualizacion: nowIso,
-                fecha_creacion: nowIso,
-                activo: true,
-            };
-            delete docData._usuario;
-            const ref = await fs.addDoc(fs.collection(db, 'productos'), docData);
-            if (stockActual > 0) {
-                await fs.addDoc(fs.collection(db, 'movimientos'), {
-                    producto_id: ref.id,
-                    nombre_producto: data.nombre,
-                    producto_nombre: data.nombre,
-                    tipo: 'INGRESO',
-                    cantidad: stockActual,
-                    usuario,
-                    ubicacion: docData.ubicacion || '',
-                    fecha: nowIso,
-                    motivo: 'Stock inicial al crear producto',
-                    notas: 'Stock inicial al crear producto',
-                    stock_anterior: 0,
-                    stock_nuevo: stockActual,
-                });
-            }
-            return ref.id;
-        } catch (err) {
-            firebaseError('crearProducto', err);
-        }
+        return id;
     }, []);
 
     const actualizarProducto = useCallback(async (id, data) => {
-        const updateData = { ...data, ultima_actualizacion: new Date().toISOString() };
-        if (updateData.stock_actual !== undefined) updateData.stock_actual = Number(updateData.stock_actual) || 0;
-        if (updateData.stock_minimo !== undefined) updateData.stock_minimo = Number(updateData.stock_minimo) || 0;
-        delete updateData._usuario;
-
-        if (USE_MOCK) {
-            const updated = mockProductos.map(p =>
-                p.id === id ? { ...p, ...updateData, ultima_actualizacion: mockTimestamp() } : p
-            );
-            setMockProductos(updated);
-            notify('productos');
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'productos', id), updateData);
-        } catch (err) {
-            firebaseError('actualizarProducto', err);
-        }
+        const { _usuario, ...rest } = data;
+        const updateData = { ...rest, ultima_actualizacion: nowValue() };
+        if (updateData.stock_actual !== undefined) updateData.stock_actual = toNum(updateData.stock_actual);
+        if (updateData.stock_minimo !== undefined) updateData.stock_minimo = toNum(updateData.stock_minimo);
+        await updateDocument('productos', id, updateData);
     }, []);
 
-    const eliminarProducto = useCallback(async (id) => {
-        if (USE_MOCK) {
-            setMockProductos(mockProductos.filter(p => p.id !== id));
-            notify('productos');
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.deleteDoc(fs.doc(db, 'productos', id));
-        } catch (err) {
-            firebaseError('eliminarProducto', err);
-        }
-    }, []);
+    const eliminarProducto = useCallback((id) => deleteDocument('productos', id), []);
 
     /**
-     * Actualiza el stock de un producto y registra UN movimiento, de forma
-     * atómica (transacción): el stock anterior se lee del servidor, no del
-     * estado en caché del cliente, para que dos usuarios operando a la vez
-     * no se pisen.
+     * Actualiza el stock y registra UN movimiento de forma atómica
+     * (transacción): el stock anterior se lee del servidor, no de la caché.
      *
      * @param {string} id
      * @param {number} valor          stock final (modo 'set') o cantidad (modo 'delta')
      * @param {string} usuario
-     * @param {object} [opts]
-     * @param {'set'|'delta'} [opts.modo='set']
-     * @param {string} [opts.tipo]    INGRESO | SALIDA | AJUSTE… (por defecto según el signo)
-     * @param {string} [opts.motivo]
-     * @returns {Promise<{anterior:number, nuevo:number}|undefined>}
+     * @param {{ modo?: 'set'|'delta', tipo?: string, motivo?: string }} [opts]
      */
     const updateStock = useCallback(async (id, valor, usuario, opts = {}) => {
         const { modo = 'set', tipo, motivo = 'Ajuste de stock' } = opts;
-        const num = Number(valor) || 0;
+        const num = toNum(valor);
         const calcular = (anterior) => {
             const nuevo = modo === 'delta' ? Math.max(0, anterior + num) : Math.max(0, num);
             const diff = nuevo - anterior;
             return { nuevo, diff, tipoFinal: tipo || (diff >= 0 ? 'INGRESO' : 'SALIDA') };
         };
+        const movimiento = (prod, anterior, nuevo, diff, tipoFinal, fecha) => clean({
+            producto_id: id,
+            nombre_producto: prod.nombre || '',
+            producto_nombre: prod.nombre || '',
+            tipo: tipoFinal,
+            cantidad: Math.abs(diff),
+            usuario: usuario || 'Sistema',
+            ubicacion: prod.ubicacion || '',
+            fecha,
+            motivo,
+            notas: motivo,
+            stock_anterior: anterior,
+            stock_nuevo: nuevo,
+        });
 
         if (USE_MOCK) {
-            const prod = mockProductos.find(p => p.id === id);
-            if (!prod) return;
-            const anterior = Number(prod.stock_actual) || 0;
+            const prod = getMock('productos').find(p => p.id === id);
+            if (!prod) throw new Error('El producto ya no existe');
+            const anterior = toNum(prod.stock_actual);
             const { nuevo, diff, tipoFinal } = calcular(anterior);
-            setMockProductos(mockProductos.map(p =>
-                p.id === id ? { ...p, stock_actual: nuevo, ultima_actualizacion: mockTimestamp() } : p
-            ));
-            notify('productos');
-            setMockMovimientos([{
-                id: 'mv_' + Date.now(),
-                producto_id: id,
-                nombre_producto: prod.nombre,
-                producto_nombre: prod.nombre,
-                tipo: tipoFinal,
-                cantidad: Math.abs(diff),
-                usuario: usuario || 'Sistema',
-                ubicacion: prod.ubicacion || '',
-                fecha: mockTimestamp(),
-                motivo,
-                notas: motivo,
-                stock_anterior: anterior,
-                stock_nuevo: nuevo,
-            }, ...mockMovimientos]);
-            notify('movimientos');
-            return { anterior, nuevo };
+            const fecha = nowValue();
+            setMock('productos', list => list.map(p => (p.id === id ? { ...p, stock_actual: nuevo, ultima_actualizacion: fecha } : p)));
+            setMock('movimientos', list => [{ id: mockId('mv'), ...movimiento(prod, anterior, nuevo, diff, tipoFinal, fecha) }, ...list]);
+            return { anterior, nuevo, nombre: prod.nombre, tipo: tipoFinal, diff };
         }
         try {
             const { fs, db } = await getFirestore();
@@ -226,34 +106,39 @@ export function useProductos() {
                 const snap = await tx.get(prodRef);
                 if (!snap.exists()) throw new Error('El producto ya no existe');
                 const prod = snap.data();
-                const anterior = Number(prod.stock_actual) || 0;
+                const anterior = toNum(prod.stock_actual);
                 const { nuevo, diff, tipoFinal } = calcular(anterior);
-                const nowIso = new Date().toISOString();
-                tx.update(prodRef, { stock_actual: nuevo, ultima_actualizacion: nowIso });
-                tx.set(movRef, {
-                    producto_id: id,
-                    nombre_producto: prod.nombre || '',
-                    producto_nombre: prod.nombre || '',
-                    tipo: tipoFinal,
-                    cantidad: Math.abs(diff),
-                    usuario: usuario || 'Sistema',
-                    ubicacion: prod.ubicacion || '',
-                    fecha: nowIso,
-                    motivo,
-                    notas: motivo,
-                    stock_anterior: anterior,
-                    stock_nuevo: nuevo,
-                });
-                return { anterior, nuevo };
+                const fecha = new Date().toISOString();
+                tx.update(prodRef, { stock_actual: nuevo, ultima_actualizacion: fecha });
+                tx.set(movRef, movimiento(prod, anterior, nuevo, diff, tipoFinal, fecha));
+                return { anterior, nuevo, nombre: prod.nombre, tipo: tipoFinal, diff };
             });
         } catch (err) {
             firebaseError('updateStock', err);
         }
     }, []);
 
-    return {
-        productos, loading, error,
-        crearProducto, actualizarProducto, eliminarProducto,
-        updateStock,
-    };
+    // Envolturas con auditoría (el nombre se resuelve con la lista actual).
+    const nombreDe = useCallback((id) => productos.find(p => p.id === id)?.nombre || id, [productos]);
+
+    return useMemo(() => ({
+        productos,
+        loading,
+        error,
+        crearProducto: audited(crearProducto, ([data], id) => ({
+            accion: 'crear', entidad: 'producto', id, descripcion: data.nombre,
+            detalles: { ubicacion: data.ubicacion || '', stock: toNum(data.stock_actual) },
+        })),
+        actualizarProducto: audited(actualizarProducto, ([id, data]) => ({
+            accion: 'editar', entidad: 'producto', id,
+            descripcion: `${data.nombre || nombreDe(id)} · ${Object.keys(data).filter(k => !k.startsWith('_')).slice(0, 6).join(', ')}`,
+        })),
+        eliminarProducto: audited(eliminarProducto, ([id]) => ({
+            accion: 'eliminar', entidad: 'producto', id, descripcion: nombreDe(id),
+        })),
+        updateStock: audited(updateStock, ([id, , , opts = {}], r) => r && r.diff !== 0 ? ({
+            accion: 'stock', entidad: 'producto', id,
+            descripcion: `${r.nombre} · ${r.tipo.toLowerCase()} de ${Math.abs(r.diff)} (${r.anterior} → ${r.nuevo})${opts.motivo ? ` · ${opts.motivo}` : ''}`,
+        }) : null),
+    }), [productos, loading, error, crearProducto, actualizarProducto, eliminarProducto, updateStock, nombreDe]);
 }

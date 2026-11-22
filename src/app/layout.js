@@ -8,6 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import BottomNav from '@/components/layout/BottomNav';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { FeedbackProvider } from '@/components/ui/Feedback';
 
 // Fuentes autoalojadas por Next (sin petición bloqueante a Google Fonts).
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -67,13 +68,15 @@ export default function RootLayout({ children }) {
                     <ThemeProvider>
                     <LocationProvider>
                         <SidebarProvider>
+                            <FeedbackProvider>
                             <ErrorBoundary>
-                                <div className="flex min-h-[100dvh] min-h-screen bg-app-bg text-slate-900">
+                                <div className="flex min-h-[100dvh] min-h-screen bg-slate-50 text-slate-900">
                                     <Sidebar />
                                     <MainContent>{children}</MainContent>
                                     <BottomNav />
                                 </div>
                             </ErrorBoundary>
+                            </FeedbackProvider>
                         </SidebarProvider>
                     </LocationProvider>
                     </ThemeProvider>

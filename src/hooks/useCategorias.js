@@ -1,117 +1,39 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { 
-    USE_MOCK, mockTimestamp, mockCategorias, listeners, notify, 
-    getFirestore, firebaseError, setMockCategorias 
-} from './useFirestoreQuery';
+import { useCallback, useMemo } from 'react';
+import { useCollection } from './useCollection';
+import { MOCK_CATEGORIAS } from '@/lib/mockDataStore';
+import { registerMock } from '@/lib/mockStore';
+import { addDocument, updateDocument, deleteDocument, nowValue } from '@/lib/dataOps';
+import { audited } from '@/lib/auditLog';
+
+registerMock('categorias', () => [...MOCK_CATEGORIAS]);
+
+// Se ordena en el cliente: un orderBy('orden') en Firestore ocultaría las
+// categorías importadas que no tienen ese campo.
+const byOrden = (a, b) => (a.orden ?? 999) - (b.orden ?? 999) || (a.nombre || '').localeCompare(b.nombre || '', 'es');
 
 export function useCategorias() {
-    const [categorias, setCategorias] = useState(USE_MOCK ? mockCategorias : []);
-    const [loading, setLoading] = useState(!USE_MOCK);
-    const [error, setError] = useState(null);
+    const { data, loading, error } = useCollection('categorias');
+    const categorias = useMemo(() => [...data].sort(byOrden), [data]);
 
-    useEffect(() => {
-        if (USE_MOCK) {
-            setCategorias([...mockCategorias]);
-            listeners.categorias.add(setCategorias);
-            return () => listeners.categorias.delete(setCategorias);
-        }
-        let unsub;
-        (async () => {
-            try {
-                const { fs, db } = await getFirestore();
-                const q = fs.query(fs.collection(db, 'categorias'), fs.orderBy('orden', 'asc'));
-                unsub = fs.onSnapshot(q,
-                    (snap) => {
-                        setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                        setLoading(false);
-                        setError(null);
-                    },
-                    (err) => {
-                        console.error('[LogINV] Error listener categorias:', err.code, err.message);
-                        setLoading(false);
-                        setError(err.message);
-                        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-                            console.warn('[LogINV] Intentando sin orderBy...');
-                            const qSimple = fs.collection(db, 'categorias');
-                            unsub = fs.onSnapshot(qSimple,
-                                (snap) => {
-                                    setCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                                    setLoading(false);
-                                    setError(null);
-                                },
-                                (fallbackErr) => {
-                                    console.error('[LogINV] Error fallback categorias:', fallbackErr);
-                                    setLoading(false);
-                                }
-                            );
-                        }
-                    }
-                );
-            } catch (err) {
-                console.error('[LogINV] Error setup categorias:', err);
-                setLoading(false);
-                setError(err.message);
-            }
-        })();
-        return () => unsub?.();
-    }, []);
+    const crearCategoria = useCallback((cat) => addDocument('categorias', {
+        ...cat,
+        orden: categorias.length + 1,
+        activa: true,
+        fecha_creacion: nowValue(),
+    }, { prefix: 'cat', prepend: false }), [categorias.length]);
 
-    const crearCategoria = useCallback(async (data) => {
-        if (USE_MOCK) {
-            const newCat = {
-                id: 'cat_' + Date.now(),
-                ...data,
-                orden: mockCategorias.length + 1,
-                activa: true,
-                fecha_creacion: mockTimestamp(),
-            };
-            setMockCategorias([...mockCategorias, newCat]);
-            notify('categorias');
-            return newCat.id;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            const ref = await fs.addDoc(fs.collection(db, 'categorias'), {
-                ...data,
-                orden: categorias.length + 1,
-                activa: true,
-                fecha_creacion: new Date().toISOString(),
-            });
-            return ref.id;
-        } catch (err) {
-            firebaseError('crearCategoria', err);
-        }
-    }, [categorias]);
+    const actualizarCategoria = useCallback((id, cat) => updateDocument('categorias', id, cat), []);
+    const eliminarCategoria = useCallback((id) => deleteDocument('categorias', id), []);
 
-    const actualizarCategoria = useCallback(async (id, data) => {
-        if (USE_MOCK) {
-            const updated = mockCategorias.map(c => c.id === id ? { ...c, ...data } : c);
-            setMockCategorias(updated);
-            notify('categorias');
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.updateDoc(fs.doc(db, 'categorias', id), data);
-        } catch (err) {
-            firebaseError('actualizarCategoria', err);
-        }
-    }, []);
+    const nombreDe = (id) => categorias.find(c => c.id === id)?.nombre || id;
 
-    const eliminarCategoria = useCallback(async (id) => {
-        if (USE_MOCK) {
-            setMockCategorias(mockCategorias.filter(c => c.id !== id));
-            notify('categorias');
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.deleteDoc(fs.doc(db, 'categorias', id));
-        } catch (err) {
-            firebaseError('eliminarCategoria', err);
-        }
-    }, []);
-
-    return { categorias, loading, error, crearCategoria, actualizarCategoria, eliminarCategoria };
+    return {
+        categorias,
+        loading,
+        error,
+        crearCategoria: audited(crearCategoria, ([cat], id) => ({ accion: 'crear', entidad: 'categoria', id, descripcion: cat.nombre })),
+        actualizarCategoria: audited(actualizarCategoria, ([id, cat]) => ({ accion: 'editar', entidad: 'categoria', id, descripcion: cat.nombre || nombreDe(id) })),
+        eliminarCategoria: audited(eliminarCategoria, ([id]) => ({ accion: 'eliminar', entidad: 'categoria', id, descripcion: nombreDe(id) })),
+    };
 }

@@ -10,7 +10,7 @@ export default function ConteoHistoryCard({ conteo, onSelect }) {
         <button
             type="button"
             onClick={() => onSelect(conteo)}
-            className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:shadow-md transition-all group"
+            className="w-full text-left bg-surface border border-slate-200 rounded-xl p-4 sm:p-5 hover:shadow-md transition-all group"
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">

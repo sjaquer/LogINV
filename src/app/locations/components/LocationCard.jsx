@@ -27,8 +27,8 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
     return (
         <div className={`border rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden ${
             isActiva 
-                ? 'bg-white border-slate-200 dark:bg-[#0d0d10] dark:border-white/10' 
-                : 'bg-white/80 border-slate-200 opacity-60 dark:bg-[#0d0d10]/60 dark:border-white/5'
+                ? 'bg-surface border-slate-200 dark:bg-[#0d0d10] dark:border-white/10' 
+                : 'bg-surface/80 border-slate-200 opacity-60 dark:bg-[#0d0d10]/60 dark:border-white/5'
         }`}>
             <div className="p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -36,7 +36,7 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl ${
                             isActiva 
                                 ? 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300' 
-                                : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500'
+                                : 'bg-slate-100 text-slate-400 dark:bg-white/5'
                         }`}>
                             {ubicacion.icono ? (
                                 <span className="select-none leading-none">{ubicacion.icono}</span>
@@ -49,7 +49,7 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                                 <h3 className="font-bold text-slate-900 dark:text-white text-lg truncate">{ubicacion.nombre}</h3>
                             </div>
                             {ubicacion.descripcion && (
-                                <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{ubicacion.descripcion}</p>
+                                <p className="text-sm text-slate-500 truncate mt-0.5">{ubicacion.descripcion}</p>
                             )}
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                 </div>
 
                 {deleteWarning && (
-                    <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5 animate-fade-in">
+                    <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5 animate-fade-in">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                         <span>{deleteWarning}</span>
                     </div>
@@ -95,8 +95,8 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                         onClick={() => onSelectLocation && onSelectLocation(ubicacion.id)}
                         className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${
                             productCount > 0
-                                ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900/50 hover:bg-violet-100'
-                                : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'
+                                ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 hover:bg-violet-100'
+                                : 'bg-slate-50 dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5'
                         }`}
                         title="Ver productos en esta ubicación"
                     >
@@ -104,13 +104,13 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                         <span>{productCount} {productCount === 1 ? 'producto' : 'productos'}</span>
                     </Link>
 
-                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-500 text-xs">
                         <Users size={14} />
-                        <span>Capacidad: <strong className="text-slate-700 dark:text-slate-200">{ubicacion.capacidad || '—'}</strong></span>
+                        <span>Capacidad: <strong className="text-slate-700">{ubicacion.capacidad || '—'}</strong></span>
                     </div>
 
                     {ubicacion.piso && (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/10 text-slate-600">
                             {ubicacion.piso}
                         </span>
                     )}
@@ -118,7 +118,7 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                     <div className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         isActiva 
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' 
-                            : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-500'
+                            : 'bg-slate-100 text-slate-500 dark:bg-white/5'
                     }`}>
                         {isActiva ? 'Activa' : 'Inactiva'}
                     </div>
@@ -133,9 +133,9 @@ export default function LocationCard({ ubicacion, productCount = 0, canManage, o
                                 onChange={(e) => onToggle(ubicacion.id, e.target.checked)}
                                 className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-violet-600 focus:ring-violet-500 dark:bg-black/50"
                             />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Ubicación activa en inventario</span>
+                            <span className="text-sm font-medium text-slate-700">Ubicación activa en inventario</span>
                         </label>
-                        <span className="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase">
+                        <span className="text-xs font-mono text-slate-400 uppercase">
                             {ubicacion.codigo || ubicacion.id}
                         </span>
                     </div>

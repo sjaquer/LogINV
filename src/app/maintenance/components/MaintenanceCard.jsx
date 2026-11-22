@@ -20,7 +20,7 @@ export default function MaintenanceCard({ maintenance, onStart, onComplete, onDe
     }
 
     return (
-        <div className={`bg-white border rounded-xl shadow-sm overflow-hidden ${
+        <div className={`bg-surface border rounded-xl shadow-sm overflow-hidden ${
             isScheduled ? 'border-blue-200' :
             isInProgress ? 'border-amber-200' :
             'border-slate-200'

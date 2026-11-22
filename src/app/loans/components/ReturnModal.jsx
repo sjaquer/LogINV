@@ -24,7 +24,7 @@ export default function ReturnModal({ loan, onClose, onConfirm }) {
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-white max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-6 border border-slate-200 shadow-2xl bg-surface max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex flex-col items-center text-center">
                     <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mb-4">
                         <CheckCircle size={28} className="text-emerald-600" />
@@ -49,7 +49,7 @@ export default function ReturnModal({ loan, onClose, onConfirm }) {
                         value={notas}
                         onChange={e => setNotas(e.target.value)}
                         placeholder="Estado del producto, observaciones..."
-                        className="inp resize-none text-sm py-2 bg-white border-slate-200 text-slate-900 w-full"
+                        className="inp resize-none text-sm py-2 bg-surface border-slate-200 text-slate-900 w-full"
                     />
                 </div>
 

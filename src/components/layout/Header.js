@@ -3,20 +3,14 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, UBICACIONES } from '@/context/LocationContext';
 import { useTheme } from '@/context/ThemeContext';
-import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor, Settings } from 'lucide-react';
+import { User, MapPin, LogOut, ChevronDown, Sun, Moon, Monitor, Settings, LifeBuoy, ShieldCheck } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 function getLocBadgeStyle(info) {
-    if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/40';
+    if (info?.id === 'GENERAL') return 'text-violet-700 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300';
     return 'text-brand-700 bg-brand-50 border-brand-200 dark:bg-brand-950/40 dark:text-brand-300 dark:border-brand-800/40';
 }
 
-const LANGUAGES = [
-    { code: 'es', label: 'Español' },
-    { code: 'en', label: 'English' },
-    { code: 'zh', label: '中文' },
-    { code: 'ja', label: '日本語' }
-];
 
 const THEME_ICONS = { light: Sun, dark: Moon, auto: Monitor };
 const THEME_LABELS = { light: 'Claro', dark: 'Oscuro', auto: 'Auto' };
@@ -47,7 +41,7 @@ export default function Header({ title }) {
     }, []);
 
     return (
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-slate-200/60 dark:border-white/10 shadow-sm transition-all duration-300 min-w-0">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-surface/80 dark:bg-black/80 backdrop-blur-md border-b border-slate-200/60 dark:border-white/10 shadow-sm transition-all duration-300 min-w-0">
             <div className="min-w-0 flex-1">
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-0.5 flex items-center gap-1.5 truncate">
                     <span className="hidden sm:inline">Bienvenido</span> <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20 flex-shrink-0"></span> <span className="truncate">{user?.nombre}</span>
@@ -70,12 +64,12 @@ export default function Header({ title }) {
                     </button>
 
                     {openLocMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-40 animate-fade-in origin-top-right overflow-hidden flex flex-col max-h-[80vh]">
+                        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-40 animate-fade-in origin-top-right overflow-hidden flex flex-col max-h-[80vh]">
                             <div className="px-3 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
-                                <span className="text-[11px] text-slate-400 dark:text-slate-400 uppercase tracking-wider font-bold">
+                                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-bold">
                                     Filtrar por Ubicación
                                 </span>
-                                <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                                <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 px-2 py-0.5 rounded-full">
                                     {activeLocationsCount} activas
                                 </span>
                             </div>
@@ -87,7 +81,7 @@ export default function Header({ title }) {
                                     placeholder="Buscar almacén o salón..."
                                     value={locFilter}
                                     onChange={e => setLocFilter(e.target.value)}
-                                    className="w-full text-xs px-3 py-2 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-black text-slate-800 dark:text-white placeholder-slate-400"
+                                    className="w-full text-xs px-3 py-2 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-violet-500 focus:bg-surface dark:focus:bg-black text-slate-800 dark:text-white placeholder-slate-400"
                                 />
                             </div>
 
@@ -105,8 +99,8 @@ export default function Header({ title }) {
                                                 isSelected
                                                     ? 'text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 font-bold'
                                                     : isInactive
-                                                        ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 opacity-70'
-                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5'
+                                                        ? 'text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 opacity-70'
+                                                        : 'text-slate-700 hover:bg-slate-50 dark:hover:bg-white/5'
                                             }`}
                                         >
                                             <span className="flex items-center gap-2 truncate">
@@ -140,10 +134,11 @@ export default function Header({ title }) {
                     )}
                 </div>
 
-                {/* Theme toggle */}
+                {/* Theme toggle (en móvil está en el menú "Más") */}
                 <button
                     onClick={toggleTheme}
-                    className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d0d10] shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400"
+                    aria-label={`Tema: ${THEME_LABELS[mode]}. Cambiar tema`}
+                    className="hidden sm:flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-surface dark:bg-[#0d0d10] shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all text-slate-500 hover:text-brand-600 dark:hover:text-brand-400"
                     title={`Tema: ${THEME_LABELS[mode]}`}
                 >
                     <ThemeIcon size={16} />
@@ -153,24 +148,42 @@ export default function Header({ title }) {
                 <div className="relative" ref={userRef}>
                     <button
                         onClick={() => { setOpenUserMenu(!openUserMenu); setOpenLocMenu(false); }}
-                        className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all py-1.5 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl"
+                        className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 shadow-sm hover:border-brand-400 dark:hover:border-brand-400 transition-all py-1.5 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl"
                     >
                         <div className="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center text-brand-600 dark:text-brand-400 flex-shrink-0">
                             <User size={14} />
                         </div>
                         <div className="hidden sm:flex flex-col items-start leading-none gap-0.5 min-w-0">
-                            <span className="hidden lg:block text-slate-700 dark:text-slate-200 max-w-[120px] truncate font-semibold text-xs">{user?.nombre}</span>
+                            <span className="hidden lg:block text-slate-700 max-w-[120px] truncate font-semibold text-xs">{user?.nombre}</span>
                             <span className="text-[10px] uppercase tracking-wider font-bold text-brand-400 dark:text-brand-300">{user?.rol}</span>
                         </div>
                         <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
                     </button>
 
                     {openUserMenu && (
-                        <div className="absolute right-0 top-full mt-2 bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-56 animate-fade-in z-40 origin-top-right max-w-[calc(100vw-2rem)]">
+                        <div className="absolute right-0 top-full mt-2 bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl ring-1 ring-slate-900/5 py-2 w-56 animate-fade-in z-40 origin-top-right max-w-[calc(100vw-2rem)]">
                             <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
                                 <p className="text-sm font-semibold text-slate-800 dark:text-white">{user?.nombre}</p>
-                                <p className="text-xs text-slate-400 dark:text-slate-400 uppercase tracking-wider font-bold mt-0.5">{user?.rol}</p>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mt-0.5">{user?.rol}</p>
                             </div>
+                            <Link
+                                href="/ayuda"
+                                onClick={() => setOpenUserMenu(false)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                            >
+                                <LifeBuoy size={16} />
+                                <span className="font-medium">Ayuda y guía</span>
+                            </Link>
+                            {user?.rol === 'admin' && (
+                                <Link
+                                    href="/auditoria"
+                                    onClick={() => setOpenUserMenu(false)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                                >
+                                    <ShieldCheck size={16} />
+                                    <span className="font-medium">Auditoría</span>
+                                </Link>
+                            )}
                             <button
                                 onClick={logout}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"

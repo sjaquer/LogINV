@@ -10,6 +10,8 @@ import PullToRefresh from '@/components/ui/PullToRefresh';
 import RouteGuard from '@/components/ui/RouteGuard';
 import MaintenanceFormModal from './components/MaintenanceFormModal';
 import MaintenanceCard from './components/MaintenanceCard';
+import CompleteMaintenanceModal from './components/CompleteMaintenanceModal';
+import { useToast } from '@/components/ui/Feedback';
 import {
     Wrench, Plus, Clock, Play, CheckCircle, AlertTriangle,
 } from 'lucide-react';
@@ -27,11 +29,22 @@ export default function MaintenancePage() {
 
     const [tab, setTab] = useState('programados');
     const [showForm, setShowForm] = useState(false);
+    const [completing, setCompleting] = useState(null);
+    const toast = useToast();
 
     useEffect(() => {
-        setHideBottomNav(!!showForm);
+        setHideBottomNav(!!showForm || !!completing);
         return () => setHideBottomNav(false);
-    }, [showForm, setHideBottomNav]);
+    }, [showForm, completing, setHideBottomNav]);
+
+    const run = useCallback(async (fn, ok) => {
+        try {
+            await fn();
+            toast.success(ok);
+        } catch (err) {
+            toast.error(err.message);
+        }
+    }, [toast]);
 
     const filteredMaintenance = useMemo(() => {
         if (tab === 'programados') return mantenimientosProgramados;
@@ -45,7 +58,8 @@ export default function MaintenancePage() {
             ...data,
             created_by: userName,
         });
-    }, [crearMantenimiento, userName]);
+        toast.success('Mantenimiento programado');
+    }, [crearMantenimiento, userName, toast]);
 
     const handleRefresh = useCallback(() => {
         return new Promise(resolve => setTimeout(resolve, 600));
@@ -59,7 +73,7 @@ export default function MaintenancePage() {
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
 
                 {/* Description */}
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-1">
                         <Wrench size={18} className="text-amber-500" /> Control de mantenimiento
                     </h3>
@@ -67,7 +81,7 @@ export default function MaintenancePage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm overflow-x-auto">
+                <div className="flex items-center gap-2 bg-surface border border-slate-200 rounded-xl p-1.5 shadow-sm overflow-x-auto">
                     <button
                         onClick={() => setTab('programados')}
                         className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-sm font-semibold transition-all ${tab === 'programados' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
@@ -110,7 +124,7 @@ export default function MaintenancePage() {
                 {loading ? (
                     <div className="space-y-3">
                         {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 rounded-xl h-32 animate-pulse shadow-sm" />
+                            <div key={i} className="bg-surface border border-slate-200 rounded-xl h-32 animate-pulse shadow-sm" />
                         ))}
                     </div>
                 ) : filteredMaintenance.length === 0 ? (
@@ -125,15 +139,26 @@ export default function MaintenancePage() {
                             <MaintenanceCard
                                 key={maint.id}
                                 maintenance={maint}
-                                onStart={tab === 'programados' ? () => iniciarMantenimiento(maint.id) : null}
-                                onComplete={tab === 'progreso' ? () => completarMantenimiento(maint.id) : null}
-                                onDelete={eliminarMantenimiento}
+                                onStart={tab === 'programados' ? () => run(() => iniciarMantenimiento(maint.id), 'Mantenimiento iniciado') : null}
+                                onComplete={tab === 'progreso' ? () => setCompleting(maint) : null}
+                                onDelete={(id) => run(() => eliminarMantenimiento(id), 'Mantenimiento eliminado')}
                             />
                         ))}
                     </div>
                 )}
             </div>
             </PullToRefresh>
+
+            {completing && (
+                <CompleteMaintenanceModal
+                    maintenance={completing}
+                    onClose={() => setCompleting(null)}
+                    onConfirm={async (costo, notas) => {
+                        await run(() => completarMantenimiento(completing.id, costo, notas), 'Mantenimiento completado');
+                        setCompleting(null);
+                    }}
+                />
+            )}
 
             {/* Modal */}
             {showForm && (

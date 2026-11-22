@@ -12,6 +12,7 @@ import RouteGuard from '@/components/ui/RouteGuard';
 import LoanFormModal from './components/LoanFormModal';
 import LoanCard from './components/LoanCard';
 import ReturnModal from './components/ReturnModal';
+import { useToast } from '@/components/ui/Feedback';
 import { formatDate } from '@/lib/utils';
 import {
     Handshake, Plus, Clock, CheckCircle, AlertTriangle, Filter,
@@ -45,18 +46,35 @@ export default function LoansPage() {
         return list;
     }, [prestamos, prestamosActivos, prestamosVencidos, tab]);
 
+    const toast = useToast();
+
     const handleCreateLoan = useCallback(async (data) => {
         await crearPrestamo({
             ...data,
             created_by: userName,
         });
-    }, [crearPrestamo, userName]);
+        toast.success(`Préstamo registrado: ${data.producto_nombre || 'artículo'} → ${data.prestado_a}`);
+    }, [crearPrestamo, userName, toast]);
 
     const handleReturn = useCallback(async (notas) => {
         if (!returnLoan) return;
-        await registrarDevolucion(returnLoan.id, notas);
-        setReturnLoan(null);
-    }, [returnLoan, registrarDevolucion]);
+        try {
+            await registrarDevolucion(returnLoan.id, notas);
+            toast.success('Devolución registrada');
+            setReturnLoan(null);
+        } catch (err) {
+            toast.error(err.message);
+        }
+    }, [returnLoan, registrarDevolucion, toast]);
+
+    const handleDelete = useCallback(async (id) => {
+        try {
+            await eliminarPrestamo(id);
+            toast.success('Préstamo cancelado');
+        } catch (err) {
+            toast.error(err.message);
+        }
+    }, [eliminarPrestamo, toast]);
 
     const handleRefresh = useCallback(() => {
         return new Promise(resolve => setTimeout(resolve, 600));
@@ -70,7 +88,7 @@ export default function LoansPage() {
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-4">
 
                 {/* Description */}
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-1">
                         <Handshake size={18} className="text-blue-500" /> Control de préstamos
                     </h3>
@@ -78,7 +96,7 @@ export default function LoansPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1.5 shadow-sm">
+                <div className="flex items-center gap-2 bg-surface border border-slate-200 rounded-xl p-1.5 shadow-sm">
                     <button
                         onClick={() => setTab('activos')}
                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${tab === 'activos' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
@@ -113,7 +131,7 @@ export default function LoansPage() {
                 {loading ? (
                     <div className="space-y-3">
                         {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-white border border-slate-200 rounded-xl h-32 animate-pulse shadow-sm" />
+                            <div key={i} className="bg-surface border border-slate-200 rounded-xl h-32 animate-pulse shadow-sm" />
                         ))}
                     </div>
                 ) : filteredLoans.length === 0 ? (
@@ -132,7 +150,7 @@ export default function LoansPage() {
                                     loan={loan}
                                     producto={prod}
                                     onReturn={tab !== 'historial' ? () => setReturnLoan(loan) : null}
-                                    onDelete={eliminarPrestamo}
+                                    onDelete={handleDelete}
                                 />
                             );
                         })}

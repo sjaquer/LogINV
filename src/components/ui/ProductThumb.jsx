@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ImageOff, Package } from 'lucide-react';
 import { formatProductImageUrl, getDriveFallbackUrl } from '@/lib/imageUtils';
 
@@ -7,13 +7,11 @@ export { formatProductImageUrl, getDriveFallbackUrl };
 
 // Miniatura de producto con resiliencia de carga y fallbacks visuales de alta calidad
 export default function ProductThumb({ url, icon, size = 'sm', fit = 'cover', className = '', alt = '' }) {
-    const [failed, setFailed] = useState(false);
-    const [useFallback, setUseFallback] = useState(false);
-
-    useEffect(() => {
-        setFailed(false);
-        setUseFallback(false);
-    }, [url]);
+    // Se guarda para qué URL falló la carga: al cambiar la URL se reintenta solo.
+    const [failState, setFailState] = useState({ url: null, step: 0 });
+    const step = failState.url === url ? failState.step : 0; // 0 ok · 1 usar respaldo · 2 sin imagen
+    const failed = step === 2;
+    const useFallback = step >= 1;
 
     let dims = 'w-10 h-10 rounded-xl text-lg';
     if (size === 'card') {
@@ -29,11 +27,8 @@ export default function ProductThumb({ url, icon, size = 'sm', fit = 'cover', cl
     const currentSrc = useFallback ? (fallbackUrl || primaryUrl) : primaryUrl;
 
     function handleImageError() {
-        if (!useFallback && fallbackUrl && fallbackUrl !== primaryUrl) {
-            setUseFallback(true);
-        } else {
-            setFailed(true);
-        }
+        const next = !useFallback && fallbackUrl && fallbackUrl !== primaryUrl ? 1 : 2;
+        setFailState({ url, step: next });
     }
 
     const fitClass = fit === 'contain' ? 'object-contain' : 'object-cover';
@@ -54,7 +49,7 @@ export default function ProductThumb({ url, icon, size = 'sm', fit = 'cover', cl
     if (size === 'card') {
         return (
             <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100/90 dark:from-zinc-900/90 dark:to-zinc-950 text-slate-300 dark:text-zinc-600 ${className}`}>
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-800/80 shadow-xs border border-slate-200/50 dark:border-zinc-700/50 flex items-center justify-center text-slate-400 dark:text-zinc-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-surface dark:bg-zinc-800/80 shadow-xs border border-slate-200/50 dark:border-zinc-700/50 flex items-center justify-center text-slate-400 dark:text-zinc-400 group-hover:scale-110 transition-transform duration-300">
                     {icon || <Package size={22} strokeWidth={1.8} />}
                 </div>
                 <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 mt-1.5 uppercase tracking-wider">Sin foto</span>

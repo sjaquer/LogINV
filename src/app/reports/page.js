@@ -55,7 +55,7 @@ export default function ReportsPage() {
             <Header title="Reportes" />
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-8">
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between flex-wrap gap-3">
+                <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between flex-wrap gap-3">
                     <div>
                         <h3 className="font-bold text-slate-800 flex items-center gap-2">
                             <FileText size={18} className="text-brand-500" /> Reporte de inventario
@@ -82,22 +82,22 @@ export default function ReportsPage() {
 
                 {/* KPIs */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                         <Package size={18} className="text-brand-500 mb-2" />
                         <p className="text-2xl font-black text-slate-900">{productos.length}</p>
                         <p className="text-xs text-slate-500 font-medium">Productos registrados</p>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                         <Layers size={18} className="text-violet-500 mb-2" />
                         <p className="text-2xl font-black text-slate-900">{totalStock}</p>
                         <p className="text-xs text-slate-500 font-medium">Unidades en stock</p>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                         <AlertTriangle size={18} className="text-amber-500 mb-2" />
                         <p className="text-2xl font-black text-slate-900">{stockBajo.length}</p>
                         <p className="text-xs text-slate-500 font-medium">Con stock bajo</p>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-4 shadow-sm">
                         <MapPin size={18} className="text-emerald-500 mb-2" />
                         <p className="text-2xl font-black text-slate-900">{porUbicacion.length}</p>
                         <p className="text-xs text-slate-500 font-medium">Ubicaciones con ítems</p>
@@ -105,7 +105,7 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Stock bajo */}
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm">
                     <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
                         <AlertTriangle size={16} className="text-amber-500" /> Productos con stock bajo
                     </h3>
@@ -141,7 +141,7 @@ export default function ReportsPage() {
 
                 {/* Por categoría / ubicación */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-3">Productos por categoría</h3>
                         <div className="space-y-2">
                             {porCategoria.map(([nombre, count]) => (
@@ -152,7 +152,7 @@ export default function ReportsPage() {
                             ))}
                         </div>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                    <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-3">Productos por ubicación</h3>
                         <div className="space-y-2">
                             {porUbicacion.map(([nombre, count]) => (
@@ -166,7 +166,7 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Movimientos recientes */}
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                <div className="bg-surface border border-slate-200 rounded-xl p-5 shadow-sm">
                     <h3 className="font-bold text-slate-800 mb-3">Movimientos recientes</h3>
                     {movimientosRecientes.length === 0 ? (
                         <EmptyState icon={FileText} title="Sin movimientos" subtitle="Aún no se han registrado movimientos de stock" />

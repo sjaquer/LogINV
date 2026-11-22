@@ -21,8 +21,8 @@ export default function LoanCard({ loan, producto, onReturn, onDelete }) {
     }
 
     return (
-        <div className={`bg-white dark:bg-[#0d0d10] border rounded-2xl shadow-xs overflow-hidden transition-all ${
-            isOverdue ? 'border-red-300 dark:border-red-900/60' : isActive ? 'border-blue-200 dark:border-blue-900/50' : 'border-slate-200 dark:border-[#222226]'
+        <div className={`bg-surface dark:bg-[#0d0d10] border rounded-2xl shadow-xs overflow-hidden transition-all ${
+            isOverdue ? 'border-red-300' : isActive ? 'border-blue-200' : 'border-slate-200 dark:border-[#222226]'
         }`}>
             <div className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">

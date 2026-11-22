@@ -1,162 +1,77 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { 
-    USE_MOCK, mockTimestamp, listeners, notify, 
-    getFirestore, firebaseError 
-} from './useFirestoreQuery';
+import { useCallback } from 'react';
+import { useCollection } from './useCollection';
+import { registerMock, mockTimestamp } from '@/lib/mockStore';
+import { setDocument, deleteDocument, nowValue } from '@/lib/dataOps';
+import { audited } from '@/lib/auditLog';
 
-// Mock data for locations fallback
-let mockUbicaciones = [
-    { id: 'TEMPLO', codigo: 'TEMPLO', nombre: 'Templo', descripcion: 'Templo Principal - Auditorio y Altar', capacidad: 500, icono: '⛪', activa: true, created_at: mockTimestamp() },
-    { id: 'ALMACEN_B1', codigo: 'ALMACEN_B1', nombre: 'Almacén B1 (Herramientas)', descripcion: 'Almacén B1 - Primer Piso', capacidad: 100, icono: '🧰', activa: true, created_at: mockTimestamp() },
-    { id: 'ALMACEN_B2', codigo: 'ALMACEN_B2', nombre: 'Almacén B2 (Escaleras y Albañilería)', descripcion: 'Almacén B2 - Primer Piso', capacidad: 100, icono: '🪜', activa: true, created_at: mockTimestamp() },
-    { id: 'ALMACEN_B3', codigo: 'ALMACEN_B3', nombre: 'Almacén B3 Salón 209 (Ministerio de Adoración)', descripcion: 'Almacén B3 - Salón 209', capacidad: 80, icono: '🎵', activa: true, created_at: mockTimestamp() },
-    { id: 'ALMACEN_B4', codigo: 'ALMACEN_B4', nombre: 'Almacén B4 (Redes Juveniles)', descripcion: 'Almacén B4 - Tercer Piso', capacidad: 100, icono: '📦', activa: true, created_at: mockTimestamp() },
-    { id: 'ALMACEN_DISCOVERY', codigo: 'ALMACEN_DISCOVERY', nombre: 'Salón 308 (Almacén Discovery)', descripcion: 'Almacén Discovery Land (B5)', capacidad: 100, icono: '🧸', activa: true, created_at: mockTimestamp() },
-];
+registerMock('ubicaciones', () => [
+    { id: 'TEMPLO', codigo: 'TEMPLO', nombre: 'Templo', descripcion: 'Templo Principal - Auditorio y Altar', capacidad: 500, icono: '⛪', piso: 'Piso 1', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B1', codigo: 'ALMACEN_B1', nombre: 'Almacén B1 (Herramientas)', descripcion: 'Almacén B1 - Primer Piso', capacidad: 100, icono: '🧰', piso: 'Piso 1', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B2', codigo: 'ALMACEN_B2', nombre: 'Almacén B2 (Escaleras y Albañilería)', descripcion: 'Almacén B2 - Primer Piso', capacidad: 100, icono: '🪜', piso: 'Piso 1', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B3', codigo: 'ALMACEN_B3', nombre: 'Almacén B3 Salón 209 (Ministerio de Adoración)', descripcion: 'Almacén B3 - Salón 209', capacidad: 80, icono: '🎵', piso: 'Piso 2', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_B4', codigo: 'ALMACEN_B4', nombre: 'Almacén B4 (Redes Juveniles)', descripcion: 'Almacén B4 - Tercer Piso', capacidad: 100, icono: '📦', piso: 'Piso 3', activa: true, created_at: mockTimestamp() },
+    { id: 'ALMACEN_DISCOVERY', codigo: 'ALMACEN_DISCOVERY', nombre: 'Salón 308 (Almacén Discovery)', descripcion: 'Almacén Discovery Land (B5)', capacidad: 100, icono: '🧸', piso: 'Piso 3', activa: true, created_at: mockTimestamp() },
+]);
 
-const ubicacionesListeners = new Set();
-
-function notifyUbicaciones() {
-    ubicacionesListeners.forEach(fn => fn([...mockUbicaciones]));
+/** Convierte un nombre en un código estable: "Almacén B1" → "ALMACEN_B1". */
+export function codigoDesdeNombre(nombre = '') {
+    return nombre.toUpperCase().trim()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^A-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
 }
 
 export function useLocations() {
-    const [ubicaciones, setUbicaciones] = useState(USE_MOCK ? mockUbicaciones : []);
-    const [loading, setLoading] = useState(!USE_MOCK);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (USE_MOCK) {
-            setUbicaciones([...mockUbicaciones]);
-            ubicacionesListeners.add(setUbicaciones);
-            return () => ubicacionesListeners.delete(setUbicaciones);
-        }
-        let unsub;
-        (async () => {
-            try {
-                const { fs, db } = await getFirestore();
-                const colRef = fs.collection(db, 'ubicaciones');
-                unsub = fs.onSnapshot(colRef,
-                    (snap) => {
-                        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        list.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
-                        setUbicaciones(list);
-                        setLoading(false);
-                        setError(null);
-                    },
-                    (err) => {
-                        console.error('[LogINV] Error listener ubicaciones:', err.code, err.message);
-                        setLoading(false);
-                        setError(err.message);
-                    }
-                );
-            } catch (err) {
-                console.error('[LogINV] Error setup ubicaciones:', err);
-                setLoading(false);
-                setError(err.message);
-            }
-        })();
-        return () => unsub?.();
-    }, []);
+    const { data: ubicaciones, loading, error } = useCollection('ubicaciones');
 
     const crearUbicacion = useCallback(async (data) => {
-        if (USE_MOCK) {
-            const newLoc = {
-                id: 'loc_' + Date.now(),
-                ...data,
-                activa: true,
-                created_at: mockTimestamp(),
-            };
-            mockUbicaciones = [...mockUbicaciones, newLoc];
-            notifyUbicaciones();
-            return newLoc.id;
+        const id = data.codigo || data.id || codigoDesdeNombre(data.nombre) || ('LOC_' + Date.now());
+        if (ubicaciones.some(u => u.id === id)) {
+            throw new Error(`Ya existe una ubicación con el código ${id}`);
         }
-        try {
-            const { fs, db } = await getFirestore();
-            const nowIso = new Date().toISOString();
-            
-            // Clean uppercase code ID
-            const rawCode = data.codigo || data.id || data.nombre.toUpperCase().trim()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^A-Z0-9]+/g, '_')
-                .replace(/^_+|_+$/g, '');
-            const finalId = rawCode || ('LOC_' + Date.now());
-
-            const newDoc = {
-                id: finalId,
-                codigo: finalId,
-                nombre: (data.nombre || '').trim(),
-                descripcion: (data.descripcion || '').trim(),
-                capacidad: Number(data.capacidad) || 100,
-                icono: data.icono || '📍',
-                piso: data.piso || 'Piso 1',
-                color: data.color || 'violet',
-                activa: data.activa !== false,
-                created_at: nowIso,
-                fecha_creacion: nowIso,
-            };
-
-            await fs.setDoc(fs.doc(db, 'ubicaciones', finalId), newDoc);
-            return finalId;
-        } catch (err) {
-            firebaseError('crearUbicacion', err);
-            throw err;
-        }
-    }, []);
+        const ahora = nowValue();
+        await setDocument('ubicaciones', id, {
+            id,
+            codigo: id,
+            nombre: (data.nombre || '').trim(),
+            descripcion: (data.descripcion || '').trim(),
+            capacidad: Number(data.capacidad) || 100,
+            icono: data.icono || '📍',
+            piso: data.piso || 'Piso 1',
+            color: data.color || 'violet',
+            activa: data.activa !== false,
+            created_at: ahora,
+            fecha_creacion: ahora,
+        });
+        return id;
+    }, [ubicaciones]);
 
     const actualizarUbicacion = useCallback(async (id, data) => {
-        const cleanData = { ...data };
-        if ('capacidad' in cleanData) {
-            cleanData.capacidad = Number(cleanData.capacidad) || 0;
-        }
-        if ('nombre' in cleanData && typeof cleanData.nombre === 'string') {
-            cleanData.nombre = cleanData.nombre.trim();
-        }
-        if ('descripcion' in cleanData && typeof cleanData.descripcion === 'string') {
-            cleanData.descripcion = cleanData.descripcion.trim();
-        }
-
-        if (USE_MOCK) {
-            mockUbicaciones = mockUbicaciones.map(u => u.id === id ? { ...u, ...cleanData } : u);
-            notifyUbicaciones();
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.setDoc(fs.doc(db, 'ubicaciones', id), cleanData, { merge: true });
-        } catch (err) {
-            firebaseError('actualizarUbicacion', err);
-            throw err;
-        }
+        const clean = { ...data };
+        if ('capacidad' in clean) clean.capacidad = Number(clean.capacidad) || 0;
+        if (typeof clean.nombre === 'string') clean.nombre = clean.nombre.trim();
+        if (typeof clean.descripcion === 'string') clean.descripcion = clean.descripcion.trim();
+        await setDocument('ubicaciones', id, clean, { merge: true });
     }, []);
 
-    const eliminarUbicacion = useCallback(async (id) => {
-        if (USE_MOCK) {
-            mockUbicaciones = mockUbicaciones.filter(u => u.id !== id);
-            notifyUbicaciones();
-            return;
-        }
-        try {
-            const { fs, db } = await getFirestore();
-            await fs.deleteDoc(fs.doc(db, 'ubicaciones', id));
-        } catch (err) {
-            firebaseError('eliminarUbicacion', err);
-            throw err;
-        }
-    }, []);
+    const eliminarUbicacion = useCallback((id) => deleteDocument('ubicaciones', id), []);
+    const toggleUbicacion = useCallback((id, activa) => actualizarUbicacion(id, { activa }), [actualizarUbicacion]);
 
-    const toggleUbicacion = useCallback(async (id, activa) => {
-        return actualizarUbicacion(id, { activa });
-    }, [actualizarUbicacion]);
+    const nombreDe = (id) => ubicaciones.find(u => u.id === id)?.nombre || id;
 
-    return { 
-        ubicaciones, 
-        loading, 
-        error, 
-        crearUbicacion, 
-        actualizarUbicacion, 
-        eliminarUbicacion,
-        toggleUbicacion
+    return {
+        ubicaciones,
+        loading,
+        error,
+        crearUbicacion: audited(crearUbicacion, ([data], id) => ({ accion: 'crear', entidad: 'ubicacion', id, descripcion: data.nombre })),
+        actualizarUbicacion: audited(actualizarUbicacion, ([id, data]) => (
+            Object.keys(data).length === 1 && 'activa' in data ? null
+                : { accion: 'editar', entidad: 'ubicacion', id, descripcion: data.nombre || nombreDe(id) }
+        )),
+        eliminarUbicacion: audited(eliminarUbicacion, ([id]) => ({ accion: 'eliminar', entidad: 'ubicacion', id, descripcion: nombreDe(id) })),
+        toggleUbicacion: audited(toggleUbicacion, ([id, activa]) => ({
+            accion: activa ? 'activar' : 'desactivar', entidad: 'ubicacion', id, descripcion: nombreDe(id),
+        })),
     };
 }

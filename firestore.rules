@@ -378,18 +378,25 @@ service cloud.firestore {
     }
 
     // ── Auditoría ───────────────────────────────────────────────────────
+    // Registro inmutable. Cada usuario solo puede registrar acciones propias
+    // (usuario_id = su UID) y solo los administradores pueden leerlo.
     match /auditoria/{auditoriaId} {
-      allow read: if isManager();
+      allow read: if isAdmin();
 
       allow create: if isActiveUser()
                     && docSizeOk()
                     && request.resource.data.keys().hasAll(['usuario_id', 'accion', 'entidad'])
-                    && request.resource.data.usuario_id is string
+                    && request.resource.data.usuario_id == request.auth.uid
                     && request.resource.data.accion is string
+                    && request.resource.data.accion.size() <= 30
                     && request.resource.data.entidad is string
+                    && request.resource.data.entidad.size() <= 30
                     && strLenOk('usuario_nombre', 100)
-                    && strLenOk('entidad_id', 100)
-                    && timestampOk('timestamp');
+                    && strLenOk('usuario_rol', 20)
+                    && strLenOk('entidad_id', 150)
+                    && strLenOk('descripcion', 300)
+                    && timestampOk('timestamp')
+                    && timestampOk('fecha');
 
       allow update: if false;
       allow delete: if false;

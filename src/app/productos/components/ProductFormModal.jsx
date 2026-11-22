@@ -87,9 +87,9 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
 
     return (
         <div className="modal-overlay animate-fade-in" onClick={onClose}>
-            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-white max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="modal-box animate-slide-up p-0 overflow-hidden border border-slate-200 shadow-2xl bg-surface max-w-lg w-full max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-surface flex-shrink-0">
                     <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-slate-900 text-lg">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h3>
                         <p className="text-sm text-slate-500 mt-0.5">{isEdit ? 'Modifica los datos del producto' : 'Registra un nuevo producto al inventario'}</p>
@@ -127,7 +127,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             value={form.nombre}
                             onChange={e => handleChange('nombre', e.target.value)}
                             placeholder="Ej: Micrófono inalámbrico"
-                            className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             required
                         />
                     </div>
@@ -141,7 +141,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 value={form.codigo_barras}
                                 onChange={e => handleChange('codigo_barras', e.target.value)}
                                 placeholder="Ej: INSTB1 o 7750182000123"
-                                className="inp text-base py-3 flex-1 bg-white border-slate-200 text-slate-900 font-mono"
+                                className="inp text-base py-3 flex-1 bg-surface border-slate-200 text-slate-900 font-mono"
                             />
                             <button
                                 type="button"
@@ -181,7 +181,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             <select
                                 value={form.categoria}
                                 onChange={e => handleChange('categoria', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                                 required
                             >
                                 <option value="">— Selecciona —</option>
@@ -195,7 +195,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             <select
                                 value={form.ubicacion}
                                 onChange={e => handleChange('ubicacion', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                                 required
                             >
                                 <option value="">— Selecciona —</option>
@@ -219,7 +219,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 min="0"
                                 value={form.stock_actual}
                                 onChange={e => handleChange('stock_actual', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900 text-center font-bold"
                             />
                         </div>
                         <div>
@@ -229,7 +229,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 min="0"
                                 value={form.stock_minimo}
                                 onChange={e => handleChange('stock_minimo', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900 text-center font-bold"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900 text-center font-bold"
                             />
                         </div>
                         <div>
@@ -237,7 +237,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             <select
                                 value={form.unidad}
                                 onChange={e => handleChange('unidad', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             >
                                 {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
                             </select>
@@ -251,7 +251,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             <select
                                 value={form.estado}
                                 onChange={e => handleChange('estado', e.target.value)}
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             >
                                 {ESTADOS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
                             </select>
@@ -263,7 +263,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                                 value={form.responsabilidad}
                                 onChange={e => handleChange('responsabilidad', e.target.value)}
                                 placeholder="Ej: Ministerio de Adoración"
-                                className="inp text-base py-3 bg-white border-slate-200 text-slate-900"
+                                className="inp text-base py-3 bg-surface border-slate-200 text-slate-900"
                             />
                         </div>
                     </div>
@@ -278,7 +278,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             value={form.descripcion}
                             onChange={e => handleChange('descripcion', e.target.value)}
                             placeholder="Marca, modelo, color, características..."
-                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp resize-none text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
 
@@ -290,7 +290,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
                             value={form.observaciones}
                             onChange={e => handleChange('observaciones', e.target.value)}
                             placeholder="Notas de mantenimiento, etiquetado, etc."
-                            className="inp resize-none text-base py-3 bg-white border-slate-200 text-slate-900"
+                            className="inp resize-none text-base py-3 bg-surface border-slate-200 text-slate-900"
                         />
                     </div>
                 </form>

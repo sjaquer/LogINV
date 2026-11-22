@@ -15,6 +15,8 @@
 // Si una ruta NO aparece aquí se asume que cualquier usuario autenticado puede entrar.
 export const ROUTE_PERMISSIONS = {
     '/admin/users':   ['admin'],
+    '/auditoria':     ['admin'],
+    '/ayuda':         ['admin', 'encargado', 'voluntario'],
     '/usuarios':      ['admin'],
     '/reports':       ['admin', 'encargado'],
     '/reportes':      ['admin', 'encargado'],

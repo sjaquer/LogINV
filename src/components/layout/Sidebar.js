@@ -1,118 +1,100 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSidebar } from '@/context/SidebarContext';
 import { useAuth } from '@/context/AuthContext';
-import { canAccess } from '@/lib/routePermissions';
-import {
-    LayoutDashboard,
-    Package,
-    ChevronLeft,
-    ChevronRight,
-    ClipboardList,
-    MapPin,
-    Handshake,
-    Wrench,
-    FileText,
-    Users,
-    ScanBarcode,
-} from 'lucide-react';
+import { NAV_GROUPS, navItemsFor, isActivePath } from '@/lib/navigation';
+import { ROLES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
     const pathname = usePathname();
     const { collapsed, setCollapsed } = useSidebar();
     const { user } = useAuth();
-    const role = user?.rol || '';
-
-    const ALL_NAV_ITEMS = [
-        { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
-        { href: '/productos', label: 'Productos', icon: Package },
-        { href: '/inventario', label: 'Inventario', icon: ClipboardList },
-        { href: '/scan', label: 'Escanear', icon: ScanBarcode },
-        { href: '/locations', label: 'Ubicaciones', icon: MapPin },
-        { href: '/loans', label: 'Préstamos', icon: Handshake },
-        { href: '/maintenance', label: 'Mantenimiento', icon: Wrench },
-        { href: '/reports', label: 'Reportes', icon: FileText },
-        { href: '/admin/users', label: 'Usuarios', icon: Users },
-    ];
-
-    // Mostrar solo las rutas a las que el rol actual tiene permiso
-    const NAV_ITEMS = ALL_NAV_ITEMS.filter(item => canAccess(item.href, role));
+    const items = navItemsFor(user?.rol);
+    const groups = [...NAV_GROUPS, { id: 'ayuda', label: null }]
+        .map(g => ({ ...g, items: items.filter(i => i.group === g.id) }))
+        .filter(g => g.items.length);
 
     return (
-        <>
-            {/* Sidebar panel – desktop only */}
-            <aside
-                className={cn(
-                    'fixed top-0 left-0 z-[58] h-full flex-col bg-white border-r border-slate-200 shadow-none transition-all duration-300 hidden lg:flex',
-                    collapsed ? 'w-[72px]' : 'w-64',
-                )}
-                style={{ height: '100dvh' }}
-            >
-                {/* Logo */}
-                <div className={cn('flex items-center gap-3 px-6 py-6 border-b border-slate-100', collapsed && 'justify-center px-2')}>
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" className="w-full h-full object-cover" />
+        <aside
+            className={cn(
+                'fixed top-0 left-0 z-[58] h-[100dvh] flex-col bg-surface border-r border-slate-200 transition-[width] duration-300 hidden lg:flex',
+                collapsed ? 'w-[72px]' : 'w-64',
+            )}
+            aria-label="Navegación principal"
+        >
+            {/* Marca */}
+            <div className={cn('flex items-center gap-3 h-[72px] px-5 border-b border-slate-100', collapsed && 'justify-center px-2')}>
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20">
+                    <img src="/icons/icon-192.png" alt="" className="w-full h-full object-cover" />
+                </div>
+                {!collapsed && (
+                    <div className="min-w-0">
+                        <p className="font-bold text-slate-900 tracking-tight leading-tight text-lg">LogINV</p>
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider truncate">Inventario Iglesia CNC</p>
                     </div>
-                    {!collapsed && (
-                        <div>
-                            <p className="font-bold text-slate-800 tracking-tight leading-tight text-lg">LOG-INV</p>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Control de Inventario</p>
-                        </div>
-                    )}
-                </div>
+                )}
+            </div>
 
-                {/* Nav links */}
-                <nav className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
-                    {!collapsed && (
-                        <div className="px-2 py-2 mb-2">
-                            <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Navegación</p>
-                        </div>
-                    )}
-                    {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                        const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
-                        return (
-                            <Link
-                                key={href}
-                                href={href}
-                                className={cn(
-                                    'group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative',
-                                    isActive 
-                                        ? 'text-brand-700 bg-brand-50' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50',
-                                    collapsed && 'justify-center px-2'
-                                )}
-                                title={collapsed ? label : undefined}
-                                aria-current={isActive ? 'page' : undefined}
-                            >
-                                <span className={cn(
-                                    'transition-colors duration-200',
-                                    isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-600'
-                                )}>
-                                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                                </span>
-                                {!collapsed && <span className="flex-1 text-left">{label}</span>}
-                                {isActive && !collapsed && (
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-600 rounded-l-full" />
-                                )}
-                            </Link>
-                        );
-                    })}
-                </nav>
+            {/* Secciones */}
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+                {groups.map(group => (
+                    <div key={group.id}>
+                        {group.label && !collapsed && (
+                            <p className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.12em] text-slate-400 font-bold">{group.label}</p>
+                        )}
+                        {group.label && collapsed && <div className="mx-3 mb-2 border-t border-slate-100" />}
+                        <ul className="space-y-0.5">
+                            {group.items.map(({ href, label, icon: Icon }) => {
+                                const active = isActivePath(pathname, href);
+                                return (
+                                    <li key={href}>
+                                        <Link
+                                            href={href}
+                                            title={collapsed ? label : undefined}
+                                            aria-current={active ? 'page' : undefined}
+                                            className={cn(
+                                                'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                                active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                                                collapsed && 'justify-center px-2',
+                                            )}
+                                        >
+                                            {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-brand-600" aria-hidden="true" />}
+                                            <Icon size={19} strokeWidth={active ? 2.4 : 2} className={active ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-600'} aria-hidden="true" />
+                                            {!collapsed && <span className="truncate">{label}</span>}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                ))}
+            </nav>
 
-                {/* Collapse toggle (desktop only) */}
-                <div className="hidden lg:flex p-4 border-t border-slate-100">
-                    <button
-                        className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all duration-200"
-                        onClick={() => setCollapsed(!collapsed)}
-                        aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
-                    >
-                        {collapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /><span className="text-xs font-medium">Colapsar</span></div>}
-                    </button>
-                </div>
-            </aside>
-        </>
+            {/* Cuenta + colapsar */}
+            <div className="border-t border-slate-100 p-3 space-y-2">
+                {!collapsed && user && (
+                    <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2">
+                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                            {(user.nombre || '?')[0].toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-slate-800">{user.nombre}</p>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">{ROLES[user.rol?.toUpperCase()]?.label || user.rol}</p>
+                        </div>
+                    </div>
+                )}
+                <button
+                    type="button"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setCollapsed(!collapsed)}
+                    aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+                >
+                    {collapsed ? <ChevronRight size={18} /> : <><ChevronLeft size={18} /> Colapsar</>}
+                </button>
+            </div>
+        </aside>
     );
 }

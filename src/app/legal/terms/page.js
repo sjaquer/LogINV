@@ -9,7 +9,7 @@ export const metadata = {
 export default function TermsOfServicePage() {
     return (
         <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
-            <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-10">
+            <div className="max-w-3xl mx-auto bg-surface border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-10">
                 <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline mb-6">
                     <ArrowLeft size={16} /> Volver a LogINV
                 </Link>

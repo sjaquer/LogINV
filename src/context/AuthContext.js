@@ -6,6 +6,8 @@ import { Lock, Mail, AlertCircle } from 'lucide-react';
 import { authService } from '@/services/auth';
 import { signOut as driveSignOut } from '@/services/googleDrive';
 import { USE_MOCK, getFirestore } from '@/hooks/useFirestoreQuery';
+import { audit, setAuditUser } from '@/lib/auditLog';
+import { useIsClient } from '@/hooks/usePersistentState';
 
 // Rutas públicas que deben ser accesibles sin iniciar sesión (requisito de
 // verificación de OAuth de Google: Política de Privacidad y Condiciones del
@@ -131,20 +133,19 @@ function LoginScreen({ onLogin }) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 flex items-center justify-center p-4">
+        <div className="min-h-[100dvh] bg-gradient-to-br from-ink-900 via-brand-950 to-ink-900 flex items-center justify-center p-4">
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-brand-500/30 mb-4">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">LOG-INV</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tight">LogINV</h1>
                     <p className="text-sm text-white/50 font-medium mt-1">Control de Inventario</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white rounded-2xl shadow-2xl p-6 space-y-5">
+                <div className="bg-surface rounded-2xl shadow-2xl p-6 space-y-5">
                     <div className="text-center">
                         <h2 className="text-lg font-bold text-slate-900">Iniciar sesión</h2>
                         <p className="text-sm text-slate-500 mt-1">Ingresa con tu correo y contraseña</p>
@@ -210,7 +211,7 @@ function LoginScreen({ onLogin }) {
                     <span>·</span>
                     <Link href="/legal/terms" className="hover:text-white/60 hover:underline">Condiciones del servicio</Link>
                 </p>
-                <p className="text-center text-xs text-white/30 mt-3">LogINV · Control de Inventario</p>
+                
             </div>
         </div>
     );
@@ -218,17 +219,20 @@ function LoginScreen({ onLogin }) {
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(USE_MOCK ? MOCK_USER : null);
-    const [loaded, setLoaded] = useState(false);
+    const [loaded, setLoaded] = useState(USE_MOCK);
+    // La app depende de la sesión del navegador: el servidor solo pinta la
+    // pantalla de carga (evita desajustes de hidratación con fechas/horas).
+    const isClient = useIsClient();
+
+    // La auditoría necesita saber quién actúa: se fija en el mismo render.
+    setAuditUser(user);
     const pathname = usePathname();
     const isPublicRoute = PUBLIC_ROUTES.some(p => pathname?.startsWith(p));
 
     // Restaura la sesión de Firebase (persistida por el SDK) y vuelve a
     // resolver el rol contra `usuarios`.
     useEffect(() => {
-        if (USE_MOCK) {
-            setLoaded(true);
-            return;
-        }
+        if (USE_MOCK) return undefined;
         const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
             if (!firebaseUser) {
                 setUser(null);
@@ -258,13 +262,18 @@ export function AuthProvider({ children }) {
         return unsubscribe;
     }, []);
 
-    const login = useCallback((userData) => setUser(userData), []);
+    const login = useCallback((userData) => {
+        setAuditUser(userData);
+        audit('login', 'sesion', userData.id, 'Inicio de sesión');
+        setUser(userData);
+    }, []);
 
-    const logout = useCallback(() => {
+    const logout = useCallback(async () => {
+        await audit('logout', 'sesion', user?.id, 'Cierre de sesión');
         setUser(null);
         driveSignOut();
         if (!USE_MOCK) authService.signOut();
-    }, []);
+    }, [user?.id]);
 
     // Páginas públicas (legales): accesibles sin sesión, sin chrome de la app.
     if (isPublicRoute) {
@@ -275,9 +284,9 @@ export function AuthProvider({ children }) {
         );
     }
 
-    if (!loaded) {
+    if (!loaded || !isClient) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <div className="min-h-screen bg-ink-900 flex items-center justify-center">
                 <div className="w-10 h-10 border-4 border-brand-400 border-t-transparent rounded-full animate-spin" />
             </div>
         );

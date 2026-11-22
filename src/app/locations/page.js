@@ -96,7 +96,7 @@ export default function LocationsPage() {
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-fade-in max-w-5xl mx-auto w-full pb-8">
 
                 {/* Banner Header with Stats */}
-                <div className="bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
+                <div className="bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
@@ -105,7 +105,7 @@ export default function LocationsPage() {
                                 </span>
                                 Ubicaciones y Espacios Físicos
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-xs text-slate-500 mt-1">
                                 {loading ? 'Cargando ubicaciones...' : `${stats.total} espacios registrados en la base de datos de la iglesia`}
                             </p>
                         </div>
@@ -157,7 +157,7 @@ export default function LocationsPage() {
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Buscar por nombre, código o descripción..."
-                            className="inp pl-10 text-sm py-2.5 bg-white dark:bg-[#0d0d10] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400"
+                            className="inp pl-10 text-sm py-2.5 bg-surface dark:bg-[#0d0d10] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400"
                         />
                     </div>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -175,7 +175,7 @@ export default function LocationsPage() {
                                 className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
                                     pisoFilter === tab.id
                                         ? 'bg-violet-600 text-white shadow-sm'
-                                        : 'bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                        : 'bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 text-slate-600 hover:bg-slate-50 dark:hover:bg-white/5'
                                 }`}
                             >
                                 {tab.label}
@@ -188,7 +188,7 @@ export default function LocationsPage() {
                 {loading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {Array.from({ length: 6 }).map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl h-44 animate-pulse shadow-sm" />
+                            <div key={i} className="bg-surface dark:bg-[#0d0d10] border border-slate-200 dark:border-white/10 rounded-2xl h-44 animate-pulse shadow-sm" />
                         ))}
                     </div>
                 ) : filteredUbicaciones.length === 0 ? (
