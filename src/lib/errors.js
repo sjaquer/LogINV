@@ -216,7 +216,10 @@ export function describeError(err) {
     // Mensajes propios en español (AppError con texto, respuestas de nuestra
     // API) se muestran tal cual; los técnicos quedan solo en `detail`.
     const custom = err?.custom || err?.serverMessage;
-    const message = custom ? err.message : renderMessage(entry, err?.vars);
+    let message = custom ? err.message : renderMessage(entry, err?.vars);
+    // Error no reconocido: se adjunta el texto original (recortado) para poder identificarlo.
+    const raw = typeof err === 'string' ? err : err?.message;
+    if (code === 'APP-01' && raw && !custom) message = `${message} Detalle: ${raw.length > 140 ? `${raw.slice(0, 140)}…` : raw}`;
     return {
         code,
         title: entry.title,

@@ -216,9 +216,9 @@ export function FeedbackProvider({ children }) {
     return (
         <FeedbackContext.Provider value={value}>
             {children}
-            {/* Avisos: en el costado derecho en escritorio, sobre la barra inferior en móvil */}
+            {/* Avisos: abajo a la derecha en escritorio (sin tapar el encabezado), sobre la barra inferior en móvil */}
             <div
-                className="pointer-events-none fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-[95] flex flex-col items-center gap-2 px-4 lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-4 lg:w-[400px] lg:items-end lg:px-6"
+                className="pointer-events-none fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-[95] flex flex-col items-center gap-2 px-4 lg:inset-x-auto lg:bottom-6 lg:right-0 lg:w-[400px] lg:items-end lg:px-6"
                 aria-live="polite"
             >
                 {toasts.map((t) => <Toast key={t.id} toast={t} onDismiss={dismiss} />)}
