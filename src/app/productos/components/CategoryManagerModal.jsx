@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { X, Save, Trash2, Pencil, FolderPlus, AlertTriangle } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
-const ICONS = ['📦', '🥃', '🍺', '🍷', '🥤', '🍋', '🥜', '🧊', '🍸', '🥂'];
+const ICONS = ['📦', '🎵', '🪑', '💻', '⚙️', '💡', '🔧', '🎨', '🔨', '🧹', '📚', '🎉'];
 const COLORS = ['#f59e0b', '#10b981', '#f472b6', '#8b5cf6', '#ef4444', '#3b82f6', '#14b8a6', '#f97316'];
 
 export default function CategoryManagerModal({ categorias, onClose, onCrear, onActualizar, onEliminar }) {

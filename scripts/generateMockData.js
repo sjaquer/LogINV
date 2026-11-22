@@ -3,7 +3,7 @@
 //  Genera src/lib/mockDataStore.js a partir de "CODIGOS CNC.xlsx" usando la
 //  misma normalización que scripts/seedExcel.js (scripts/lib/excelMapping.js),
 //  para que el modo MOCK (sin Firebase configurado) refleje el inventario
-//  real de la iglesia en vez de datos de bar/restaurante.
+//  real de la iglesia en vez de datos genéricos de ejemplo.
 //
 //  Uso: node scripts/generateMockData.js
 // ═══════════════════════════════════════════════════════════════════════════
