@@ -76,7 +76,7 @@ export default function ScanPage() {
             setLinkSuccess(`Código asignado exitosamente a "${prod.nombre}"`);
             setTimeout(() => setLinkSuccess(''), 4000);
         } catch (err) {
-            toast.error('No se pudo asignar el código: ' + err.message);
+            toast.error(err, { title: 'No se pudo asignar el código' });
         } finally {
             setLinking(false);
         }

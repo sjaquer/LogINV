@@ -6,6 +6,7 @@ import { MOCK_PRODUCTOS } from '@/lib/mockDataStore';
 import { registerMock, getMock, setMock, mockId } from '@/lib/mockStore';
 import { addDocument, updateDocument, deleteDocument, clean, nowValue } from '@/lib/dataOps';
 import { audited } from '@/lib/auditLog';
+import { AppError } from '@/lib/errors';
 
 registerMock('productos', () => [...MOCK_PRODUCTOS]);
 
@@ -14,8 +15,18 @@ const toNum = (v) => Number(v) || 0;
 export function useProductos() {
     const { data: productos, loading, error } = useCollection('productos', { orderByField: 'nombre' });
 
+    // Un código de barras identifica a un solo artículo: si se repite, el
+    // escáner encontraría el equivocado.
+    const assertCodigoLibre = useCallback((codigo, idPropio = null) => {
+        const c = String(codigo || '').trim();
+        if (!c) return;
+        const otro = productos.find(p => p.id !== idPropio && String(p.codigo_barras || '').trim().toLowerCase() === c.toLowerCase());
+        if (otro) throw new AppError('INV-01', { message: `El código ${c} ya pertenece a "${otro.nombre}".` });
+    }, [productos]);
+
     const crearProducto = useCallback(async (data) => {
         const { _usuario: usuario = 'Sistema', ...rest } = data;
+        assertCodigoLibre(rest.codigo_barras);
         const stockActual = toNum(rest.stock_actual);
         const ahora = nowValue();
         const id = await addDocument('productos', {
@@ -44,15 +55,16 @@ export function useProductos() {
             }, { prefix: 'mv' });
         }
         return id;
-    }, []);
+    }, [assertCodigoLibre]);
 
     const actualizarProducto = useCallback(async (id, data) => {
         const { _usuario, ...rest } = data;
+        if (rest.codigo_barras !== undefined) assertCodigoLibre(rest.codigo_barras, id);
         const updateData = { ...rest, ultima_actualizacion: nowValue() };
         if (updateData.stock_actual !== undefined) updateData.stock_actual = toNum(updateData.stock_actual);
         if (updateData.stock_minimo !== undefined) updateData.stock_minimo = toNum(updateData.stock_minimo);
         await updateDocument('productos', id, updateData);
-    }, []);
+    }, [assertCodigoLibre]);
 
     const eliminarProducto = useCallback((id) => deleteDocument('productos', id), []);
 
@@ -90,7 +102,7 @@ export function useProductos() {
 
         if (USE_MOCK) {
             const prod = getMock('productos').find(p => p.id === id);
-            if (!prod) throw new Error('El producto ya no existe');
+            if (!prod) throw new AppError('DATOS-01', { vars: { que: 'El artículo' } });
             const anterior = toNum(prod.stock_actual);
             const { nuevo, diff, tipoFinal } = calcular(anterior);
             const fecha = nowValue();
@@ -104,7 +116,7 @@ export function useProductos() {
             const movRef = fs.doc(fs.collection(db, 'movimientos'));
             return await fs.runTransaction(db, async (tx) => {
                 const snap = await tx.get(prodRef);
-                if (!snap.exists()) throw new Error('El producto ya no existe');
+                if (!snap.exists()) throw new AppError('DATOS-01', { vars: { que: 'El artículo' } });
                 const prod = snap.data();
                 const anterior = toNum(prod.stock_actual);
                 const { nuevo, diff, tipoFinal } = calcular(anterior);

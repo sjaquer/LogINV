@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { X, Save, AlertTriangle, Hash, Palette, Check } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 const POPULAR_ICONS = ['⛪', '🧰', '🪜', '🎙️', '🎬', '💼', '🚪', '🎵', '👶', '☀️', '📦', '📡', '🧸', '🚻', '🌿', '📍'];
 const PISOS = ['Piso 1', 'Piso 2', 'Piso 3', 'Exterior / Otro'];
@@ -22,6 +23,7 @@ export default function LocationFormModal({ ubicacion, onClose, onSave }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     const [form, setForm] = useState({
@@ -52,7 +54,7 @@ export default function LocationFormModal({ ubicacion, onClose, onSave }) {
             await onSave(form, isEdit ? ubicacion.id : null);
             onClose();
         } catch (err) {
-            setError(err.message || 'Error al guardar la ubicación');
+            toast.error(err);
         } finally {
             setSaving(false);
         }

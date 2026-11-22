@@ -16,6 +16,7 @@ import { useState, useCallback } from 'react';
 import { GOOGLE_DRIVE, APP_CONFIG } from '@/lib/constants';
 import { compressImage } from '@/lib/imageCompression';
 import { authService } from './auth';
+import { AppError } from '@/lib/errors';
 
 // ─── State ───────────────────────────────────────────────────────────────
 let accessToken = null;
@@ -61,7 +62,7 @@ async function ensureAuthorized() {
     if (accessToken) return accessToken;
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID;
     if (!clientId) {
-        throw new Error('Google Drive Client ID no está configurado');
+        throw new AppError('DRIVE-01');
     }
 
     try {
@@ -112,15 +113,15 @@ export function getPublicImageUrl(fileId) {
 // ─── Subir imagen de producto (comprime, crea/reusa carpeta, sube, publica) ─
 export async function uploadImage(file) {
     if (!APP_CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        throw new Error('Tipo de archivo no permitido. Usa JPEG, PNG, WebP o GIF');
+        throw new AppError('IMG-01');
     }
     if (file.size > APP_CONFIG.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
-        throw new Error(`El archivo excede ${APP_CONFIG.MAX_UPLOAD_SIZE_MB}MB`);
+        throw new AppError('IMG-02', { vars: { max: APP_CONFIG.MAX_UPLOAD_SIZE_MB } });
     }
 
     const optimized = await compressImage(file);
     if (optimized.size > APP_CONFIG.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
-        throw new Error(`El archivo excede ${APP_CONFIG.MAX_UPLOAD_SIZE_MB}MB, incluso comprimido`);
+        throw new AppError('IMG-02', { vars: { max: APP_CONFIG.MAX_UPLOAD_SIZE_MB } });
     }
 
     await ensureAuthorized();
@@ -138,7 +139,7 @@ export async function uploadImage(file) {
             headers: { Authorization: `Bearer ${accessToken}` },
             body: form,
         });
-        if (!response.ok) throw new Error('Error al subir la imagen a Google Drive');
+        if (!response.ok) throw new AppError('DRIVE-02');
 
         const result = await response.json();
         await makeFilePublic(result.id);

@@ -22,9 +22,9 @@ export async function POST(request) {
         const formData = await request.formData();
         const file = formData.get('file');
 
-        if (!file || typeof file === 'string') throw new HttpError('No se envió ningún archivo', 400);
-        if (!ALLOWED_TYPES.includes(file.type)) throw new HttpError('Formato de imagen no permitido', 415);
-        if (file.size > MAX_BYTES) throw new HttpError('La imagen supera el tamaño máximo (5 MB)', 413);
+        if (!file || typeof file === 'string') throw new HttpError('No se envió ningún archivo', 400, 'VAL-01');
+        if (!ALLOWED_TYPES.includes(file.type)) throw new HttpError('Formato de imagen no permitido', 415, 'IMG-01');
+        if (file.size > MAX_BYTES) throw new HttpError('La imagen supera el tamaño máximo (5 MB)', 413, 'IMG-02');
 
         const buffer = Buffer.from(await file.arrayBuffer());
         const safeName = (file.name || 'image.jpg').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
@@ -40,7 +40,7 @@ export async function DELETE(request) {
     try {
         await requireUser(request);
         const id = new URL(request.url).searchParams.get('id');
-        if (!id || !DRIVE_ID_RE.test(id)) throw new HttpError('Id de archivo inválido', 400);
+        if (!id || !DRIVE_ID_RE.test(id)) throw new HttpError('Id de archivo inválido', 400, 'VAL-01');
 
         await deleteImageFromDrive(id);
         return NextResponse.json({ success: true });

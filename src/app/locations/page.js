@@ -9,6 +9,8 @@ import { useSidebar } from '@/context/SidebarContext';
 import { EmptyState } from '@/components/ui/SharedComponents';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import RouteGuard from '@/components/ui/RouteGuard';
+import { useToast } from '@/components/ui/Feedback';
+import { AppError } from '@/lib/errors';
 import LocationFormModal from './components/LocationFormModal';
 import LocationCard from './components/LocationCard';
 import {
@@ -22,6 +24,7 @@ export default function LocationsPage() {
     const { user } = useAuth();
     const { setHideBottomNav } = useSidebar();
     const role = user?.rol || 'voluntario';
+    const toast = useToast();
 
     const [showForm, setShowForm] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
@@ -49,6 +52,25 @@ export default function LocationsPage() {
             await crearUbicacion(data);
         }
     }, [crearUbicacion, actualizarUbicacion]);
+
+    const handleDelete = useCallback(async (id) => {
+        try {
+            const cantidad = productCountByLocation[id] || 0;
+            if (cantidad > 0) throw new AppError('INV-02', { vars: { cantidad } });
+            await eliminarUbicacion(id);
+            toast.success('Ubicación eliminada');
+        } catch (err) {
+            toast.error(err);
+        }
+    }, [eliminarUbicacion, productCountByLocation, toast]);
+
+    const handleToggle = useCallback(async (...args) => {
+        try {
+            await toggleUbicacion(...args);
+        } catch (err) {
+            toast.error(err);
+        }
+    }, [toggleUbicacion, toast]);
 
     const handleEdit = useCallback((ubicacion) => {
         setEditingLocation(ubicacion);
@@ -206,8 +228,8 @@ export default function LocationsPage() {
                                 productCount={productCountByLocation[loc.id] || 0}
                                 canManage={canManage}
                                 onEdit={handleEdit}
-                                onToggle={toggleUbicacion}
-                                onDelete={eliminarUbicacion}
+                                onToggle={handleToggle}
+                                onDelete={handleDelete}
                                 onSelectLocation={setUbicacion}
                             />
                         ))}

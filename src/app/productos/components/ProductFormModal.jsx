@@ -6,6 +6,7 @@ import BarcodeLabelModal, { BarcodeLabelPreview } from '@/components/ui/BarcodeL
 import ProductImageUploader from './ProductImageUploader';
 import { useLocation } from '@/context/LocationContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 const UNIDADES = ['pieza', 'unidades', 'cajas', 'bolsas', 'pares', 'metros', 'kg', 'litros', 'packs'];
 
@@ -23,6 +24,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
     const [showScanner, setShowScanner] = useState(false);
     const [showLabel, setShowLabel] = useState(false);
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     const initialUbicacion = producto?.ubicacion || (ubicacionesFisicas.length > 0 ? ubicacionesFisicas[0].id : 'TEMPLO');
@@ -79,7 +81,7 @@ export default function ProductFormModal({ producto, categorias, onClose, onSave
             await onSave({ ...form, _usuario: userName }, isEdit ? producto.id : null);
             onClose();
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setSaving(false);
         }

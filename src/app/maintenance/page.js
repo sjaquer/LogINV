@@ -42,7 +42,7 @@ export default function MaintenancePage() {
             await fn();
             toast.success(ok);
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         }
     }, [toast]);
 

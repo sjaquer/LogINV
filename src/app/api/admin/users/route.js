@@ -13,6 +13,21 @@ import { HttpError, requireAdmin, handleApiError } from '@/lib/serverAuth';
 
 const handleError = (err) => handleApiError(err, '/api/admin/users');
 
+// Errores de Firebase Admin Auth → mensaje en español + código del diccionario.
+const AUTH_ADMIN_ERRORS = {
+    'auth/email-already-exists': ['Ya existe una cuenta con ese correo', 409, 'AUTH-08'],
+    'auth/invalid-password': ['La contraseña debe tener al menos 6 caracteres', 400, 'AUTH-09'],
+    'auth/invalid-email': ['El correo no tiene un formato válido', 400, 'AUTH-02'],
+    'auth/invalid-display-name': ['El nombre no es válido', 400, 'VAL-01'],
+    'auth/user-not-found': ['La cuenta ya no existe en el sistema de acceso', 404, 'DATOS-01'],
+};
+function authAdminError(err) {
+    const known = AUTH_ADMIN_ERRORS[err?.code];
+    if (known) return new HttpError(...known);
+    console.error('[LogINV] Firebase Admin Auth:', err?.code, err?.message);
+    return new HttpError('No se pudieron guardar las credenciales de la cuenta', 400, 'VAL-01');
+}
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -33,13 +48,13 @@ export async function POST(request) {
         const { nombre, email, password, rol, telefono, departamento } = await request.json();
 
         if (!nombre?.trim() || !email?.trim()) {
-            throw new HttpError('Nombre y correo son obligatorios', 400);
+            throw new HttpError('Nombre y correo son obligatorios', 400, 'VAL-01');
         }
         if (!password || password.length < 6) {
-            throw new HttpError('La contraseña debe tener al menos 6 caracteres', 400);
+            throw new HttpError('La contraseña debe tener al menos 6 caracteres', 400, 'AUTH-09');
         }
         if (!['admin', 'encargado', 'voluntario'].includes(rol)) {
-            throw new HttpError('Rol inválido', 400);
+            throw new HttpError('Rol inválido', 400, 'VAL-01');
         }
 
         const userRecord = await (await adminAuth()).createUser({
@@ -48,9 +63,9 @@ export async function POST(request) {
             displayName: nombre.trim(),
         }).catch((err) => {
             if (err.code === 'auth/email-already-exists') {
-                throw new HttpError('Ya existe una cuenta con ese correo', 409);
+                throw new HttpError('Ya existe una cuenta con ese correo', 409, 'AUTH-08');
             }
-            throw new HttpError(err.message, 400);
+            throw authAdminError(err);
         });
 
         await (await adminDb()).collection('usuarios').doc(userRecord.uid).set({
@@ -74,9 +89,9 @@ export async function PATCH(request) {
     try {
         const me = await requireAdmin(request);
         const { id, activo, rol, password, nombre, telefono, departamento } = await request.json();
-        if (!id) throw new HttpError('Falta el id de la cuenta', 400);
+        if (!id) throw new HttpError('Falta el id de la cuenta', 400, 'VAL-01');
         if (id === me.uid && (activo === false || (rol && rol !== 'admin'))) {
-            throw new HttpError('No puedes desactivar ni quitarte el rol de administrador a ti mismo', 400);
+            throw new HttpError('No puedes desactivar ni quitarte el rol de administrador a ti mismo', 400, 'USR-01');
         }
 
         const authUpdates = {};
@@ -88,12 +103,12 @@ export async function PATCH(request) {
         }
         if (rol) {
             if (!['admin', 'encargado', 'voluntario'].includes(rol)) {
-                throw new HttpError('Rol inválido', 400);
+                throw new HttpError('Rol inválido', 400, 'VAL-01');
             }
             docUpdates.rol = rol;
         }
         if (password) {
-            if (password.length < 6) throw new HttpError('La contraseña debe tener al menos 6 caracteres', 400);
+            if (password.length < 6) throw new HttpError('La contraseña debe tener al menos 6 caracteres', 400, 'AUTH-09');
             authUpdates.password = password;
         }
         if (nombre?.trim()) {
@@ -122,13 +137,13 @@ export async function PATCH(request) {
                                 disabled: authUpdates.disabled ?? false,
                             });
                         } else {
-                            throw new HttpError('No se encontró el correo del usuario para registrar sus credenciales', 400);
+                            throw new HttpError('No se encontró el correo del usuario para registrar sus credenciales', 400, 'USR-02');
                         }
                     } else {
                         console.warn(`[LogINV] Usuario ${id} no encontrado en Firebase Auth, actualizando solo Firestore.`);
                     }
                 } else {
-                    throw new HttpError(err.message || 'Error al actualizar credenciales en Auth', 400);
+                    throw authAdminError(err);
                 }
             }
         }
@@ -148,8 +163,8 @@ export async function DELETE(request) {
         const me = await requireAdmin(request);
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
-        if (!id) throw new HttpError('Falta el id de la cuenta', 400);
-        if (id === me.uid) throw new HttpError('No puedes eliminar tu propia cuenta', 400);
+        if (!id) throw new HttpError('Falta el id de la cuenta', 400, 'VAL-01');
+        if (id === me.uid) throw new HttpError('No puedes eliminar tu propia cuenta', 400, 'USR-01');
 
         await (await adminAuth()).deleteUser(id).catch(() => {}); // ya pudo no existir en Auth
         await (await adminDb()).collection('usuarios').doc(id).delete();

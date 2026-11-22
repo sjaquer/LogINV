@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { X, Save, AlertTriangle, Handshake } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { formatDate } from '@/lib/utils';
+import { useToast } from '@/components/ui/Feedback';
 
 export default function LoanFormModal({ productos, ubicacion, onClose, onSave }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     const [form, setForm] = useState({
@@ -41,7 +43,7 @@ export default function LoanFormModal({ productos, ubicacion, onClose, onSave })
             });
             onClose();
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setSaving(false);
         }

@@ -18,6 +18,7 @@ import { authService } from '@/services/auth';
 import { USE_MOCK } from '@/hooks/useFirestoreQuery';
 import { audit } from '@/lib/auditLog';
 import { cn } from '@/lib/utils';
+import { AppError } from '@/lib/errors';
 
 const ROLE_INFO = {
     admin: {
@@ -40,7 +41,7 @@ const ROLE_INFO = {
 // ─── API de administración (/api/admin/users, protegida por el ID token) ───
 async function callAdminApi(method, body, query = '') {
     const idToken = await authService.getIdToken();
-    if (!idToken) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    if (!idToken) throw new AppError('AUTH-05');
     const res = await fetch(`/api/admin/users${query}`, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
@@ -51,6 +52,8 @@ async function callAdminApi(method, body, query = '') {
     if (!res.ok) {
         const err = new Error(data?.error || `Error del servidor (${res.status})`);
         err.status = res.status;
+        err.appCode = data?.code;                       // código del diccionario (src/lib/errors.js)
+        err.serverMessage = res.status < 500 && !!data?.error; // mensaje específico y seguro para mostrar
         throw err;
     }
     return data;
@@ -125,6 +128,7 @@ function UsuarioFormModal({ usuario, isSelf, onClose, onSave }) {
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const toast = useToast();
     useEscapeKey(onClose);
 
     const set = (key, value) => { setForm(prev => ({ ...prev, [key]: value })); setError(''); };
@@ -142,7 +146,7 @@ function UsuarioFormModal({ usuario, isSelf, onClose, onSave }) {
             await onSave({ ...form, nombre, email, password: cambiarPassword ? form.password : '' }, usuario);
             onClose();
         } catch (err) {
-            setError(err.message || 'No se pudo guardar.');
+            toast.error(err);
         } finally {
             setSaving(false);
         }
@@ -384,7 +388,7 @@ export default function AdminUsersPage() {
             audit(activar ? 'activar' : 'desactivar', 'usuario', u.id, u.nombre);
             toast.success(activar ? `${u.nombre} puede volver a ingresar` : `${u.nombre} fue desactivado`);
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         } finally {
             setBusyId(null);
         }
@@ -413,7 +417,7 @@ export default function AdminUsersPage() {
             audit('eliminar', 'usuario', u.id, `${u.nombre} (${u.email})`);
             toast.success('Cuenta eliminada');
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         } finally {
             setBusyId(null);
         }

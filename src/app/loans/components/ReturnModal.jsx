@@ -2,12 +2,14 @@
 import { useState } from 'react';
 import { X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 export default function ReturnModal({ loan, onClose, onConfirm }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [notas, setNotas] = useState('');
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     async function handleConfirm() {
@@ -16,7 +18,7 @@ export default function ReturnModal({ loan, onClose, onConfirm }) {
         try {
             await onConfirm(notas);
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setSaving(false);
         }

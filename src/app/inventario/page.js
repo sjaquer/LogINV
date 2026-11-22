@@ -95,7 +95,7 @@ function InventarioPageInner() {
         try {
             await crearConteo({ usuario: userName, notas: '', items: [], ubicacion });
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         }
     }, [crearConteo, userName, ubicacion, toast]);
 
@@ -129,7 +129,7 @@ function InventarioPageInner() {
             await actualizarConteo(conteoActivo.id, { items, notas });
             toast.success('Avance del conteo guardado');
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         } finally {
             setSaving(false);
         }
@@ -157,7 +157,7 @@ function InventarioPageInner() {
             clearConteoBackup();
             toast.success(conDiff.length ? `Conteo finalizado: se ajustó el stock de ${conDiff.length} producto(s)` : 'Conteo finalizado sin diferencias');
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         } finally {
             setSaving(false);
         }
@@ -201,7 +201,7 @@ function InventarioPageInner() {
             setQuick(null);
             toast.success(`${producto.nombre}: ${r?.anterior ?? producto.stock_actual} → ${r?.nuevo ?? '—'} ${producto.unidad || ''}`);
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         }
     }, [quick, updateStock, userName, toast]);
 

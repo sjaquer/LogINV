@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { X, Save, AlertTriangle, Wrench } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 const TIPOS = [
     { id: 'preventivo', label: 'Preventivo', color: 'blue' },
@@ -12,6 +13,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     const [form, setForm] = useState({
@@ -44,7 +46,7 @@ export default function MaintenanceFormModal({ productos, onClose, onSave }) {
             });
             onClose();
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setSaving(false);
         }

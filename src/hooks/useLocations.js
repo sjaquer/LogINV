@@ -4,6 +4,7 @@ import { useCollection } from './useCollection';
 import { registerMock, mockTimestamp } from '@/lib/mockStore';
 import { setDocument, deleteDocument, nowValue } from '@/lib/dataOps';
 import { audited } from '@/lib/auditLog';
+import { AppError } from '@/lib/errors';
 
 registerMock('ubicaciones', () => [
     { id: 'TEMPLO', codigo: 'TEMPLO', nombre: 'Templo', descripcion: 'Templo Principal - Auditorio y Altar', capacidad: 500, icono: '⛪', piso: 'Piso 1', activa: true, created_at: mockTimestamp() },
@@ -28,7 +29,7 @@ export function useLocations() {
     const crearUbicacion = useCallback(async (data) => {
         const id = data.codigo || data.id || codigoDesdeNombre(data.nombre) || ('LOC_' + Date.now());
         if (ubicaciones.some(u => u.id === id)) {
-            throw new Error(`Ya existe una ubicación con el código ${id}`);
+            throw new AppError('DATOS-02', { vars: { codigo: id } });
         }
         const ahora = nowValue();
         await setDocument('ubicaciones', id, {

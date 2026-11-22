@@ -1,13 +1,14 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { Camera, CameraOff, X } from 'lucide-react';
+import { AppError, describeError } from '@/lib/errors';
 
 let scannerIdCounter = 0;
 
 export default function BarcodeScanner({ onScan, onClose }) {
     const scannerRef = useRef(null);
     const containerRef = useRef(null);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null); // descripción del diccionario de errores
     const [scannerId] = useState(() => `barcode-reader-${++scannerIdCounter}`);
 
     useEffect(() => {
@@ -15,6 +16,9 @@ export default function BarcodeScanner({ onScan, onClose }) {
         let mounted = true;
         (async () => {
             try {
+                // La cámara solo existe en páginas seguras (https o localhost).
+                if (window.isSecureContext === false) throw new AppError('CAM-04');
+                if (!navigator.mediaDevices?.getUserMedia) throw new AppError('CAM-02');
                 const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
                 if (!mounted || !containerRef.current) return;
                 
@@ -54,7 +58,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
                     () => {}
                 );
             } catch (err) {
-                if (mounted) setError(err?.message || 'Cámara no disponible');
+                if (mounted) setError(describeError(err));
             }
         })();
         return () => { mounted = false; html5QrCode?.stop().catch(() => {}); };
@@ -83,8 +87,10 @@ export default function BarcodeScanner({ onScan, onClose }) {
                     {error && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink-900/90 text-white p-6 text-center">
                             <CameraOff size={40} className="text-slate-400 mb-3" />
-                            <p className="text-base font-medium">Cámara no disponible</p>
-                            <p className="text-sm text-slate-400 mt-2">Permite el acceso a la cámara para escanear</p>
+                            <p className="text-base font-semibold">{error.title}</p>
+                            <p className="text-sm text-slate-300 mt-1.5 max-w-xs">{error.message}</p>
+                            {error.hint && <p className="text-xs text-slate-400 mt-2 max-w-xs">{error.hint}</p>}
+                            <span className="mt-3 rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wide text-slate-300">{error.code}</span>
                         </div>
                     )}
                 </div>

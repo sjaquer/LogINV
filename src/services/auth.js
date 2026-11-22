@@ -18,6 +18,7 @@ import {
 } from 'firebase/auth';
 import { ROLES, GOOGLE_DRIVE } from '@/lib/constants';
 import { firebaseConfig } from '@/lib/firebaseConfig';
+import { AppError } from '@/lib/errors';
 
 // ─── Initialize Firebase ─────────────────────────────────────────────────
 let app = null;
@@ -45,7 +46,7 @@ export const authService = {
      */
     async signIn(email, password) {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase no está inicializado');
+        if (!auth) throw new AppError('AUTH-10');
 
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
@@ -57,7 +58,7 @@ export const authService = {
      */
     async resetPassword(email) {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase no está inicializado');
+        if (!auth) throw new AppError('AUTH-10');
         await sendPasswordResetEmail(auth, email);
     },
 
@@ -68,7 +69,7 @@ export const authService = {
      */
     async signInWithGoogleForDrive() {
         const auth = getFirebaseAuth();
-        if (!auth) throw new Error('Firebase no está inicializado');
+        if (!auth) throw new AppError('AUTH-10');
 
         const provider = new GoogleAuthProvider();
         provider.addScope(GOOGLE_DRIVE.SCOPE);

@@ -8,10 +8,15 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
+/**
+ * Error de API con estado HTTP y código del diccionario (src/lib/errors.js),
+ * que el cliente usa para mostrar el aviso con su código.
+ */
 export class HttpError extends Error {
-    constructor(message, status) {
+    constructor(message, status, code) {
         super(message);
         this.status = status;
+        this.code = code;
     }
 }
 
@@ -24,24 +29,24 @@ export class HttpError extends Error {
 export async function requireUser(request, { roles } = {}) {
     const authHeader = request.headers.get('authorization') || '';
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!idToken) throw new HttpError('No autenticado', 401);
+    if (!idToken) throw new HttpError('No autenticado', 401, 'AUTH-05');
 
     const auth = await adminAuth(); // errores de configuración/carga se propagan con su mensaje
     let decoded;
     try {
         decoded = await auth.verifyIdToken(idToken);
     } catch {
-        throw new HttpError('Sesión inválida o expirada', 401);
+        throw new HttpError('Sesión inválida o expirada', 401, 'AUTH-05');
     }
 
     // En LogINV el id del documento en `usuarios` es el UID de Firebase Auth.
     const snap = await (await adminDb()).collection('usuarios').doc(decoded.uid).get();
-    if (!snap.exists) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403);
+    if (!snap.exists) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403, 'AUTH-06');
 
     const usuario = snap.data();
-    if (usuario.activo === false) throw new HttpError('Tu cuenta está desactivada', 403);
+    if (usuario.activo === false) throw new HttpError('Tu cuenta está desactivada', 403, 'AUTH-07');
     if (roles && !roles.includes(usuario.rol)) {
-        throw new HttpError('No tienes permisos para esta acción', 403);
+        throw new HttpError('No tienes permisos para esta acción', 403, 'PERM-01');
     }
 
     return { uid: decoded.uid, email: decoded.email, usuario };
@@ -57,5 +62,6 @@ export function handleApiError(err, tag = 'api') {
     // la causa más común de fallos en el despliegue y no revelan secretos.
     const isConfigError = /Firebase Admin no (está configurad|pudo cargarse)/i.test(err?.message || '');
     const message = status === 500 && !isConfigError ? 'Error interno del servidor' : err.message;
-    return NextResponse.json({ error: message }, { status });
+    const code = err instanceof HttpError && err.code ? err.code : (isConfigError ? 'SRV-01' : 'SRV-02');
+    return NextResponse.json({ error: message, code }, { status });
 }

@@ -8,6 +8,18 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { USE_MOCK, getFirestore } from './useFirestoreQuery';
 import { getMock, subscribeMock } from '@/lib/mockStore';
+import { AppError, describeError, reportError } from '@/lib/errors';
+
+const NOMBRES = {
+    productos: 'los artículos', categorias: 'las categorías', ubicaciones: 'las ubicaciones', movimientos: 'los movimientos',
+    prestamos: 'los préstamos', mantenimientos: 'los mantenimientos', conteos: 'los conteos', usuarios: 'los usuarios', auditoria: 'la auditoría',
+};
+
+/** Error de carga con el código original (permisos, red…) o DATOS-08 si no se reconoce. */
+function loadError(name, err) {
+    const info = describeError(err);
+    return info.code === 'APP-01' ? new AppError('DATOS-08', { vars: { que: NOMBRES[name] }, cause: err }) : err;
+}
 
 const EMPTY = Object.freeze([]);
 const noopSubscribe = () => () => {};
@@ -38,8 +50,9 @@ export function useCollection(name, { orderByField = null, direction = 'asc', li
                         unsub = listen(base, false);
                         return;
                     }
-                    console.error(`[LogINV] Error escuchando ${name}:`, err.code, err.message);
-                    setState(s => ({ ...s, loading: false, error: err.message }));
+                    const e = loadError(name, err);
+                    reportError(e, { context: `escuchando ${name}` });
+                    setState(s => ({ ...s, loading: false, error: describeError(e).message }));
                 },
             );
             const constraints = [];
@@ -49,8 +62,10 @@ export function useCollection(name, { orderByField = null, direction = 'asc', li
                 ? listen(fs.query(base, ...constraints), !!orderByField)
                 : listen(base, false);
         }).catch((err) => {
-            console.error(`[LogINV] Error iniciando ${name}:`, err);
-            if (!cancelled) setState(s => ({ ...s, loading: false, error: err.message }));
+            if (cancelled) return;
+            const e = loadError(name, err);
+            reportError(e, { context: `iniciando ${name}` });
+            setState(s => ({ ...s, loading: false, error: describeError(e).message }));
         });
 
         return () => {

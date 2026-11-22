@@ -4,6 +4,8 @@
 //  Modo (Firebase / demo), carga diferida de Firestore y traducción de errores.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { toAppError } from '@/lib/errors';
+
 export { mockTimestamp } from '@/lib/mockStore';
 
 // Modo demo: sin proyecto de Firebase configurado o forzado por variable.
@@ -21,19 +23,13 @@ export async function getFirestore() {
     return { fs: _fs, db: _db };
 }
 
+/**
+ * Registra el error original y lo relanza como AppError del diccionario
+ * (src/lib/errors.js), para que la interfaz muestre un mensaje claro y su código.
+ * Los AppError propios (ej. "El artículo ya no existe") pasan sin cambios.
+ */
 export function firebaseError(operation, err) {
-    const code = err?.code || '';
-    const msg = err?.message || String(err);
-    console.error(`[LogINV] Error en ${operation}:`, code, msg);
-
-    if (code === 'permission-denied' || msg.includes('Missing or insufficient permissions')) {
-        throw new Error('No tienes permisos para realizar esta acción. Si crees que es un error, contacta a un administrador.');
-    }
-    if (code === 'failed-precondition' || msg.includes('index')) {
-        throw new Error('Firestore requiere un índice para esta consulta. Revisa la consola del navegador para obtener el enlace de creación del índice.');
-    }
-    if (code === 'unavailable' || code === 'resource-exhausted') {
-        throw new Error('Sin conexión con el servidor. Verifica tu conexión a internet.');
-    }
-    throw new Error(msg || `Error en operación: ${operation}`);
+    const appErr = toAppError(err);
+    console.error(`[LogINV] ${appErr.appCode} en ${operation}:`, err?.code || '', err?.message || err);
+    throw appErr;
 }

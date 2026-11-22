@@ -5,6 +5,8 @@ import { useGoogleDrive } from '@/services/googleDrive';
 import { compressImage } from '@/lib/imageCompression';
 import ProductThumb from '@/components/ui/ProductThumb';
 import { authService } from '@/services/auth';
+import { useToast } from '@/components/ui/Feedback';
+import { AppError, describeError } from '@/lib/errors';
 
 // Cabecera de autorización para /api/drive-upload (requiere sesión activa).
 async function authHeaders() {
@@ -33,6 +35,7 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
     const [infoMsg, setInfoMsg] = useState('');
     const [localError, setLocalError] = useState('');
     const inputRef = useRef(null);
+    const toast = useToast();
 
     function handlePick() {
         setLocalError('');
@@ -50,6 +53,7 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
         setProcessing(true);
 
         try {
+            if (file.type && !file.type.startsWith('image/')) throw new AppError('IMG-01');
             // 1. Comprimir en el navegador (reduce de varios MB a ~40-60 KB)
             const compressed = await compressImage(file);
             const oldId = imagenId;
@@ -90,7 +94,10 @@ export default function ProductImageUploader({ imagenUrl, imagenId, onChange }) 
             }
         } catch (err) {
             console.error('[LogINV] Error procesando imagen:', err);
-            setLocalError(err.message || 'Error al procesar la imagen');
+            // Errores ya clasificados (tipo/tamaño) se muestran tal cual; el resto es una foto ilegible.
+            const e = err?.appCode ? err : new AppError('IMG-03', { cause: err });
+            toast.error(e);
+            setLocalError(describeError(e).title);
         } finally {
             setProcessing(false);
         }

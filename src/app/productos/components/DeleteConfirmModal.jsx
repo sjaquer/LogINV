@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 export default function DeleteConfirmModal({ producto, onClose, onConfirm }) {
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState('');
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     async function handleDelete() {
@@ -16,7 +18,7 @@ export default function DeleteConfirmModal({ producto, onClose, onConfirm }) {
             await onConfirm(producto.id);
             onClose();
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setDeleting(false);
         }

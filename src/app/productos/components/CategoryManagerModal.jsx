@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { X, Save, Trash2, Pencil, FolderPlus, AlertTriangle } from 'lucide-react';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useToast } from '@/components/ui/Feedback';
 
 const ICONS = ['📦', '🎵', '🪑', '💻', '⚙️', '💡', '🔧', '🎨', '🔨', '🧹', '📚', '🎉'];
 const COLORS = ['#f59e0b', '#10b981', '#f472b6', '#8b5cf6', '#ef4444', '#3b82f6', '#14b8a6', '#f97316'];
@@ -16,6 +17,7 @@ export default function CategoryManagerModal({ categorias, onClose, onCrear, onA
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
+    const toast = useToast();
     useEscapeKey(onClose);
 
     async function handleAdd(e) {
@@ -27,7 +29,7 @@ export default function CategoryManagerModal({ categorias, onClose, onCrear, onA
             await onCrear({ nombre: newName.trim(), descripcion: newDesc.trim(), icono: newIcon, color: newColor });
             setNewName(''); setNewDesc(''); setNewIcon('📦'); setNewColor('#6366f1');
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         } finally {
             setSaving(false);
         }
@@ -40,7 +42,7 @@ export default function CategoryManagerModal({ categorias, onClose, onCrear, onA
             await onActualizar(id, { nombre: editName.trim() });
             setEditingId(null);
         } catch (err) {
-            setError(err.message || 'Error');
+            toast.error(err);
         }
     }
 

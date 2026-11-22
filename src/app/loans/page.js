@@ -63,7 +63,7 @@ export default function LoansPage() {
             toast.success('Devolución registrada');
             setReturnLoan(null);
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         }
     }, [returnLoan, registrarDevolucion, toast]);
 
@@ -72,7 +72,7 @@ export default function LoansPage() {
             await eliminarPrestamo(id);
             toast.success('Préstamo cancelado');
         } catch (err) {
-            toast.error(err.message);
+            toast.error(err);
         }
     }, [eliminarPrestamo, toast]);
 
