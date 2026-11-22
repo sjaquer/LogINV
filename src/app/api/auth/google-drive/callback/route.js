@@ -51,7 +51,7 @@ export async function GET(request) {
             return htmlPage('Error canjeando el código', `<p>${escapeHtml(detail)}</p>`, 400);
         }
 
-        await adminDb().collection('configuracion').doc('google_drive').set({
+        await (await adminDb()).collection('configuracion').doc('google_drive').set({
             refresh_token: tokenData.refresh_token,
             actualizado_en: new Date(),
         }, { merge: true });

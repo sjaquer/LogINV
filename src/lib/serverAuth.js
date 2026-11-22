@@ -26,15 +26,16 @@ export async function requireUser(request, { roles } = {}) {
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
     if (!idToken) throw new HttpError('No autenticado', 401);
 
+    const auth = await adminAuth(); // errores de configuración/carga se propagan con su mensaje
     let decoded;
     try {
-        decoded = await adminAuth().verifyIdToken(idToken);
+        decoded = await auth.verifyIdToken(idToken);
     } catch {
         throw new HttpError('Sesión inválida o expirada', 401);
     }
 
     // En LogINV el id del documento en `usuarios` es el UID de Firebase Auth.
-    const snap = await adminDb().collection('usuarios').doc(decoded.uid).get();
+    const snap = await (await adminDb()).collection('usuarios').doc(decoded.uid).get();
     if (!snap.exists) throw new HttpError('Tu cuenta no está registrada en Usuarios', 403);
 
     const usuario = snap.data();
@@ -54,7 +55,7 @@ export function handleApiError(err, tag = 'api') {
     if (status === 500) console.error(`[LogINV] ${tag} error:`, err);
     // Los errores de configuración (credenciales ausentes) sí se muestran: son
     // la causa más común de fallos en el despliegue y no revelan secretos.
-    const isConfigError = /no está configurad/i.test(err?.message || '');
+    const isConfigError = /Firebase Admin no (está configurad|pudo cargarse)/i.test(err?.message || '');
     const message = status === 500 && !isConfigError ? 'Error interno del servidor' : err.message;
     return NextResponse.json({ error: message }, { status });
 }

@@ -29,7 +29,7 @@ async function getDriveAccessToken() {
     if (!refreshToken) {
         try {
             const { adminDb } = await import('@/lib/firebaseAdmin');
-            const doc = await adminDb().collection('configuracion').doc('google_drive').get();
+            const doc = await (await adminDb()).collection('configuracion').doc('google_drive').get();
             if (doc.exists) {
                 refreshToken = doc.data()?.refresh_token;
             }

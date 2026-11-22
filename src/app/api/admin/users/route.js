@@ -42,7 +42,7 @@ export async function POST(request) {
             throw new HttpError('Rol inválido', 400);
         }
 
-        const userRecord = await adminAuth().createUser({
+        const userRecord = await (await adminAuth()).createUser({
             email: email.trim(),
             password,
             displayName: nombre.trim(),
@@ -53,7 +53,7 @@ export async function POST(request) {
             throw new HttpError(err.message, 400);
         });
 
-        await adminDb().collection('usuarios').doc(userRecord.uid).set({
+        await (await adminDb()).collection('usuarios').doc(userRecord.uid).set({
             nombre: nombre.trim(),
             email: email.trim(),
             rol,
@@ -105,16 +105,16 @@ export async function PATCH(request) {
 
         if (Object.keys(authUpdates).length) {
             try {
-                await adminAuth().updateUser(id, authUpdates);
+                await (await adminAuth()).updateUser(id, authUpdates);
             } catch (err) {
                 if (err.code === 'auth/user-not-found') {
                     // Si se intentó asignar una nueva contraseña a un usuario que existía en Firestore
                     // pero aún no en Firebase Auth (ej. seed inicial), crearlo en Auth
                     if (authUpdates.password) {
-                        const uDoc = await adminDb().collection('usuarios').doc(id).get();
+                        const uDoc = await (await adminDb()).collection('usuarios').doc(id).get();
                         const uData = uDoc.data();
                         if (uData?.email) {
-                            await adminAuth().createUser({
+                            await (await adminAuth()).createUser({
                                 uid: id,
                                 email: uData.email,
                                 password: authUpdates.password,
@@ -133,7 +133,7 @@ export async function PATCH(request) {
             }
         }
         if (Object.keys(docUpdates).length) {
-            await adminDb().collection('usuarios').doc(id).set(docUpdates, { merge: true });
+            await (await adminDb()).collection('usuarios').doc(id).set(docUpdates, { merge: true });
         }
 
         return NextResponse.json({ ok: true });
@@ -151,8 +151,8 @@ export async function DELETE(request) {
         if (!id) throw new HttpError('Falta el id de la cuenta', 400);
         if (id === me.uid) throw new HttpError('No puedes eliminar tu propia cuenta', 400);
 
-        await adminAuth().deleteUser(id).catch(() => {}); // ya pudo no existir en Auth
-        await adminDb().collection('usuarios').doc(id).delete();
+        await (await adminAuth()).deleteUser(id).catch(() => {}); // ya pudo no existir en Auth
+        await (await adminDb()).collection('usuarios').doc(id).delete();
 
         return NextResponse.json({ ok: true });
     } catch (err) {

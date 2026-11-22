@@ -94,16 +94,20 @@ function generarPassword() {
 }
 
 function useServerStatus() {
-    const [status, setStatus] = useState(USE_MOCK ? 'demo' : 'checking');
+    const [state, setState] = useState({ status: USE_MOCK ? 'demo' : 'checking', detail: '' });
     useEffect(() => {
         if (USE_MOCK) return undefined;
         let alive = true;
         callAdminApi('GET')
-            .then(() => alive && setStatus('ok'))
-            .catch(err => alive && setStatus(err.status === 401 || err.status === 403 ? 'ok' : 'unavailable'));
+            .then(() => alive && setState({ status: 'ok', detail: '' }))
+            .catch(err => alive && setState(
+                err.status === 401 || err.status === 403
+                    ? { status: 'ok', detail: '' }
+                    : { status: 'unavailable', detail: err.message },
+            ));
         return () => { alive = false; };
     }, []);
-    return status;
+    return state;
 }
 
 // ─── Formulario ────────────────────────────────────────────────────────────
@@ -290,7 +294,7 @@ export default function AdminUsersPage() {
     const { setHideBottomNav } = useSidebar();
     const toast = useToast();
     const confirm = useConfirm();
-    const serverStatus = useServerStatus();
+    const { status: serverStatus, detail: serverDetail } = useServerStatus();
 
     const [modal, setModal] = useState(null); // { usuario } — usuario null = nueva cuenta
     const [busyId, setBusyId] = useState(null);
@@ -443,11 +447,14 @@ export default function AdminUsersPage() {
                     {serverStatus === 'unavailable' && (
                         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800">
                             <ShieldAlert size={18} className="mt-0.5 flex-shrink-0" />
-                            <p>
-                                El servidor no tiene configuradas las credenciales de administración (FIREBASE_ADMIN_*).
-                                Puedes crear y editar cuentas, pero cambiar contraseñas enviará un correo de restablecimiento
-                                y eliminar una cuenta no borrará sus credenciales.
-                            </p>
+                            <div className="space-y-1">
+                                <p>
+                                    La administración de cuentas del servidor no está disponible. Puedes crear y editar cuentas,
+                                    pero cambiar contraseñas enviará un correo de restablecimiento y eliminar una cuenta no
+                                    borrará sus credenciales.
+                                </p>
+                                {serverDetail && <p className="font-mono text-xs opacity-80">Detalle: {serverDetail}</p>}
+                            </div>
                         </div>
                     )}
 

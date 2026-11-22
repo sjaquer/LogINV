@@ -26,7 +26,7 @@
     "date-fns": "^3.6.0",
     "exceljs": "^4.4.0",
     "firebase": "^13.4.0",
-    "firebase-admin": "^14.5.1",
+    "firebase-admin": "^13.10.0",
     "html5-qrcode": "^2.3.8",
     "jsbarcode": "^3.12.3",
     "lucide-react": "^0.469.0",
