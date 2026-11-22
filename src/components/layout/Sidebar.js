@@ -27,12 +27,10 @@ export default function Sidebar() {
         >
             {/* Marca */}
             <div className={cn('flex items-center gap-3 h-[72px] px-5 border-b border-slate-100', collapsed && 'justify-center px-2')}>
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-500/20">
-                    <img src="/icons/icon-192.png" alt="" className="w-full h-full object-cover" />
-                </div>
+                <img src="/icons/logo-mark.png" alt="" width={40} height={40} className="flex-shrink-0 w-10 h-10 rounded-full shadow-md shadow-brand-500/25" />
                 {!collapsed && (
                     <div className="min-w-0">
-                        <p className="font-bold text-slate-900 tracking-tight leading-tight text-lg">LogINV</p>
+                        <p className="font-bold text-slate-900 tracking-tight leading-tight text-lg">Log<span className="text-brand-600">INV</span></p>
                         <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider truncate">Inventario Iglesia CNC</p>
                     </div>
                 )}

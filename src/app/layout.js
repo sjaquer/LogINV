@@ -14,14 +14,38 @@ import { FeedbackProvider } from '@/components/ui/Feedback';
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
 
+// URL pública: necesaria para que las vistas previas (WhatsApp, redes)
+// encuentren la imagen Open Graph con una dirección absoluta.
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
+    || 'http://localhost:3000';
+
+const SITE_TITLE = 'LogINV – Control de Inventario Iglesia CNC';
+const SITE_DESCRIPTION = 'Sistema interno de gestión de inventario para la Iglesia CNC. Control de stock, ubicaciones, préstamos, mantenimiento y reportes.';
+
+// La imagen de vista previa vive en src/app/opengraph-image.jpg y
+// twitter-image.jpg (convención de archivos de Next: se enlazan solas).
 export const metadata = {
+    metadataBase: new URL(SITE_URL),
     title: {
-        default: 'LogINV – Control de Inventario Iglesia CNC',
+        default: SITE_TITLE,
         template: '%s · LogINV',
     },
     applicationName: 'LogINV',
     robots: { index: false, follow: false },
-    description: 'Sistema interno de gestión de inventario para la Iglesia CNC. Control de stock, ubicaciones, préstamos, mantenimiento y reportes.',
+    description: SITE_DESCRIPTION,
+    openGraph: {
+        type: 'website',
+        siteName: 'LogINV · Iglesia Alianza CNC',
+        title: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        url: '/',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+    },
     manifest: '/manifest.json',
     icons: {
         icon: [

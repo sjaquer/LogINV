@@ -137,10 +137,11 @@ function LoginScreen({ onLogin }) {
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shadow-brand-500/30 mb-4">
-                        <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" className="w-full h-full object-cover" />
+                    <div className="relative mb-5">
+                        <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-sky-400/30 to-violet-500/30 blur-2xl" aria-hidden="true" />
+                        <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" width={112} height={112} className="relative w-28 h-28 rounded-full ring-1 ring-white/15 ring-offset-4 ring-offset-transparent shadow-2xl shadow-brand-950/60" />
                     </div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">LogINV</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tight">Log<span className="text-blue-300">INV</span></h1>
                     <p className="text-sm text-white/50 font-medium mt-1">Control de Inventario</p>
                 </div>
 
