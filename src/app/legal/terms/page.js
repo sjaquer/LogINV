@@ -18,7 +18,7 @@ export default function TermsOfServicePage() {
                     <FileText className="text-brand-600" size={28} />
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Condiciones del Servicio</h1>
                 </div>
-                <p className="text-sm text-slate-400 mb-8">Última actualización: {new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm text-slate-400 mb-8">Última actualización: 13 de septiembre de 2026</p>
 
                 <div className="prose prose-slate max-w-none space-y-6 text-slate-700 text-sm sm:text-base leading-relaxed">
                     <section>
