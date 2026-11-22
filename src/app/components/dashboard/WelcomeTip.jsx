@@ -11,8 +11,8 @@ export default function WelcomeTip({ userId }) {
         <div className="flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-4 animate-fade-in">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white"><LifeBuoy size={20} /></span>
             <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900">¿Primera vez en LogINV?</p>
-                <p className="mt-0.5 text-sm text-slate-600">La guía explica cada pantalla y botón con capturas, paso a paso.</p>
+                <p className="font-bold text-slate-900">¡Bienvenido al inventario de la iglesia!</p>
+                <p className="mt-0.5 text-sm text-slate-600">Gracias por servir cuidando lo que Dios nos ha confiado. La guía explica cada pantalla y botón con capturas, paso a paso.</p>
                 <Link href="/ayuda" className="btn-primary btn-sm mt-3">Abrir la guía</Link>
             </div>
             <button type="button" onClick={() => setDismissed('1')} className="icon-btn" aria-label="No volver a mostrar"><X size={18} /></button>

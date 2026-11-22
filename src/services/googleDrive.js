@@ -16,7 +16,7 @@ import { useState, useCallback } from 'react';
 import { GOOGLE_DRIVE, APP_CONFIG } from '@/lib/constants';
 import { compressImage } from '@/lib/imageCompression';
 import { authService } from './auth';
-import { AppError } from '@/lib/errors';
+import { AppError, describeError } from '@/lib/errors';
 
 // ─── State ───────────────────────────────────────────────────────────────
 let accessToken = null;
@@ -203,7 +203,7 @@ export function useGoogleDrive() {
             await ensureAuthorized();
             return true;
         } catch (err) {
-            setError(err.message);
+            setError(describeError(err).message);
             return false;
         }
     }, []);
@@ -214,7 +214,7 @@ export function useGoogleDrive() {
         try {
             return await uploadImage(file);
         } catch (err) {
-            setError(err.message);
+            setError(describeError(err).message);
             throw err;
         } finally {
             setLoading(false);
@@ -227,7 +227,7 @@ export function useGoogleDrive() {
         try {
             await deleteImage(fileId);
         } catch (err) {
-            setError(err.message);
+            setError(describeError(err).message);
         } finally {
             setLoading(false);
         }

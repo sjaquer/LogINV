@@ -8,6 +8,8 @@ import { signOut as driveSignOut } from '@/services/googleDrive';
 import { USE_MOCK, getFirestore } from '@/hooks/useFirestoreQuery';
 import { audit, setAuditUser } from '@/lib/auditLog';
 import { useIsClient } from '@/hooks/usePersistentState';
+import { AppError, describeError } from '@/lib/errors';
+import { CHURCH, VERSES } from '@/lib/church';
 
 // Rutas públicas que deben ser accesibles sin iniciar sesión (requisito de
 // verificación de OAuth de Google: Política de Privacidad y Condiciones del
@@ -86,12 +88,12 @@ function LoginScreen({ onLogin }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null); // descripción del diccionario de errores
 
     async function handleSubmit(e) {
         e.preventDefault();
         setLoading(true);
-        setError('');
+        setError(null);
         try {
             if (USE_MOCK) {
                 onLogin(MOCK_USER);
@@ -103,13 +105,13 @@ function LoginScreen({ onLogin }) {
 
             if (!usuario) {
                 await authService.signOut();
-                setError('Tu usuario no está registrado en el sistema. Contacta a un administrador.');
+                setError(describeError(new AppError('AUTH-06')));
                 return;
             }
 
             if (usuario.activo === false) {
                 await authService.signOut();
-                setError('Tu cuenta está desactivada. Contacta a un administrador.');
+                setError(describeError(new AppError('AUTH-07')));
                 return;
             }
 
@@ -120,21 +122,20 @@ function LoginScreen({ onLogin }) {
                 rol: usuario.rol,
             });
         } catch (err) {
-            const map = {
-                'auth/invalid-credential': 'Correo o contraseña incorrectos.',
-                'auth/invalid-email': 'Correo inválido.',
-                'auth/too-many-requests': 'Demasiados intentos. Intenta de nuevo más tarde.',
-                'auth/user-disabled': 'Esta cuenta fue deshabilitada en el sistema.',
-            };
-            setError(map[err.code] || err.message || 'No se pudo iniciar sesión');
+            const info = describeError(err);
+            console.error(`[LogINV] ${info.code} al iniciar sesión:`, err);
+            setError(info);
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <div className="min-h-[100dvh] bg-gradient-to-br from-ink-900 via-brand-950 to-ink-900 flex items-center justify-center p-4">
-            <div className="w-full max-w-sm">
+        <div className="relative min-h-[100dvh] overflow-hidden bg-gradient-to-br from-ink-950 via-brand-950 to-ink-900 flex items-center justify-center p-4">
+            {/* Halos con los colores del logo de la iglesia */}
+            <div className="pointer-events-none absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-sky-500/20 blur-3xl" aria-hidden="true" />
+            <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" aria-hidden="true" />
+            <div className="relative w-full max-w-sm">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="relative mb-5">
@@ -142,13 +143,13 @@ function LoginScreen({ onLogin }) {
                         <img src="/icons/icon-512.png" alt="Iglesia Alianza CNC" width={112} height={112} className="relative w-28 h-28 rounded-full ring-1 ring-white/15 ring-offset-4 ring-offset-transparent shadow-2xl shadow-brand-950/60" />
                     </div>
                     <h1 className="text-3xl font-black text-white tracking-tight">Log<span className="text-blue-300">INV</span></h1>
-                    <p className="text-sm text-white/50 font-medium mt-1">Control de Inventario</p>
+                    <p className="text-sm text-white/60 font-medium mt-1">{CHURCH.app}</p>
                 </div>
 
                 {/* Login Card */}
                 <div className="bg-surface rounded-2xl shadow-2xl p-6 space-y-5">
                     <div className="text-center">
-                        <h2 className="text-lg font-bold text-slate-900">Iniciar sesión</h2>
+                        <h2 className="text-lg font-bold text-slate-900">¡Qué bueno verte!</h2>
                         <p className="text-sm text-slate-500 mt-1">Ingresa con tu correo y contraseña</p>
                     </div>
 
@@ -160,7 +161,7 @@ function LoginScreen({ onLogin }) {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={e => { setEmail(e.target.value); setError(''); }}
+                                    onChange={e => { setEmail(e.target.value); setError(null); }}
                                     placeholder="tu@correo.com"
                                     className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl text-base font-medium text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                                     autoComplete="username"
@@ -176,7 +177,7 @@ function LoginScreen({ onLogin }) {
                                 <input
                                     type="password"
                                     value={password}
-                                    onChange={e => { setPassword(e.target.value); setError(''); }}
+                                    onChange={e => { setPassword(e.target.value); setError(null); }}
                                     placeholder="••••••••"
                                     className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl text-base font-medium text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                                     autoComplete="current-password"
@@ -186,9 +187,14 @@ function LoginScreen({ onLogin }) {
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-2 text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-100">
-                                <AlertCircle size={16} className="flex-shrink-0" />
-                                <span>{error}</span>
+                            <div role="alert" className="flex items-start gap-2.5 text-sm bg-rose-50 p-3 rounded-xl border border-rose-100 animate-fade-in">
+                                <AlertCircle size={17} className="mt-0.5 flex-shrink-0 text-rose-600" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-rose-700">{error.title}</p>
+                                    <p className="mt-0.5 text-rose-600">{error.message}</p>
+                                    {error.hint && <p className="mt-1 text-xs text-rose-500">{error.hint}</p>}
+                                </div>
+                                <span className="flex-shrink-0 rounded-md bg-rose-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-600" title="Código del error">{error.code}</span>
                             </div>
                         )}
 
@@ -203,9 +209,12 @@ function LoginScreen({ onLogin }) {
                     </form>
                 </div>
 
-                <p className="text-center text-xs text-white/50 mt-6 max-w-xs mx-auto leading-relaxed">
-                    Sistema interno de control de inventario para la Iglesia CNC: gestión de bienes, ubicaciones,
-                    préstamos y mantenimiento.
+                <figure className="mt-7 text-center max-w-xs mx-auto">
+                    <blockquote className="text-sm italic text-white/70 leading-relaxed">“{VERSES[0].text}”</blockquote>
+                    <figcaption className="mt-1 text-xs font-semibold text-sky-300/80">{VERSES[0].ref}</figcaption>
+                </figure>
+                <p className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-white/40 mt-5">
+                    {CHURCH.name} · {CHURCH.motto}
                 </p>
                 <p className="text-center text-xs text-white/30 mt-3 flex items-center justify-center gap-3">
                     <Link href="/legal/privacy" className="hover:text-white/60 hover:underline">Privacidad</Link>

@@ -20,6 +20,7 @@ import { useMaintenance } from '@/hooks/useMaintenance';
 import { exportInventoryExcel } from '@/lib/excelExport';
 import { History } from 'lucide-react';
 import { isLowStock } from '@/lib/stock';
+import { CHURCH, greeting, verseOfTheDay } from '@/lib/church';
 
 export default function DashboardPage() {
     const { productos, loading: pLoading } = useProductos();
@@ -103,10 +104,14 @@ export default function DashboardPage() {
         return exportInventoryExcel(productosUbicacion, categorias, ubicacionInfo.nombre);
     }, [productosUbicacion, categorias, ubicacionInfo.nombre]);
 
-    const hoyLabel = useMemo(
-        () => new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }),
-        []
-    );
+    const { hoyLabel, saludo, versiculo } = useMemo(() => {
+        const now = new Date();
+        return {
+            hoyLabel: now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }),
+            saludo: greeting(now),
+            versiculo: verseOfTheDay(now),
+        };
+    }, []);
 
     return (
         <div className="flex flex-col flex-1">
@@ -114,17 +119,23 @@ export default function DashboardPage() {
             <div className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 animate-fade-in max-w-6xl mx-auto w-full pb-4">
 
                 {/* Saludo + acciones de reporte */}
-                <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 sm:p-7 text-white shadow-lg shadow-brand-900/10">
+                <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-brand-600 to-violet-700 p-5 sm:p-7 text-white shadow-lg shadow-brand-900/15">
                     <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+                    {/* Logo de la iglesia como marca de agua */}
+                    <img src="/icons/icon-512.png" alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-10 -right-8 h-44 w-44 sm:h-56 sm:w-56 rounded-full opacity-[0.12] mix-blend-luminosity" />
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                         <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-white/60 first-letter:uppercase">{hoyLabel}</p>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-white/70 first-letter:uppercase">{hoyLabel} · {CHURCH.name}</p>
                             <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
-                                Hola, {user?.nombre?.split(' ')[0] || 'Usuario'}
+                                {saludo}, {user?.nombre?.split(' ')[0] || 'hermano'}
                             </h2>
-                            <p className="mt-1 text-sm sm:text-base text-white/75 truncate">
+                            <p className="mt-1 text-sm sm:text-base text-white/80 truncate">
                                 {isGeneral ? 'Vista general de todas las ubicaciones' : `${ubicacionInfo.icono} ${ubicacionInfo.nombre}`}
                             </p>
+                            <figure className="mt-4 max-w-md border-l-2 border-white/30 pl-3">
+                                <blockquote className="text-sm italic text-white/85 leading-snug">“{versiculo.text}”</blockquote>
+                                <figcaption className="mt-0.5 text-xs font-semibold text-white/60">{versiculo.ref}</figcaption>
+                            </figure>
                         </div>
                         <WeeklyReportButton
                             onGenerate={handleWeeklyReport}

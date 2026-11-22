@@ -176,18 +176,7 @@ export const ROUTES = {
   ADMIN_USERS: '/admin/users',
 };
 
-// ─── Mensajes de Error ───────────────────────────────────────────────────
-export const ERROR_MESSAGES = {
-  PERMISSION_DENIED: 'Permisos denegados. Contacta al administrador.',
-  NOT_FOUND: 'Elemento no encontrado.',
-  NETWORK_ERROR: 'Error de conexión. Verifica tu internet.',
-  VALIDATION_ERROR: 'Datos inválidos. Revisa el formulario.',
-  DUPLICATE_ERROR: 'Ya existe un elemento con esos datos.',
-  FIRESTORE_INDEX: 'Firestore requiere un índice. Revisa la consola.',
-  GOOGLE_DRIVE_ERROR: 'Error al subir imagen a Google Drive.',
-  MAX_FILE_SIZE: 'El archivo excede el tamaño máximo permitido.',
-  INVALID_FILE_TYPE: 'Tipo de archivo no permitido.',
-};
+// Los mensajes de error viven en src/lib/errors.js (diccionario con códigos).
 
 // ─── Mensajes de Éxito ───────────────────────────────────────────────────
 export const SUCCESS_MESSAGES = {

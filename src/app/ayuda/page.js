@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
     Rocket, LayoutDashboard, Package, ScanBarcode, ClipboardList, Handshake, MapPin,
-    Wrench, FileText, Users, ShieldCheck, LifeBuoy, Lightbulb, Check, Minus, HelpCircle,
+    Wrench, FileText, Users, ShieldCheck, LifeBuoy, Lightbulb, Check, Minus, HelpCircle, AlertTriangle,
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { SearchInput } from '@/components/ui/Page';
@@ -11,6 +11,9 @@ import { useAuth } from '@/context/AuthContext';
 import { ROLES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { GUIDE, ROLE_MATRIX, FAQ } from './guideContent';
+import { errorCatalog } from '@/lib/errors';
+
+const ERROR_CATALOG = errorCatalog();
 
 const ICONS = { Rocket, LayoutDashboard, Package, ScanBarcode, ClipboardList, Handshake, MapPin, Wrench, FileText, Users, ShieldCheck };
 const ROLE_ORDER = ['admin', 'encargado', 'voluntario'];
@@ -103,12 +106,21 @@ export default function AyudaPage() {
         return FAQ.filter(f => !term || `${f.q} ${f.a}`.toLowerCase().includes(term));
     }, [q]);
 
+    // Códigos de error: se busca por código ("RED-01") o por palabras.
+    const errores = useMemo(() => {
+        const term = q.trim().toLowerCase();
+        if (!term) return ERROR_CATALOG;
+        return ERROR_CATALOG
+            .map(g => ({ ...g, items: g.items.filter(e => `${e.code} ${e.title} ${e.message} ${e.hint || ''}`.toLowerCase().includes(term)) }))
+            .filter(g => g.items.length);
+    }, [q]);
+
     return (
         <div className="flex flex-col flex-1">
             <Header title="Ayuda y guía" />
             <div className="mx-auto w-full max-w-6xl flex-1 p-3 pb-8 sm:p-6 lg:p-8">
                 {/* Portada */}
-                <div className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-lg sm:p-8">
+                <div className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-brand-600 to-violet-700 p-5 text-white shadow-lg sm:p-8">
                     <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
                     <div className="relative max-w-2xl">
                         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70"><LifeBuoy size={14} /> Guía de LogINV</p>
@@ -151,13 +163,16 @@ export default function AyudaPage() {
                                 <a href="#faq" className="flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-surface px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2.5 lg:py-2 lg:hover:bg-slate-100">
                                     <HelpCircle size={15} /> Preguntas frecuentes
                                 </a>
+                                <a href="#errores" className="flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-surface px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2.5 lg:py-2 lg:hover:bg-slate-100">
+                                    <AlertTriangle size={15} /> Códigos de error
+                                </a>
                             </nav>
                         </div>
                     </aside>
 
                     {/* Contenido */}
                     <div className="min-w-0 space-y-6">
-                        {secciones.length === 0 && faqs.length === 0 && (
+                        {secciones.length === 0 && faqs.length === 0 && errores.length === 0 && (
                             <p className="rounded-xl border border-slate-200 bg-surface p-6 text-center text-sm text-slate-500">
                                 No hay resultados para “{q}”.
                             </p>
@@ -206,6 +221,39 @@ export default function AyudaPage() {
                                             </summary>
                                             <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.a}</p>
                                         </details>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {errores.length > 0 && (
+                            <section id="errores" className="glass-panel scroll-mt-24">
+                                <header className="panel-header flex-col items-start gap-1">
+                                    <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900"><AlertTriangle size={20} className="text-amber-500" /> Códigos de error</h2>
+                                    <p className="text-sm text-slate-500">
+                                        Cuando algo falla aparece un aviso al costado con un código (por ejemplo <span className="font-mono font-bold">RED-01</span>).
+                                        Búscalo aquí para saber qué pasó, o toca “Copiar para reportar” y envíaselo a un administrador.
+                                    </p>
+                                </header>
+                                <div className="divide-y divide-slate-100">
+                                    {errores.map(g => (
+                                        <div key={g.group} className="px-4 py-4 sm:px-6">
+                                            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">{g.label}</h3>
+                                            <dl className="space-y-2.5">
+                                                {g.items.map(e => (
+                                                    <div key={e.code} id={`error-${e.code}`} className="flex gap-3 scroll-mt-24">
+                                                        <dt className="w-[74px] flex-shrink-0 pt-0.5">
+                                                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wide text-slate-600">{e.code}</span>
+                                                        </dt>
+                                                        <dd className="min-w-0 text-sm">
+                                                            <p className="font-semibold text-slate-800">{e.title}</p>
+                                                            <p className="text-slate-600">{e.message}</p>
+                                                            {e.hint && <p className="mt-0.5 text-xs text-slate-500">Qué hacer: {e.hint}</p>}
+                                                        </dd>
+                                                    </div>
+                                                ))}
+                                            </dl>
+                                        </div>
                                     ))}
                                 </div>
                             </section>
