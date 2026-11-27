@@ -41,6 +41,27 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
+// Extrae la extensión de una imagen embebida como DataURL (base64).
+function dataUrlExtension(dataUrl) {
+    const mime = dataUrl.slice(5, dataUrl.indexOf(';')).toLowerCase();
+    if (mime.includes('png')) return 'png';
+    if (mime.includes('gif')) return 'gif';
+    if (mime.includes('webp')) return 'png';
+    return 'jpeg';
+}
+
+// Link público de la foto: URL externa si existe, Drive como respaldo o el
+// proxy interno que sirve las fotos base64 guardadas en Firestore.
+function imageLinkFor(producto) {
+    const url = typeof producto.imagen_url === 'string' ? producto.imagen_url.trim() : '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (producto.imagen_drive_id) return `https://drive.google.com/file/d/${producto.imagen_drive_id}/view`;
+    if (url.startsWith('data:') && producto.id && typeof window !== 'undefined') {
+        return `${window.location.origin}/api/product-image?id=${encodeURIComponent(producto.id)}`;
+    }
+    return '';
+}
+
 // Trae los bytes de una foto de Drive vía el proxy interno (evita CORS) y
 // detecta la extensión soportada por exceljs a partir del content-type.
 async function fetchImageBuffer(driveId) {
@@ -156,6 +177,7 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     const inv = workbook.addWorksheet('Inventario completo', { properties: { tabColor: { argb: BRAND } } });
     inv.columns = [
         { header: 'Foto', key: 'foto', width: 12 },
+        { header: 'Link de imagen', key: 'link', width: 46 },
         { header: 'Código de barras', key: 'codigo', width: 18 },
         { header: 'Producto', key: 'nombre', width: 32 },
         { header: 'Descripción', key: 'descripcion', width: 28 },
@@ -170,21 +192,26 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
     ];
     styleHeaderRow(inv.getRow(1));
     inv.views = [{ state: 'frozen', ySplit: 1 }];
-    inv.autoFilter = { from: 'A1', to: 'L1' };
+    inv.autoFilter = { from: 'A1', to: 'M1' };
 
-    // Traer todas las fotos en paralelo antes de armar las filas, para poder
-    // anclar cada imagen a la fila exacta de su producto.
-    const conFoto = productos.filter(p => p.imagen_drive_id);
-    const imagenesPorId = new Map();
-    await Promise.all(conFoto.map(async p => {
-        const img = await fetchImageBuffer(p.imagen_drive_id);
-        if (img) imagenesPorId.set(p.imagen_drive_id, img);
+    // Resolver la foto de cada producto: las nuevas se guardan como base64 en
+    // Firestore (`imagen_url`); Drive queda solo como respaldo de datos viejos.
+    const imagenesPorProducto = new Map();
+    await Promise.all(productos.map(async p => {
+        const url = typeof p.imagen_url === 'string' ? p.imagen_url.trim() : '';
+        if (url.startsWith('data:')) {
+            imagenesPorProducto.set(p.id, { base64: url, extension: dataUrlExtension(url) });
+        } else if (p.imagen_drive_id) {
+            const img = await fetchImageBuffer(p.imagen_drive_id);
+            if (img) imagenesPorProducto.set(p.id, img);
+        }
     }));
 
     productos.forEach(p => {
         const bajoStock = isLowStock(p);
         const row = inv.addRow({
             foto: '',
+            link: '',
             codigo: p.codigo_barras || '',
             nombre: p.nombre,
             descripcion: p.descripcion || '',
@@ -200,7 +227,16 @@ export async function exportInventoryExcel(productos, categorias = [], alcance =
         row.eachCell(cell => { cell.border = THIN_BORDERS; cell.alignment = { vertical: 'middle', wrapText: false }; });
         row.height = 54;
 
-        const foto = p.imagen_drive_id && imagenesPorId.get(p.imagen_drive_id);
+        if (p.imagen_drive_id || p.imagen_url) {
+            const linkUrl = imageLinkFor(p);
+            if (linkUrl) {
+                const linkCell = row.getCell('link');
+                linkCell.value = { text: linkUrl, hyperlink: linkUrl, tooltip: 'Abrir imagen' };
+                linkCell.font = { color: { argb: 'FF1D4ED8' }, underline: true };
+            }
+        }
+
+        const foto = p.id && imagenesPorProducto.get(p.id);
         if (foto) {
             const imageId = workbook.addImage({ base64: foto.base64, extension: foto.extension });
             inv.addImage(imageId, {

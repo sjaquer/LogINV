@@ -18,6 +18,7 @@
     "mock:generate": "node scripts/generateMockData.js",
     "excel:analyze": "node scripts/analyzeExcel.js",
     "export:db": "node scripts/exportFullDatabase.mjs",
+    "export:inventory": "node scripts/exportInventoryExcel.mjs",
     "export:upload-images": "node scripts/uploadImagesToDrive.mjs",
     "guide:screenshots": "node scripts/captureGuide.mjs"
   },
